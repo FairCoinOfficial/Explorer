@@ -12,6 +12,7 @@ import {
     Clock,
     Database
 } from "lucide-react"
+import { useTranslations } from 'next-intl'
 
 import {
     SidebarGroup,
@@ -24,6 +25,7 @@ import { useSidebar } from "@/components/ui/sidebar"
 
 export function NavMain() {
     const { setOpenMobile } = useSidebar()
+    const t = useTranslations('navigation')
 
     const handleNavigation = () => {
         setOpenMobile(false)
@@ -34,58 +36,58 @@ export function NavMain() {
             <SidebarGroupLabel>Explorer</SidebarGroupLabel>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Home Dashboard">
+                    <SidebarMenuButton asChild tooltip={t('home')}>
                         <Link href="/" onClick={handleNavigation}>
                             <Home />
-                            <span>Dashboard</span>
+                            <span>{t('home')}</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Search Blockchain">
+                    <SidebarMenuButton asChild tooltip={t('search')}>
                         <Link href="/search" onClick={handleNavigation}>
                             <Search />
-                            <span>Search</span>
+                            <span>{t('search')}</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Browse Blocks">
+                    <SidebarMenuButton asChild tooltip={t('blocks')}>
                         <Link href="/blocks" onClick={handleNavigation}>
                             <Blocks />
-                            <span>Blocks</span>
+                            <span>{t('blocks')}</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="View Transactions">
+                    <SidebarMenuButton asChild tooltip={t('transactions')}>
                         <Link href="/tx" onClick={handleNavigation}>
                             <Receipt />
-                            <span>Transactions</span>
+                            <span>{t('transactions')}</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Network Statistics">
+                    <SidebarMenuButton asChild tooltip={t('stats')}>
                         <Link href="/stats" onClick={handleNavigation}>
                             <BarChart3 />
-                            <span>Statistics</span>
+                            <span>{t('stats')}</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Masternode Network">
+                    <SidebarMenuButton asChild tooltip={t('masternodes')}>
                         <Link href="/masternodes" onClick={handleNavigation}>
                             <Shield />
-                            <span>Masternodes</span>
+                            <span>{t('masternodes')}</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Transaction Pool">
+                    <SidebarMenuButton asChild tooltip={t('mempool')}>
                         <Link href="/mempool" onClick={handleNavigation}>
                             <Clock />
-                            <span>Mempool</span>
+                            <span>{t('mempool')}</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>

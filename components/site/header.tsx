@@ -1,9 +1,15 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { LanguageSelector } from '@/components/language-selector';
+import { useTranslations } from 'next-intl';
 
 export function SiteHeader() {
+  const t = useTranslations('navigation');
+
   return (
     <header className="sticky top-0 z-50 bg-background/60 backdrop-blur border-b">
       <div className="container max-w-6xl mx-auto flex items-center justify-between h-16">
@@ -16,16 +22,21 @@ export function SiteHeader() {
 
         <nav className="hidden lg:flex items-center gap-2">
           <Button asChild variant="ghost">
-            <Link href="/blocks">Blocks</Link>
+            <Link href="/blocks">{t('blocks')}</Link>
           </Button>
           <Button asChild variant="ghost">
-            <Link href="/tx">Transactions</Link>
+            <Link href="/tx">{t('transactions')}</Link>
           </Button>
           <Separator className="mx-2 w-px h-6" orientation="vertical" />
+          <LanguageSelector />
           <Button asChild size="sm">
             <Link href="https://fairco.in" target="_blank" rel="noreferrer">FairCoin</Link>
           </Button>
         </nav>
+
+        <div className="lg:hidden">
+          <LanguageSelector />
+        </div>
       </div>
     </header>
   );
