@@ -42,6 +42,7 @@ export function NavUser() {
                         <SidebarMenuButton
                             size="lg"
                             className="data-[state=open]:bg-primary data-[state=open]:text-primary-foreground"
+                            tooltip="Explorer Tools"
                         >
                             <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                                 <Wrench className="size-4" />

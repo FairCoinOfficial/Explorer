@@ -19,8 +19,8 @@ import {
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-const SIDEBAR_WIDTH = "16rem"
-const SIDEBAR_WIDTH_MOBILE = "18rem"
+const SIDEBAR_WIDTH = "14rem"
+const SIDEBAR_WIDTH_MOBILE = "16rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
@@ -269,7 +269,16 @@ const SidebarTrigger = React.forwardRef<
     React.ElementRef<typeof Button>,
     React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
-    const { toggleSidebar } = useSidebar()
+    const { toggleSidebar, isMobile, openMobile, setOpenMobile } = useSidebar()
+
+    const handleClick = React.useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+        onClick?.(event)
+        if (isMobile) {
+            setOpenMobile(!openMobile)
+        } else {
+            toggleSidebar()
+        }
+    }, [onClick, isMobile, openMobile, setOpenMobile, toggleSidebar])
 
     return (
         <Button
@@ -278,10 +287,7 @@ const SidebarTrigger = React.forwardRef<
             variant="ghost"
             size="icon"
             className={cn("h-7 w-7", className)}
-            onClick={(event) => {
-                onClick?.(event)
-                toggleSidebar()
-            }}
+            onClick={handleClick}
             {...props}
         >
             <PanelLeft />
@@ -310,7 +316,6 @@ const SidebarRail = React.forwardRef<
                 "hover:bg-popover hover:group-data-[side=left]:bg-popover group-data-[side=right]:hover:bg-popover",
                 "[[data-side=left]_&]:cursor-w-resize [[data-side=right]_&]:cursor-e-resize",
                 "[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize",
-                "group-data-[collapsible=icon]:hidden",
                 className
             )}
             {...props}
@@ -559,6 +564,7 @@ const SidebarMenuButton = React.forwardRef<
         },
         ref
     ) => {
+        const { state } = useSidebar()
         const Comp = asChild ? Slot : "button"
 
         const button = (
@@ -572,7 +578,7 @@ const SidebarMenuButton = React.forwardRef<
             />
         )
 
-        if (!tooltip) {
+        if (!tooltip || state !== "collapsed") {
             return button
         }
 

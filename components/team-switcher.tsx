@@ -33,6 +33,7 @@ export function TeamSwitcher() {
                         <SidebarMenuButton
                             size="lg"
                             className="data-[state=open]:bg-primary data-[state=open]:text-primary-foreground"
+                            tooltip="Switch Network"
                         >
                             <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white p-1">
                                 <Image

@@ -31,7 +31,7 @@ export function NavProjects() {
             </SidebarGroupLabel>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
+                    <SidebarMenuButton asChild tooltip="Official FairCoin Website">
                         <Link href="https://fairco.in" target="_blank" rel="noopener noreferrer">
                             <Globe />
                             <span>Official Website</span>
@@ -40,7 +40,7 @@ export function NavProjects() {
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
+                    <SidebarMenuButton asChild tooltip="FairCoin GitHub Repository">
                         <Link href="https://github.com/FairCoinOfficial/" target="_blank" rel="noopener noreferrer">
                             <Github />
                             <span>GitHub</span>
