@@ -397,7 +397,7 @@ export default async function Page() {
               <div className="text-center py-12 px-4">
                 <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
                 <p className="text-lg font-medium text-muted-foreground mb-2">No transactions available</p>
-                <p className="text-sm text-muted-foreground">The latest block doesn't contain any transactions yet.</p>
+                <p className="text-sm text-muted-foreground">The latest block doesn&apos;t contain any transactions yet.</p>
               </div>
             ) : (
               <div className="space-y-2 sm:space-y-3">

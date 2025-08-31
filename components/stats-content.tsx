@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SectionHeader, StatsGrid, StatsCard, EmptyState, LoadingState, InfoGrid } from '@/components/ui'
 import {
     BarChart3,
     TrendingUp,
@@ -18,7 +19,8 @@ import {
     Coins,
     Activity,
     Shield,
-    Network
+    Network,
+    AlertTriangle
 } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -97,9 +99,7 @@ export function StatsContent() {
     if (loading) {
         return (
             <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-                <div className="flex items-center justify-center h-64">
-                    <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
+                <LoadingState message="Loading network statistics..." />
             </div>
         )
     }
@@ -107,16 +107,16 @@ export function StatsContent() {
     if (error) {
         return (
             <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                        <p className="text-lg text-muted-foreground mb-4">Error loading statistics</p>
-                        <p className="text-sm text-destructive mb-4">{error}</p>
-                        <Button onClick={fetchStats} variant="outline">
-                            <RefreshCw className="h-4 w-4 mr-2" />
-                            Try Again
-                        </Button>
-                    </div>
-                </div>
+                <EmptyState
+                    icon={AlertTriangle}
+                    title="Error Loading Statistics"
+                    description={error}
+                    action={{
+                        label: "Try Again",
+                        onClick: fetchStats,
+                        variant: "outline"
+                    }}
+                />
             </div>
         )
     }
@@ -157,130 +157,54 @@ export function StatsContent() {
             </div>
 
             {/* Main Stats Grid */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Block Height</CardTitle>
-                        <Database className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.blockHeight.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">Current blockchain height</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Supply</CardTitle>
-                        <Coins className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            {stats.totalSupply.toLocaleString()} FAIR
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            {supplyProgress.toFixed(2)}% of max supply
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Block Time</CardTitle>
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{Math.round(stats.avgBlockTime)}s</div>
-                        <p className="text-xs text-muted-foreground">Average block time</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Masternodes</CardTitle>
-                        <Shield className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.masternodeCount?.toLocaleString() || 'N/A'}</div>
-                        <p className="text-xs text-muted-foreground">Securing the network</p>
-                    </CardContent>
-                </Card>
-            </div>
+            <StatsGrid>
+                <StatsCard
+                    icon={Database}
+                    title="Block Height"
+                    value={stats.blockHeight.toLocaleString()}
+                    description="Current blockchain height"
+                />
+                <StatsCard
+                    icon={Coins}
+                    title="Total Supply"
+                    value={`${stats.totalSupply.toLocaleString()} FAIR`}
+                    description={`${supplyProgress.toFixed(2)}% of max supply`}
+                />
+                <StatsCard
+                    icon={Clock}
+                    title="Block Time"
+                    value={`${Math.round(stats.avgBlockTime)}s`}
+                    description="Average block time"
+                />
+                <StatsCard
+                    icon={Shield}
+                    title="Masternodes"
+                    value={stats.masternodeCount?.toLocaleString() || 'N/A'}
+                    description="Securing the network"
+                />
+            </StatsGrid>
 
             {/* FairCoin Features Overview */}
-            <div className="grid gap-4 md:grid-cols-3">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Zap className="h-5 w-5" />
-                            FastSend
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-sm text-muted-foreground mb-3">
-                            Guaranteed zero confirmation transactions for instant payments.
-                        </p>
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span>Confirmation Time</span>
-                                <span className="font-mono">~0 seconds</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span>Security</span>
-                                <span>Masternode secured</span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Shield className="h-5 w-5" />
-                            Coin Mixing
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-sm text-muted-foreground mb-3">
-                            Anonymous transactions using advanced coin mixing technology.
-                        </p>
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span>Privacy Level</span>
-                                <span>High</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span>Method</span>
-                                <span>Masternode mixing</span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Activity className="h-5 w-5" />
-                            Governance
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-sm text-muted-foreground mb-3">
-                            Decentralized blockchain voting for network consensus decisions.
-                        </p>
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span>Voting Power</span>
-                                <span>Masternode owners</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span>Consensus</span>
-                                <span>Democratic</span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+            <StatsGrid>
+                <StatsCard
+                    icon={Zap}
+                    title="FastSend"
+                    value="~0 seconds"
+                    description="Guaranteed zero confirmation transactions for instant payments"
+                />
+                <StatsCard
+                    icon={Shield}
+                    title="Coin Mixing"
+                    value="High Privacy"
+                    description="Anonymous transactions using advanced coin mixing technology"
+                />
+                <StatsCard
+                    icon={Activity}
+                    title="Governance"
+                    value="Democratic"
+                    description="Decentralized blockchain voting for network consensus decisions"
+                />
+            </StatsGrid>
 
             {/* Detailed Statistics */}
             <Tabs defaultValue="network" className="space-y-4">
@@ -295,10 +219,10 @@ export function StatsContent() {
                     <div className="grid gap-4 md:grid-cols-2">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Database className="h-5 w-5" />
-                                    Network Information
-                                </CardTitle>
+                                <SectionHeader
+                                    icon={Database}
+                                    title="Network Information"
+                                />
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
@@ -324,10 +248,10 @@ export function StatsContent() {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Hash className="h-5 w-5" />
-                                    Latest Block
-                                </CardTitle>
+                                <SectionHeader
+                                    icon={Hash}
+                                    title="Latest Block"
+                                />
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
@@ -364,10 +288,10 @@ export function StatsContent() {
                 <TabsContent value="supply" className="space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Coins className="h-5 w-5" />
-                                Supply & Economics
-                            </CardTitle>
+                            <SectionHeader
+                                icon={Coins}
+                                title="Supply & Economics"
+                            />
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid gap-4 md:grid-cols-2">
@@ -454,10 +378,10 @@ export function StatsContent() {
                     <div className="grid gap-4 md:grid-cols-2">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Shield className="h-5 w-5" />
-                                    Masternode Staking
-                                </CardTitle>
+                                <SectionHeader
+                                    icon={Shield}
+                                    title="Masternode Staking"
+                                />
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <div className="border rounded-lg p-3">
@@ -482,10 +406,10 @@ export function StatsContent() {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Coins className="h-5 w-5" />
-                                    Wallet Staking
-                                </CardTitle>
+                                <SectionHeader
+                                    icon={Coins}
+                                    title="Wallet Staking"
+                                />
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <div className="border rounded-lg p-3">
@@ -518,10 +442,10 @@ export function StatsContent() {
                     <div className="grid gap-4 md:grid-cols-2">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Hash className="h-5 w-5" />
-                                    Transaction Statistics
-                                </CardTitle>
+                                <SectionHeader
+                                    icon={Hash}
+                                    title="Transaction Statistics"
+                                />
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">

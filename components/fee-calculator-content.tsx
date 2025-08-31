@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useNetwork } from "@/contexts/network-context"
-import { Calculator, Info, Coins } from "lucide-react"
+import { Calculator, Info, Coins, AlertTriangle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { SectionHeader, EmptyState, InfoGrid } from "@/components/ui"
 
 export function FeeCalculatorContent() {
     const { currentNetwork } = useNetwork()
@@ -89,10 +90,10 @@ export function FeeCalculatorContent() {
             <div className="grid gap-6 md:grid-cols-2">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Coins className="h-4 w-4" />
-                            Transaction Details
-                        </CardTitle>
+                        <SectionHeader
+                            icon={Coins}
+                            title="Transaction Details"
+                        />
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
@@ -138,10 +139,10 @@ export function FeeCalculatorContent() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Info className="h-4 w-4" />
-                            Fee Estimate
-                        </CardTitle>
+                        <SectionHeader
+                            icon={Info}
+                            title="Fee Estimate"
+                        />
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {amount && parseFloat(amount) > 0 ? (
@@ -173,10 +174,11 @@ export function FeeCalculatorContent() {
                                 </div>
                             </>
                         ) : (
-                            <div className="text-center text-muted-foreground py-8">
-                                <Calculator className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                                <p>Enter an amount to calculate fees</p>
-                            </div>
+                            <EmptyState
+                                icon={Calculator}
+                                title="Enter Amount to Calculate"
+                                description="Enter an amount to see fee estimates"
+                            />
                         )}
                     </CardContent>
                 </Card>
@@ -184,29 +186,24 @@ export function FeeCalculatorContent() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Fee Information</CardTitle>
+                    <SectionHeader
+                        icon={Info}
+                        title="Fee Information"
+                    />
                 </CardHeader>
                 <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                            <h4 className="font-semibold mb-2">FairCoin Transaction Features</h4>
-                            <ul className="text-sm text-muted-foreground space-y-1">
-                                <li>• Standard transactions: 0.0001 FAIR minimum</li>
-                                <li>• InstantX (sendtoaddressix): Near instant confirmation</li>
-                                <li>• PrivateSend (obfuscation): Enhanced privacy</li>
-                                <li>• Multi-signature support available</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold mb-2">Network Information</h4>
-                            <ul className="text-sm text-muted-foreground space-y-1">
-                                <li>• Block time: ~120 seconds</li>
-                                <li>• Current network: {currentNetwork}</li>
-                                <li>• Confirmation time varies by priority</li>
-                                <li>• 6 confirmations recommended</li>
-                            </ul>
-                        </div>
-                    </div>
+                    <InfoGrid
+                        items={[
+                            { label: "Standard transactions", value: "0.0001 FAIR minimum" },
+                            { label: "InstantX (sendtoaddressix)", value: "Near instant confirmation" },
+                            { label: "PrivateSend (obfuscation)", value: "Enhanced privacy" },
+                            { label: "Multi-signature support", value: "Available" },
+                            { label: "Block time", value: "~120 seconds" },
+                            { label: "Current network", value: currentNetwork },
+                            { label: "Confirmation time", value: "Varies by priority" },
+                            { label: "Recommended confirmations", value: "6 confirmations" }
+                        ]}
+                    />
                 </CardContent>
             </Card>
         </div>

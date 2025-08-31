@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { SectionHeader, InfoGrid } from "@/components/ui"
 
 interface ValidationResult {
     isValid: boolean
@@ -162,10 +163,10 @@ export function AddressValidatorContent() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Shield className="h-4 w-4" />
-                        Validate FairCoin Address
-                    </CardTitle>
+                    <SectionHeader
+                        icon={Shield}
+                        title="Validate FairCoin Address"
+                    />
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
@@ -301,29 +302,24 @@ export function AddressValidatorContent() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Address Format Information</CardTitle>
+                    <SectionHeader
+                        icon={Info}
+                        title="Address Format Information"
+                    />
                 </CardHeader>
                 <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                            <h4 className="font-semibold mb-2">Mainnet Addresses</h4>
-                            <ul className="text-sm text-muted-foreground space-y-1">
-                                <li>• P2PKH: Starts with &apos;f&apos; (e.g., f1234...)</li>
-                                <li>• P2SH: Starts with &apos;F&apos; (e.g., F5678...)</li>
-                                <li>• Length: 25-34 characters</li>
-                                <li>• Used for real transactions</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold mb-2">Testnet Addresses</h4>
-                            <ul className="text-sm text-muted-foreground space-y-1">
-                                <li>• P2PKH: Starts with &apos;m&apos; or &apos;n&apos;</li>
-                                <li>• P2SH: Starts with &apos;2&apos;</li>
-                                <li>• Length: 25-34 characters</li>
-                                <li>• Used for testing only</li>
-                            </ul>
-                        </div>
-                    </div>
+                    <InfoGrid
+                        items={[
+                            { label: "Mainnet P2PKH", value: "Starts with 'f' (e.g., f1234...)" },
+                            { label: "Mainnet P2SH", value: "Starts with 'F' (e.g., F5678...)" },
+                            { label: "Mainnet Length", value: "25-34 characters" },
+                            { label: "Mainnet Usage", value: "Used for real transactions" },
+                            { label: "Testnet P2PKH", value: "Starts with 'm' or 'n'" },
+                            { label: "Testnet P2SH", value: "Starts with '2'" },
+                            { label: "Testnet Length", value: "25-34 characters" },
+                            { label: "Testnet Usage", value: "Used for testing only" }
+                        ]}
+                    />
                 </CardContent>
             </Card>
         </div>

@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CopyButton } from '@/components/copy-button'
-import { Globe, Cpu, HardDrive, Zap, RefreshCw, Home, Info } from 'lucide-react'
+import { SectionHeader, StatsGrid, StatsCard, EmptyState, LoadingState, InfoGrid } from '@/components/ui'
+import { Globe, Cpu, HardDrive, Zap, RefreshCw, Home, Info, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
@@ -117,9 +118,7 @@ export function NetworkContent() {
     if (loading) {
         return (
             <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-                <div className="flex items-center justify-center h-64">
-                    <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
+                <LoadingState message="Loading network information..." />
             </div>
         )
     }
@@ -127,16 +126,16 @@ export function NetworkContent() {
     if (error) {
         return (
             <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                        <p className="text-lg text-muted-foreground mb-4">Error loading network information</p>
-                        <p className="text-sm text-destructive mb-4">{error}</p>
-                        <Button onClick={fetchNetworkInfo} variant="outline">
-                            <RefreshCw className="h-4 w-4 mr-2" />
-                            Try Again
-                        </Button>
-                    </div>
-                </div>
+                <EmptyState
+                    icon={AlertTriangle}
+                    title="Error Loading Network Information"
+                    description={error}
+                    action={{
+                        label: "Try Again",
+                        onClick: fetchNetworkInfo,
+                        variant: "outline"
+                    }}
+                />
             </div>
         )
     }
@@ -170,55 +169,32 @@ export function NetworkContent() {
             </div>
 
             {/* Network Status */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Node Version</CardTitle>
-                        <Cpu className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{networkInfo.version}</div>
-                        <p className="text-xs text-muted-foreground">{networkInfo.subversion}</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Connections</CardTitle>
-                        <Globe className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{networkInfo.connections}</div>
-                        <p className="text-xs text-muted-foreground">Active peer connections</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Sync Progress</CardTitle>
-                        <Zap className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            {(blockchainInfo.verificationprogress * 100).toFixed(2)}%
-                        </div>
-                        <p className="text-xs text-muted-foreground">Blockchain verification</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Chain Size</CardTitle>
-                        <HardDrive className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            {(blockchainInfo.size_on_disk / 1024 / 1024 / 1024).toFixed(1)} GB
-                        </div>
-                        <p className="text-xs text-muted-foreground">Blockchain size on disk</p>
-                    </CardContent>
-                </Card>
-            </div>
+            <StatsGrid>
+                <StatsCard
+                    icon={Cpu}
+                    title="Node Version"
+                    value={networkInfo.version}
+                    description={networkInfo.subversion}
+                />
+                <StatsCard
+                    icon={Globe}
+                    title="Connections"
+                    value={networkInfo.connections.toString()}
+                    description="Active peer connections"
+                />
+                <StatsCard
+                    icon={Zap}
+                    title="Sync Progress"
+                    value={`${(blockchainInfo.verificationprogress * 100).toFixed(2)}%`}
+                    description="Blockchain verification"
+                />
+                <StatsCard
+                    icon={HardDrive}
+                    title="Chain Size"
+                    value={`${(blockchainInfo.size_on_disk / 1024 / 1024 / 1024).toFixed(1)} GB`}
+                    description="Blockchain size on disk"
+                />
+            </StatsGrid>
 
             {/* Detailed Information */}
             <Tabs defaultValue="general" className="space-y-4">
@@ -232,10 +208,10 @@ export function NetworkContent() {
                 <TabsContent value="general" className="space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Info className="h-5 w-5" />
-                                Node Information
-                            </CardTitle>
+                            <SectionHeader
+                                icon={Info}
+                                title="Node Information"
+                            />
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -281,10 +257,10 @@ export function NetworkContent() {
                 <TabsContent value="blockchain" className="space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <HardDrive className="h-5 w-5" />
-                                Blockchain Information
-                            </CardTitle>
+                            <SectionHeader
+                                icon={HardDrive}
+                                title="Blockchain Information"
+                            />
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -352,10 +328,10 @@ export function NetworkContent() {
                 <TabsContent value="peers" className="space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Globe className="h-5 w-5" />
-                                Connected Peers
-                            </CardTitle>
+                            <SectionHeader
+                                icon={Globe}
+                                title="Connected Peers"
+                            />
                         </CardHeader>
                         <CardContent>
                             {peers.length > 0 ? (
@@ -407,13 +383,11 @@ export function NetworkContent() {
                                     )}
                                 </div>
                             ) : (
-                                <div className="text-center py-8">
-                                    <Globe className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                                    <h3 className="text-lg font-medium">No Peers Connected</h3>
-                                    <p className="text-muted-foreground">
-                                        The node is not currently connected to any peers.
-                                    </p>
-                                </div>
+                                <EmptyState
+                                    icon={Globe}
+                                    title="No Peers Connected"
+                                    description="The node is not currently connected to any peers"
+                                />
                             )}
                         </CardContent>
                     </Card>
@@ -422,10 +396,10 @@ export function NetworkContent() {
                 <TabsContent value="networks" className="space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Globe className="h-5 w-5" />
-                                Network Protocols
-                            </CardTitle>
+                            <SectionHeader
+                                icon={Globe}
+                                title="Network Protocols"
+                            />
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
