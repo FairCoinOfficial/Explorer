@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "next lint",
     "sync-db": "tsx scripts/sync-db.ts",
-    "check-db": "tsx scripts/check-db.ts"
+    "check-db": "tsx scripts/check-db.ts",
+    "heroku-postbuild": "npm run build"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
