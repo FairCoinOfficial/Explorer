@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ 
       blocks,
       height,
+      total: blocks.length,
       network 
     })
   } catch (error) {
