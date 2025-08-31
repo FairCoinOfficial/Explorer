@@ -21,6 +21,7 @@ export function AddressValidatorContent() {
     const [address, setAddress] = useState("")
     const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
     const [isValidating, setIsValidating] = useState(false)
+    const [networkValidation, setNetworkValidation] = useState<any>(null)
 
     // FairCoin address validation
     const validateAddress = (address: string): ValidationResult => {
@@ -57,7 +58,7 @@ export function AddressValidatorContent() {
                 isValid: false,
                 addressType: "unknown", 
                 network: "unknown",
-                error: "Invalid characters in address"
+                error: "Invalid characters in address (must be Base58)"
             }
         }
 
@@ -70,24 +71,24 @@ export function AddressValidatorContent() {
                 network: "mainnet"
             }
         } else if (cleanAddress.startsWith('F')) {
-            // FairCoin mainnet P2SH
+            // FairCoin mainnet P2SH (multisig)
             return {
                 isValid: true,
-                addressType: "P2SH (Pay to Script Hash)",
+                addressType: "P2SH (Pay to Script Hash - Multisig)",
                 network: "mainnet"
             }
         } else if (cleanAddress.startsWith('m') || cleanAddress.startsWith('n')) {
-            // FairCoin testnet
+            // FairCoin testnet P2PKH
             return {
                 isValid: true,
-                addressType: cleanAddress.startsWith('m') ? "P2PKH (Testnet)" : "P2PKH (Testnet)",
+                addressType: "P2PKH (Testnet)",
                 network: "testnet"
             }
         } else if (cleanAddress.startsWith('2')) {
-            // Testnet P2SH
+            // Testnet P2SH (multisig)
             return {
                 isValid: true,
-                addressType: "P2SH (Testnet)",
+                addressType: "P2SH (Testnet - Multisig)",
                 network: "testnet"
             }
         }
@@ -103,11 +104,25 @@ export function AddressValidatorContent() {
     const handleValidation = async () => {
         setIsValidating(true)
         
-        // Simulate network validation delay
-        await new Promise(resolve => setTimeout(resolve, 500))
+        // Local validation first
+        const localResult = validateAddress(address)
+        setValidationResult(localResult)
         
-        const result = validateAddress(address)
-        setValidationResult(result)
+        // Network validation if locally valid
+        if (localResult.isValid) {
+            try {
+                const response = await fetch(`/api/validate-address?address=${encodeURIComponent(address.trim())}&network=${currentNetwork}`)
+                if (response.ok) {
+                    const networkResult = await response.json()
+                    setNetworkValidation(networkResult)
+                }
+            } catch (error) {
+                console.error("Network validation failed:", error)
+            }
+        } else {
+            setNetworkValidation(null)
+        }
+        
         setIsValidating(false)
     }
 
@@ -126,12 +141,12 @@ export function AddressValidatorContent() {
         switch (type) {
             case "P2PKH (Pay to Public Key Hash)":
                 return "Standard single-signature address"
-            case "P2SH (Pay to Script Hash)":
-                return "Multi-signature or script address"
+            case "P2SH (Pay to Script Hash - Multisig)":
+                return "Multi-signature address (created with addmultisigaddress)"
             case "P2PKH (Testnet)":
                 return "Testnet single-signature address"
-            case "P2SH (Testnet)":
-                return "Testnet multi-signature or script address"
+            case "P2SH (Testnet - Multisig)":
+                return "Testnet multi-signature address"
             default:
                 return "Unknown address type"
         }
@@ -225,6 +240,40 @@ export function AddressValidatorContent() {
                                                             This address is for {validationResult.network} but you&apos;re currently on {currentNetwork}.
                                                         </p>
                                                     </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {networkValidation && (
+                                            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md">
+                                                <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                                                    Network Validation Results
+                                                </h5>
+                                                <div className="text-sm space-y-1">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-blue-700 dark:text-blue-300">Valid:</span>
+                                                        <span className={networkValidation.isvalid ? "text-green-600" : "text-red-600"}>
+                                                            {networkValidation.isvalid ? "Yes" : "No"}
+                                                        </span>
+                                                    </div>
+                                                    {networkValidation.ismine !== undefined && (
+                                                        <div className="flex justify-between">
+                                                            <span className="text-blue-700 dark:text-blue-300">Is Mine:</span>
+                                                            <span>{networkValidation.ismine ? "Yes" : "No"}</span>
+                                                        </div>
+                                                    )}
+                                                    {networkValidation.iswatchonly !== undefined && (
+                                                        <div className="flex justify-between">
+                                                            <span className="text-blue-700 dark:text-blue-300">Watch Only:</span>
+                                                            <span>{networkValidation.iswatchonly ? "Yes" : "No"}</span>
+                                                        </div>
+                                                    )}
+                                                    {networkValidation.isscript !== undefined && (
+                                                        <div className="flex justify-between">
+                                                            <span className="text-blue-700 dark:text-blue-300">Script Address:</span>
+                                                            <span>{networkValidation.isscript ? "Yes" : "No"}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}

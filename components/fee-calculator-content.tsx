@@ -51,13 +51,13 @@ export function FeeCalculatorContent() {
     const getPriorityDescription = (priority: string) => {
         switch (priority) {
             case "low":
-                return "~30-60 minutes confirmation"
+                return "~10-20 minutes confirmation (Standard fee)"
             case "standard":
-                return "~10-20 minutes confirmation"
+                return "~5-10 minutes confirmation (Recommended)"
             case "high":
-                return "~5-10 minutes confirmation"
+                return "~2-5 minutes confirmation (Higher fee)"
             case "priority":
-                return "~2-5 minutes confirmation"
+                return "InstantX enabled - Near instant confirmation"
             default:
                 return ""
         }
@@ -115,10 +115,10 @@ export function FeeCalculatorContent() {
                                 onChange={(e) => setPriority(e.target.value)}
                                 className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
                             >
-                                <option value="low">Low Priority</option>
-                                <option value="standard">Standard</option>
+                                <option value="low">Low Priority (Standard)</option>
+                                <option value="standard">Standard (Recommended)</option>
                                 <option value="high">High Priority</option>
-                                <option value="priority">Maximum Priority</option>
+                                <option value="priority">InstantX (FastSend)</option>
                             </select>
                             <p className="text-sm text-muted-foreground">
                                 {getPriorityDescription(priority)}
@@ -189,12 +189,12 @@ export function FeeCalculatorContent() {
                 <CardContent>
                     <div className="grid gap-4 md:grid-cols-2">
                         <div>
-                            <h4 className="font-semibold mb-2">FairCoin Transaction Fees</h4>
+                            <h4 className="font-semibold mb-2">FairCoin Transaction Features</h4>
                             <ul className="text-sm text-muted-foreground space-y-1">
-                                <li>• Minimum fee: 0.0001 FAIR</li>
-                                <li>• Fee per KB varies by priority</li>
-                                <li>• FastSend: Higher fee for instant confirmation</li>
-                                <li>• PrivateSend: Additional mixing fees apply</li>
+                                <li>• Standard transactions: 0.0001 FAIR minimum</li>
+                                <li>• InstantX (sendtoaddressix): Near instant confirmation</li>
+                                <li>• PrivateSend (obfuscation): Enhanced privacy</li>
+                                <li>• Multi-signature support available</li>
                             </ul>
                         </div>
                         <div>
