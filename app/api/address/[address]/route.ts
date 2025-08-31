@@ -5,12 +5,12 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { address: string } }
+  { params }: { params: Promise<{ address: string }> }
 ) {
   try {
     const searchParams = request.nextUrl.searchParams
     const network = (searchParams.get('network') || 'mainnet') as NetworkType
-    const { address } = params
+    const { address } = await params
     
     // Note: This is a simplified implementation
     // Real implementation would need to track UTXOs and transaction history

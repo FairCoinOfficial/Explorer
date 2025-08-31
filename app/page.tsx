@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HeroSearch } from '@/components/site/hero-search';
 import { NetworkStatus } from '@/components/network-status';
 import { Activity, Blocks, TrendingUp, Clock, Hash, Users, ArrowUpRight } from 'lucide-react';
+import Link from 'next/link';
 
 async function getLatestBlocks(limit = 10) {
   const height = await getCachedBlockCount();
@@ -119,14 +120,14 @@ export default async function Page() {
                     {blocks.slice(0, 5).map((block) => (
                       <TableRow key={block.hash}>
                         <TableCell className="font-medium">
-                          <a href={`/block/${block.height}`} className="hover:underline">
+                          <Link href={`/block/${block.height}`} className="hover:underline">
                             {block.height}
-                          </a>
+                          </Link>
                         </TableCell>
                         <TableCell className="font-mono text-sm">
-                          <a href={`/block/${block.hash}`} className="hover:underline">
+                          <Link href={`/block/${block.hash}`} className="hover:underline">
                             {block.hash.slice(0, 16)}...
-                          </a>
+                          </Link>
                         </TableCell>
                         <TableCell>{new Date(block.time * 1000).toLocaleTimeString()}</TableCell>
                         <TableCell className="text-right">{block.tx.length}</TableCell>
@@ -147,9 +148,9 @@ export default async function Page() {
                     <div key={txid} className="flex items-center">
                       <div className="ml-4 space-y-1">
                         <p className="text-sm font-medium leading-none">
-                          <a href={`/tx/${txid}`} className="hover:underline font-mono">
+                          <Link href={`/tx/${txid}`} className="hover:underline font-mono">
                             {txid.slice(0, 16)}...
-                          </a>
+                          </Link>
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Block #{latest?.height ?? '-'}
@@ -186,14 +187,14 @@ export default async function Page() {
                     {blocks.map((block) => (
                       <TableRow key={block.hash}>
                         <TableCell className="font-medium">
-                          <a href={`/block/${block.height}`} className="hover:underline">
+                          <Link href={`/block/${block.height}`} className="hover:underline">
                             {block.height}
-                          </a>
+                          </Link>
                         </TableCell>
                         <TableCell className="font-mono text-sm">
-                          <a href={`/block/${block.hash}`} className="hover:underline">
+                          <Link href={`/block/${block.hash}`} className="hover:underline">
                             {block.hash}
-                          </a>
+                          </Link>
                         </TableCell>
                         <TableCell>{new Date(block.time * 1000).toLocaleString()}</TableCell>
                         <TableCell className="text-right">{block.tx.length}</TableCell>
@@ -226,9 +227,9 @@ export default async function Page() {
                         </div>
                         <div>
                           <p className="font-medium font-mono">
-                            <a href={`/tx/${txid}`} className="hover:underline">
+                            <Link href={`/tx/${txid}`} className="hover:underline">
                               {txid}
-                            </a>
+                            </Link>
                           </p>
                           <p className="text-sm text-muted-foreground">
                             Block #{latest?.height ?? '-'}

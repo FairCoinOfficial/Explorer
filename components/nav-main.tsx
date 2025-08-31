@@ -37,18 +37,18 @@ export function NavMain() {
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild>
-                            <a href="/search">
+                            <Link href="/search">
                                 <Search />
                                 <span>Search</span>
-                            </a>
+                            </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild>
-                            <a href="/blocks">
+                            <Link href="/blocks">
                                 <Blocks />
                                 <span>Blocks</span>
-                            </a>
+                            </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
@@ -67,26 +67,26 @@ export function NavMain() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild>
-                            <a href="/stats">
+                            <Link href="/stats">
                                 <BarChart3 />
                                 <span>Statistics</span>
-                            </a>
+                            </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild>
-                            <a href="/masternodes">
+                            <Link href="/masternodes">
                                 <Shield />
                                 <span>Masternodes</span>
-                            </a>
+                            </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild>
-                            <a href="/mempool">
+                            <Link href="/mempool">
                                 <Clock />
                                 <span>Mempool</span>
-                            </a>
+                            </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>

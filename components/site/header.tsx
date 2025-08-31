@@ -22,7 +22,7 @@ export function SiteHeader() {
           </Button>
           <Separator className="mx-2 hidden lg:block w-px h-6" orientation="vertical" />
           <Button asChild size="sm">
-            <a href="https://fairco.in" target="_blank" rel="noreferrer">FairCoin</a>
+            <Link href="https://fairco.in" target="_blank" rel="noreferrer">FairCoin</Link>
           </Button>
         </nav>
 

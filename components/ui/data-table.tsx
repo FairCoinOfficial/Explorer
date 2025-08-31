@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from 'next/link'
 import {
     ColumnDef,
     ColumnFiltersState,
@@ -81,18 +82,18 @@ export const columns: ColumnDef<Block>[] = [
             )
         },
         cell: ({ row }) => (
-            <a href={`/block/${row.getValue("height")}`} className="hover:underline font-medium">
+            <Link href={`/block/${row.getValue("height")}`} className="hover:underline font-medium">
                 {row.getValue("height")}
-            </a>
+            </Link>
         ),
     },
     {
         accessorKey: "hash",
         header: "Hash",
         cell: ({ row }) => (
-            <a href={`/block/${row.getValue("hash")}`} className="hover:underline font-mono text-sm">
+            <Link href={`/tx/${row.getValue("hash")}`} className="hover:underline font-mono text-sm">
                 {(row.getValue("hash") as string).slice(0, 16)}...
-            </a>
+            </Link>
         ),
     },
     {
@@ -152,10 +153,10 @@ export const columns: ColumnDef<Block>[] = [
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem>
-                            <a href={`/block/${block.height}`}>View block details</a>
+                            <Link href={`/block/${block.height}`}>View block details</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>
-                            <a href={`/block/${block.hash}`}>View by hash</a>
+                            <Link href={`/block/${block.hash}`}>View by hash</Link>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

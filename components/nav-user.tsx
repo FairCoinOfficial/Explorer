@@ -1,5 +1,6 @@
 "use client"
 
+import Link from 'next/link'
 import {
     Calculator,
     Search,
@@ -63,22 +64,22 @@ export function NavUser() {
                         </DropdownMenuLabel>
                         <DropdownMenuGroup>
                             <DropdownMenuItem asChild>
-                                <a href="/search" className="cursor-pointer">
+                                <Link href="/search" className="cursor-pointer">
                                     <Search className="size-4" />
                                     Advanced Search
-                                </a>
+                                </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                                <a href="/tools/fee-calculator" className="cursor-pointer">
+                                <Link href="/tools/fee-calculator" className="cursor-pointer">
                                     <Calculator className="size-4" />
                                     Fee Calculator
-                                </a>
+                                </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                                <a href="/tools/address-validator" className="cursor-pointer">
+                                <Link href="/tools/address-validator" className="cursor-pointer">
                                     <Wallet className="size-4" />
                                     Address Validator
-                                </a>
+                                </Link>
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
@@ -87,26 +88,26 @@ export function NavUser() {
                         </DropdownMenuLabel>
                         <DropdownMenuGroup>
                             <DropdownMenuItem asChild>
-                                <a href="/stats" className="cursor-pointer">
+                                <Link href="/stats" className="cursor-pointer">
                                     <TrendingUp className="size-4" />
                                     Network Statistics
-                                </a>
+                                </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                                <a href="/network-status" className="cursor-pointer">
+                                <Link href="/network-status" className="cursor-pointer">
                                     <Activity className="size-4" />
                                     Network Status
-                                </a>
+                                </Link>
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
                             <DropdownMenuItem asChild>
-                                <a href="https://docs.fairco.in" target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                                <Link href="https://docs.fairco.in" target="_blank" rel="noopener noreferrer" className="cursor-pointer">
                                     <Info className="size-4" />
                                     API Documentation
                                     <ExternalLink className="ml-auto size-3" />
-                                </a>
+                                </Link>
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                     </DropdownMenuContent>

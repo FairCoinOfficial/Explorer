@@ -6,12 +6,12 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { hashOrHeight: string } }
+  { params }: { params: Promise<{ hashOrHeight: string }> }
 ) {
   try {
     const searchParams = request.nextUrl.searchParams
     const network = (searchParams.get('network') || 'mainnet') as NetworkType
-    const { hashOrHeight } = params
+    const { hashOrHeight } = await params
     
     // Use cached block retrieval
     const block = await blockCache.getBlock(hashOrHeight, network, true)

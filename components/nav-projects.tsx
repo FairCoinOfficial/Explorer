@@ -1,5 +1,4 @@
-"use client"
-
+import Link from 'next/link'
 import {
     ExternalLink,
     Globe,
@@ -33,38 +32,38 @@ export function NavProjects() {
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild>
-                        <a href="https://fairco.in" target="_blank" rel="noopener noreferrer">
+                        <Link href="https://fairco.in" target="_blank" rel="noopener noreferrer">
                             <Globe />
                             <span>Official Website</span>
                             <ExternalLink className="ml-auto h-3 w-3" />
-                        </a>
+                        </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild>
-                        <a href="https://github.com/FairCoinOfficial/" target="_blank" rel="noopener noreferrer">
+                        <Link href="https://github.com/FairCoinOfficial/" target="_blank" rel="noopener noreferrer">
                             <Github />
                             <span>GitHub</span>
                             <ExternalLink className="ml-auto h-3 w-3" />
-                        </a>
+                        </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild>
-                        <a href="https://t.me/FairCoinOfficial" target="_blank" rel="noopener noreferrer">
+                        <Link href="https://t.me/FairCoinOfficial" target="_blank" rel="noopener noreferrer">
                             <MessageCircle />
                             <span>Telegram</span>
                             <ExternalLink className="ml-auto h-3 w-3" />
-                        </a>
+                        </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild>
-                        <a href="https://docs.fairco.in" target="_blank" rel="noopener noreferrer">
+                        <Link href="https://docs.fairco.in" target="_blank" rel="noopener noreferrer">
                             <BookOpen />
                             <span>Documentation</span>
                             <ExternalLink className="ml-auto h-3 w-3" />
-                        </a>
+                        </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
             </SidebarMenu>

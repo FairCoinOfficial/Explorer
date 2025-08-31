@@ -60,8 +60,21 @@ export function StatsContent() {
 
             const response = await fetch(`/api/stats?network=${currentNetwork}`)
             if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.error || 'Failed to fetch network statistics')
+                let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+                try {
+                    const contentType = response.headers.get('content-type')
+                    if (contentType && contentType.includes('application/json')) {
+                        const errorData = await response.json()
+                        errorMessage = errorData.error || errorMessage
+                    } else {
+                        // If not JSON, read as text (likely HTML error page)
+                        const errorText = await response.text()
+                        errorMessage = `Server error: ${errorText.substring(0, 100)}...`
+                    }
+                } catch (parseError) {
+                    errorMessage = `Failed to parse error response: ${parseError}`
+                }
+                throw new Error(errorMessage)
             }
 
             const data = await response.json()

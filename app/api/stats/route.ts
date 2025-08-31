@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const network = (searchParams.get('network') || 'mainnet') as NetworkType
-    
+
     // Fetch various network statistics using cache
     const [
       blockHeight,
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       networkInfo,
       masternodeList
     ] = await Promise.all([
-      blockCache.getBlockCount(network),
+      blockCache.getBlockCount(network).catch(() => 0),
       blockCache.get<any>('getblockchaininfo', [], { network, ttl: 300 }).catch(() => null),
       blockCache.getMiningInfo(network).catch(() => null),
       blockCache.getMempoolInfo(network).catch(() => null),
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     ])
 
     // Get latest block info from cache
-    const latestBlock = await blockCache.getBlock(blockHeight, network, true)
+    const latestBlock = blockHeight > 0 ? await blockCache.getBlock(blockHeight, network, true).catch(() => null) : null
 
     // FairCoin-specific calculations
     const totalSupply = blockchainInfo?.moneysupply || 53193831 // Max supply if not available

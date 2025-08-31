@@ -6,12 +6,12 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { txid: string } }
+  { params }: { params: Promise<{ txid: string }> }
 ) {
   try {
     const searchParams = request.nextUrl.searchParams
     const network = (searchParams.get('network') || 'mainnet') as NetworkType
-    const { txid } = params
+    const { txid } = await params
     
     // Use cached transaction retrieval
     const transaction = await blockCache.getTransaction(txid, network, true)
