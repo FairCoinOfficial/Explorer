@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from 'next-intl'
 import { useNetwork } from '@/contexts/network-context'
 import { NetworkStatus } from '@/components/network-status'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -55,6 +56,8 @@ interface Transaction {
 }
 
 export function TransactionContent({ txid }: { txid: string }) {
+    const t = useTranslations('transactions')
+    const common = useTranslations('common')
     const { currentNetwork } = useNetwork()
     const router = useRouter()
     const [transaction, setTransaction] = useState<Transaction | null>(null)
@@ -104,7 +107,7 @@ export function TransactionContent({ txid }: { txid: string }) {
     if (loading) {
         return (
             <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-                <LoadingState message="Loading transaction details..." />
+                <LoadingState message={t('loadingTransaction')} />
             </div>
         )
     }
@@ -114,9 +117,9 @@ export function TransactionContent({ txid }: { txid: string }) {
             <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Transaction Not Found</h2>
+                        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{t('notFound')}</h2>
                         <p className="text-muted-foreground text-sm sm:text-base">
-                            The provided ID does not correspond to a valid transaction
+                            {t('invalidTransactionId')}
                         </p>
                     </div>
                     <div className="self-start">
@@ -150,7 +153,7 @@ export function TransactionContent({ txid }: { txid: string }) {
                             <Button variant="outline" asChild>
                                 <Link href="/">
                                     <Home className="h-4 w-4 mr-2" />
-                                    Back to Home
+                                    {common('backToHome')}
                                 </Link>
                             </Button>
                         </div>
@@ -165,10 +168,10 @@ export function TransactionContent({ txid }: { txid: string }) {
             <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <EmptyState
                     icon={AlertTriangle}
-                    title="Error Loading Transaction"
+                    title={t('errorLoading')}
                     description={error}
                     action={{
-                        label: "Try Again",
+                        label: common('tryAgain'),
                         onClick: fetchTransaction,
                         variant: "outline"
                     }}
@@ -181,7 +184,7 @@ export function TransactionContent({ txid }: { txid: string }) {
         return (
             <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <div className="flex items-center justify-center h-64">
-                    <p className="text-lg text-muted-foreground">Transaction not found</p>
+                    <p className="text-lg text-muted-foreground">{t('transactionNotFound')}</p>
                 </div>
             </div>
         )
@@ -196,9 +199,9 @@ export function TransactionContent({ txid }: { txid: string }) {
             {/* Header */}
             <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Transaction Details</h2>
+                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{t('details')}</h2>
                     <p className="text-sm text-muted-foreground sm:text-base">
-                        Transaction information on the FairCoin blockchain
+                        {t('transactionInfo')}
                     </p>
                 </div>
                 <div className="flex items-center space-x-2 self-start">
@@ -231,18 +234,18 @@ export function TransactionContent({ txid }: { txid: string }) {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div>
-                                <label className="text-sm font-medium text-muted-foreground">Status</label>
+                                <label className="text-sm font-medium text-muted-foreground">{common('status')}</label>
                                 <div className="mt-1">
                                     <Badge variant={transaction.confirmations ? "default" : "secondary"} className="flex items-center gap-1 w-fit">
                                         {transaction.confirmations ? (
                                             <>
                                                 <CheckCircle className="h-3 w-3" />
-                                                Confirmed
+                                                {common('confirmed')}
                                             </>
                                         ) : (
                                             <>
                                                 <XCircle className="h-3 w-3" />
-                                                Unconfirmed
+                                                {t('unconfirmed')}
                                             </>
                                         )}
                                     </Badge>
@@ -250,23 +253,23 @@ export function TransactionContent({ txid }: { txid: string }) {
                             </div>
 
                             <div>
-                                <label className="text-sm font-medium text-muted-foreground">Confirmations</label>
+                                <label className="text-sm font-medium text-muted-foreground">{common('confirmations')}</label>
                                 <p className="mt-1 font-mono text-sm sm:text-base">{transaction.confirmations?.toLocaleString() ?? '0'}</p>
                             </div>
 
                             <div>
-                                <label className="text-sm font-medium text-muted-foreground">Block Time</label>
+                                <label className="text-sm font-medium text-muted-foreground">{t('blockTime')}</label>
                                 <p className="mt-1 text-sm sm:text-base">
                                     {transaction.blocktime
                                         ? new Date(transaction.blocktime * 1000).toLocaleString()
-                                        : 'Pending'
+                                        : t('pending')
                                     }
                                 </p>
                             </div>
 
                             <div>
-                                <label className="text-sm font-medium text-muted-foreground">Size</label>
-                                <p className="mt-1 font-mono text-sm sm:text-base">{transaction.size} bytes</p>
+                                <label className="text-sm font-medium text-muted-foreground">{common('size')}</label>
+                                <p className="mt-1 font-mono text-sm sm:text-base">{transaction.size} {common('bytes')}</p>
                             </div>
 
                             <div>
@@ -302,26 +305,26 @@ export function TransactionContent({ txid }: { txid: string }) {
             <div className="space-y-4">
                 <SectionHeader
                     icon={Database}
-                    title="Transaction Summary"
+                    title={t('summary')}
                 />
                 <StatsGrid>
                     <StatsCard
                         icon={ArrowLeft}
-                        title="Total Input"
+                        title={t('totalInput')}
                         value={`${totalInput.toFixed(8)} FAIR`}
-                        description="Sum of all input values"
+                        description={t('sumOfInputs')}
                     />
                     <StatsCard
                         icon={ArrowRight}
-                        title="Total Output"
+                        title={t('totalOutput')}
                         value={`${totalOutput.toFixed(8)} FAIR`}
-                        description="Sum of all output values"
+                        description={t('sumOfOutputs')}
                     />
                     <StatsCard
                         icon={DollarSign}
-                        title="Transaction Fee"
+                        title={t('transactionFee')}
                         value={`${fee.toFixed(8)} FAIR`}
-                        description="Network fee paid"
+                        description={t('networkFeePaid')}
                     />
                 </StatsGrid>
             </div>

@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from 'next-intl'
 import { useNetwork } from '@/contexts/network-context'
 import { NetworkStatus } from '@/components/network-status'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -39,6 +40,8 @@ interface MasternodeStats {
 }
 
 export function MasternodesContent() {
+    const t = useTranslations('masternodes')
+    const common = useTranslations('common')
     const { currentNetwork } = useNetwork()
     const [masternodes, setMasternodes] = useState<Masternode[]>([])
     const [loading, setLoading] = useState(true)
@@ -88,7 +91,7 @@ export function MasternodesContent() {
     if (loading) {
         return (
             <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-                <LoadingState message="Loading masternode data..." />
+                <LoadingState message={t('loadingData')} />
             </div>
         )
     }
@@ -98,10 +101,10 @@ export function MasternodesContent() {
             <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <EmptyState
                     icon={AlertTriangle}
-                    title="Error Loading Masternodes"
+                    title={t('errorLoading')}
                     description={error}
                     action={{
-                        label: "Try Again",
+                        label: common('tryAgain'),
                         onClick: fetchMasternodes,
                         variant: "outline"
                     }}
@@ -118,9 +121,9 @@ export function MasternodesContent() {
             {/* Header */}
             <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Masternodes</h2>
+                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{t('title')}</h2>
                     <p className="text-sm text-muted-foreground sm:text-base">
-                        FairCoin network masternodes securing the blockchain
+                        {t('networkDescription')}
                     </p>
                 </div>
                 <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
@@ -128,46 +131,46 @@ export function MasternodesContent() {
                         <NetworkStatus />
                         <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
                             <Shield className="w-3 h-3 mr-1" />
-                            {enabledNodes.length} Active
+                            {enabledNodes.length} {t('active')}
                         </Badge>
                     </div>
                     <Button onClick={fetchMasternodes} variant="outline" size="sm" className="w-full sm:w-auto">
                         <RefreshCw className="h-4 w-4 mr-2" />
-                        Refresh
+                        {common('refresh')}
                     </Button>
                 </div>
             </div>
 
             {/* Stats Cards */}
             <div className="space-y-4">
-                <SectionHeader
+                                <SectionHeader
                     icon={Server}
-                    title="Network Statistics"
+                    title={t('networkStatistics')}
                 />
                 <StatsGrid>
                     <StatsCard
                         icon={Server}
-                        title="Total Masternodes"
+                        title={t('totalMasternodes')}
                         value={masternodes.length.toLocaleString()}
-                        description="Registered nodes"
+                        description={t('totalCount')}
                     />
                     <StatsCard
                         icon={Shield}
-                        title="Active Nodes"
+                        title={t('activeMasternodes')}
                         value={enabledNodes.length.toLocaleString()}
-                        description={`${masternodes.length > 0 ? ((enabledNodes.length / masternodes.length) * 100).toFixed(1) : 0}% active`}
+                        description={t('enabled')}
                     />
                     <StatsCard
-                        icon={Lock}
-                        title="Total Collateral"
+                        icon={Coins}
+                        title={t('totalCollateral')}
                         value={`${(masternodes.length * collateralPerNode).toLocaleString()} FAIR`}
-                        description="25K FAIR per node"
+                        description={t('collateralPerNode')}
                     />
                     <StatsCard
                         icon={TrendingUp}
-                        title="Network Security"
+                        title={t('networkSecurity')}
                         value={`${((masternodes.length * collateralPerNode) / 53193831 * 100).toFixed(1)}%`}
-                        description="Of total supply locked"
+                        description={t('ofTotalSupplyLocked')}
                     />
                 </StatsGrid>
             </div>
@@ -176,14 +179,14 @@ export function MasternodesContent() {
             <div className="space-y-4">
                 <SectionHeader
                     icon={Shield}
-                    title="Masternode Requirements"
+                    title={t('masternodeRequirements')}
                 />
                 <InfoGrid
                     items={[
-                        { label: "Collateral Required", value: "25,000 FAIR" },
-                        { label: "Reward Type", value: "Block rewards + transaction fees" },
-                        { label: "Network Benefits", value: "Masternodes enable Coin Mixing and FastSend features" },
-                        { label: "Governance", value: "Decentralized blockchain voting for network decisions" }
+                        { label: t('collateralRequired'), value: "25,000 FAIR" },
+                        { label: t('rewardType'), value: t('blockRewardsAndFees') },
+                        { label: t('networkBenefits'), value: t('enablesMixingAndFastSend') },
+                        { label: t('governance'), value: t('decentralizedVoting') }
                     ]}
                 />
             </div>
@@ -191,8 +194,8 @@ export function MasternodesContent() {
             {/* Masternodes Table */}
             <Tabs defaultValue="active" className="space-y-4">
                 <TabsList>
-                    <TabsTrigger value="active">Active Nodes ({enabledNodes.length})</TabsTrigger>
-                    <TabsTrigger value="all">All Nodes ({masternodes.length})</TabsTrigger>
+                    <TabsTrigger value="active">{t('activeNodes')} ({enabledNodes.length})</TabsTrigger>
+                    <TabsTrigger value="all">{t('allNodes')} ({masternodes.length})</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="active">
