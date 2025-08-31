@@ -81,20 +81,20 @@ export function BlocksContent() {
     return (
         <div className="flex-1 space-y-4 p-3 pt-4 md:p-6 lg:p-8">
             {/* Header */}
-            <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
-                <div>
+            <div className="flex flex-col space-y-3 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
+                <div className="flex-1">
                     <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Recent Blocks</h2>
-                    <p className="text-muted-foreground text-sm sm:text-base">
+                    <p className="text-muted-foreground text-sm sm:text-base mt-1">
                         Latest blocks on the FairCoin blockchain
                     </p>
                 </div>
-                <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
+                <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0 sm:flex-shrink-0">
                     <NetworkStatus />
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 self-start">
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 self-start sm:self-auto">
                         <Database className="w-3 h-3 mr-1" />
-                        Current: {height?.toLocaleString() ?? 'N/A'}
+                        <span className="hidden sm:inline">Current: </span>{height?.toLocaleString() ?? 'N/A'}
                     </Badge>
-                    <Button onClick={fetchBlocks} variant="outline" size="sm">
+                    <Button onClick={fetchBlocks} variant="outline" size="sm" className="self-start sm:self-auto">
                         <RefreshCw className="h-4 w-4" />
                     </Button>
                 </div>
@@ -108,7 +108,7 @@ export function BlocksContent() {
                         <Hash className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{height?.toLocaleString() ?? 'N/A'}</div>
+                        <div className="text-xl font-bold sm:text-2xl">{height?.toLocaleString() ?? 'N/A'}</div>
                         <p className="text-xs text-muted-foreground">Latest block number</p>
                     </CardContent>
                 </Card>
@@ -119,7 +119,7 @@ export function BlocksContent() {
                         <Database className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{blocks.length}</div>
+                        <div className="text-xl font-bold sm:text-2xl">{blocks.length}</div>
                         <p className="text-xs text-muted-foreground">Recent blocks</p>
                     </CardContent>
                 </Card>
@@ -130,7 +130,7 @@ export function BlocksContent() {
                         <Clock className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{currentNetwork}</div>
+                        <div className="text-xl font-bold">{currentNetwork}</div>
                         <p className="text-xs text-muted-foreground">Active network</p>
                     </CardContent>
                 </Card>
@@ -145,15 +145,56 @@ export function BlocksContent() {
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="overflow-x-auto">
+                    {/* Mobile Card View */}
+                    <div className="block sm:hidden space-y-4">
+                        {blocks.map((block) => (
+                            <div key={block.height} className="border rounded-lg p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="font-medium">
+                                        <Link
+                                            href={`/block/${block.height}`}
+                                            className="hover:underline"
+                                        >
+                                            Block #{block.height.toLocaleString()}
+                                        </Link>
+                                    </div>
+                                    <Badge variant="secondary" className="text-xs">
+                                        {block.nTx?.toLocaleString() ?? block.tx?.length?.toLocaleString() ?? 0} TX
+                                    </Badge>
+                                </div>
+                                <div className="space-y-2">
+                                    <div>
+                                        <span className="text-xs text-muted-foreground">Hash: </span>
+                                        <Link
+                                            href={`/block/${block.hash}`}
+                                            className="font-mono text-sm hover:underline"
+                                        >
+                                            {block.hash.substring(0, 12)}...
+                                        </Link>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-muted-foreground">
+                                            {new Date(block.time * 1000).toLocaleDateString()}
+                                        </span>
+                                        <span className="text-muted-foreground">
+                                            {block.size ? `${(block.size / 1024).toFixed(1)} KB` : 'N/A'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden sm:block overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Height</TableHead>
                                     <TableHead>Hash</TableHead>
                                     <TableHead>Time</TableHead>
-                                    <TableHead>Transactions</TableHead>
-                                    <TableHead>Size</TableHead>
+                                    <TableHead className="hidden sm:table-cell">Transactions</TableHead>
+                                    <TableHead className="hidden md:table-cell">Size</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -184,12 +225,12 @@ export function BlocksContent() {
                                                 {new Date(block.time * 1000).toLocaleDateString()}
                                             </span>
                                         </TableCell>
-                                        <TableCell>
-                                            <Badge variant="secondary">
+                                        <TableCell className="hidden sm:table-cell">
+                                            <Badge variant="secondary" className="text-xs">
                                                 {block.nTx?.toLocaleString() ?? block.tx?.length?.toLocaleString() ?? 0}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell className="text-sm">
+                                        <TableCell className="hidden md:table-cell text-sm">
                                             {block.size ? `${(block.size / 1024).toFixed(1)} KB` : 'N/A'}
                                         </TableCell>
                                     </TableRow>
@@ -201,8 +242,8 @@ export function BlocksContent() {
             </Card>
 
             {/* Navigation */}
-            <div className="flex justify-center">
-                <Button asChild variant="outline">
+            <div className="flex justify-center pt-4">
+                <Button asChild variant="outline" className="w-full sm:w-auto">
                     <Link href="/">
                         <Home className="h-4 w-4 mr-2" />
                         Back to Home
