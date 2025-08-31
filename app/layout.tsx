@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AppSidebar />
             <SidebarInset>
               <SiteHeader />
-              <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+              <div className="flex flex-1 flex-col gap-4 p-2 pt-0 md:p-3 lg:p-4">
                 {children}
               </div>
             </SidebarInset>

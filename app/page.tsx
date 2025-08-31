@@ -23,7 +23,7 @@ export default async function Page() {
   const txFeed = latest?.tx?.slice(0, 12) ?? [];
 
   return (
-    <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+    <div className="flex-1 space-y-4 p-3 pt-4 md:p-6 lg:p-8">
       {/* Header */}
       <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">FairCoin Explorer</h2>

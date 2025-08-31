@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 export default function TxIndex() {
   return (
-    <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+    <div className="flex-1 space-y-4 p-3 pt-4 md:p-6 lg:p-8">
       {/* Header */}
       <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
         <div>

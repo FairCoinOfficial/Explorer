@@ -102,7 +102,7 @@ export function TransactionContent({ txid }: { txid: string }) {
 
     if (loading) {
         return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex-1 space-y-4 p-3 pt-4 md:p-6 lg:p-8">
                 <div className="flex items-center justify-center h-64">
                     <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
@@ -112,7 +112,7 @@ export function TransactionContent({ txid }: { txid: string }) {
 
     if (isBlockHashError) {
         return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex-1 space-y-4 p-3 pt-4 md:p-6 lg:p-8">
                 <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Transaction Not Found</h2>
@@ -193,7 +193,7 @@ export function TransactionContent({ txid }: { txid: string }) {
     const fee = totalInput - totalOutput
 
     return (
-        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+        <div className="flex-1 space-y-4 p-3 pt-4 md:p-6 lg:p-8">
             {/* Header */}
             <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
                 <div>
