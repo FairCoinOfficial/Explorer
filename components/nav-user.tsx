@@ -9,6 +9,7 @@ import {
     ExternalLink,
     Wallet,
     Activity,
+    Wrench,
 } from "lucide-react"
 import { useNetwork } from "@/contexts/network-context"
 
@@ -42,7 +43,7 @@ export function NavUser() {
                             className="data-[state=open]:bg-primary data-[state=open]:text-primary-foreground"
                         >
                             <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                                <Calculator className="size-4" />
+                                <Wrench className="size-4" />
                             </div>
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-semibold">Explorer Tools</span>
@@ -67,13 +68,17 @@ export function NavUser() {
                                     Advanced Search
                                 </a>
                             </DropdownMenuItem>
-                            <DropdownMenuItem disabled>
-                                <Calculator className="size-4" />
-                                Fee Calculator
+                            <DropdownMenuItem asChild>
+                                <a href="/tools/fee-calculator" className="cursor-pointer">
+                                    <Calculator className="size-4" />
+                                    Fee Calculator
+                                </a>
                             </DropdownMenuItem>
-                            <DropdownMenuItem disabled>
-                                <Wallet className="size-4" />
-                                Address Validator
+                            <DropdownMenuItem asChild>
+                                <a href="/tools/address-validator" className="cursor-pointer">
+                                    <Wallet className="size-4" />
+                                    Address Validator
+                                </a>
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
@@ -87,9 +92,11 @@ export function NavUser() {
                                     Network Statistics
                                 </a>
                             </DropdownMenuItem>
-                            <DropdownMenuItem disabled>
-                                <Activity className="size-4" />
-                                Network Status
+                            <DropdownMenuItem asChild>
+                                <a href="/network-status" className="cursor-pointer">
+                                    <Activity className="size-4" />
+                                    Network Status
+                                </a>
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
