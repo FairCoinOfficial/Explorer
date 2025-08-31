@@ -1,19 +1,17 @@
 "use client"
 
 import {
-    BadgeCheck,
-    Bell,
-    ChevronsUpDown,
-    CreditCard,
-    LogOut,
-    Sparkles,
+    Calculator,
+    Search,
+    TrendingUp,
+    Settings,
+    Info,
+    ExternalLink,
+    Wallet,
+    Activity,
 } from "lucide-react"
+import { useNetwork } from "@/contexts/network-context"
 
-import {
-    Avatar,
-    AvatarFallback,
-    AvatarImage,
-} from "@/components/ui/avatar"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -32,6 +30,7 @@ import {
 
 export function NavUser() {
     const { isMobile } = useSidebar()
+    const { currentNetwork } = useNetwork()
 
     return (
         <SidebarMenu>
@@ -42,15 +41,14 @@ export function NavUser() {
                             size="lg"
                             className="data-[state=open]:bg-primary data-[state=open]:text-primary-foreground"
                         >
-                            <Avatar className="h-8 w-8 rounded-lg">
-                                <AvatarImage src="/avatars/01.png" alt="FairCoin Explorer" />
-                                <AvatarFallback className="rounded-lg">FC</AvatarFallback>
-                            </Avatar>
-                            <div className="grid flex-1 text-left text-sm leading-tight">
-                                <span className="truncate font-semibold">FairCoin Explorer</span>
-                                <span className="truncate text-xs">explorer@fairco.in</span>
+                            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                <Calculator className="size-4" />
                             </div>
-                            <ChevronsUpDown className="ml-auto size-4" />
+                            <div className="grid flex-1 text-left text-sm leading-tight">
+                                <span className="truncate font-semibold">Explorer Tools</span>
+                                <span className="truncate text-xs">Utilities & Settings</span>
+                            </div>
+                            <Settings className="ml-auto size-4" />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
@@ -59,45 +57,51 @@ export function NavUser() {
                         align="end"
                         sideOffset={4}
                     >
-                        <DropdownMenuLabel className="p-0 font-normal">
-                            <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                                <Avatar className="h-8 w-8 rounded-lg">
-                                    <AvatarImage src="/avatars/01.png" alt="FairCoin Explorer" />
-                                    <AvatarFallback className="rounded-lg">FC</AvatarFallback>
-                                </Avatar>
-                                <div className="grid flex-1 text-left text-sm leading-tight">
-                                    <span className="truncate font-semibold">FairCoin Explorer</span>
-                                    <span className="truncate text-xs">explorer@fairco.in</span>
-                                </div>
-                            </div>
+                        <DropdownMenuLabel className="text-xs text-muted-foreground">
+                            Quick Tools
                         </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
                         <DropdownMenuGroup>
-                            <DropdownMenuItem>
-                                <Sparkles />
-                                Upgrade to Pro
+                            <DropdownMenuItem asChild>
+                                <a href="/search" className="cursor-pointer">
+                                    <Search className="size-4" />
+                                    Advanced Search
+                                </a>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem disabled>
+                                <Calculator className="size-4" />
+                                Fee Calculator
+                            </DropdownMenuItem>
+                            <DropdownMenuItem disabled>
+                                <Wallet className="size-4" />
+                                Address Validator
+                            </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel className="text-xs text-muted-foreground">
+                            Network Info
+                        </DropdownMenuLabel>
+                        <DropdownMenuGroup>
+                            <DropdownMenuItem asChild>
+                                <a href="/stats" className="cursor-pointer">
+                                    <TrendingUp className="size-4" />
+                                    Network Statistics
+                                </a>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem disabled>
+                                <Activity className="size-4" />
+                                Network Status
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
-                            <DropdownMenuItem>
-                                <BadgeCheck />
-                                Account
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <CreditCard />
-                                Billing
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <Bell />
-                                Notifications
+                            <DropdownMenuItem asChild>
+                                <a href="https://docs.fairco.in" target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                                    <Info className="size-4" />
+                                    API Documentation
+                                    <ExternalLink className="ml-auto size-3" />
+                                </a>
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                            <LogOut />
-                            Log out
-                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>
