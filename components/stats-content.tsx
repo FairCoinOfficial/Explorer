@@ -137,21 +137,24 @@ export function StatsContent() {
     return (
         <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
             {/* Header */}
-            <div className="flex items-center justify-between space-y-2">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Network Statistics</h2>
-                    <p className="text-muted-foreground">
+            <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+                <div className="space-y-1">
+                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Network Statistics</h2>
+                    <p className="text-sm text-muted-foreground sm:text-base">
                         FairCoin blockchain network metrics and performance
                     </p>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <NetworkStatus />
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                        <Activity className="w-3 h-3 mr-1" />
-                        {stats.phase || 'PoS'} Phase
-                    </Badge>
-                    <Button onClick={fetchStats} variant="outline" size="sm">
-                        <RefreshCw className="h-4 w-4" />
+                <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
+                    <div className="flex items-center space-x-2">
+                        <NetworkStatus />
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
+                            <Activity className="w-3 h-3 mr-1" />
+                            {stats.phase || 'PoS'} Phase
+                        </Badge>
+                    </div>
+                    <Button onClick={fetchStats} variant="outline" size="sm" className="w-full sm:w-auto">
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Refresh
                     </Button>
                 </div>
             </div>
@@ -208,15 +211,17 @@ export function StatsContent() {
 
             {/* Detailed Statistics */}
             <Tabs defaultValue="network" className="space-y-4">
-                <TabsList>
-                    <TabsTrigger value="network">Network</TabsTrigger>
-                    <TabsTrigger value="supply">Supply & Economics</TabsTrigger>
-                    <TabsTrigger value="staking">Staking</TabsTrigger>
-                    <TabsTrigger value="transactions">Transactions</TabsTrigger>
-                </TabsList>
+                <div className="overflow-x-auto">
+                    <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 lg:w-auto lg:inline-grid">
+                        <TabsTrigger value="network" className="text-xs sm:text-sm">Network</TabsTrigger>
+                        <TabsTrigger value="supply" className="text-xs sm:text-sm">Supply</TabsTrigger>
+                        <TabsTrigger value="staking" className="text-xs sm:text-sm">Staking</TabsTrigger>
+                        <TabsTrigger value="transactions" className="text-xs sm:text-sm">Transactions</TabsTrigger>
+                    </TabsList>
+                </div>
 
                 <TabsContent value="network" className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-4 lg:grid-cols-2">
                         <Card>
                             <CardHeader>
                                 <SectionHeader
@@ -225,10 +230,10 @@ export function StatsContent() {
                                 />
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">Network Weight</label>
-                                        <p className="text-lg font-semibold">{stats.networkWeight?.toLocaleString() || 'N/A'}</p>
+                                        <p className="text-lg font-semibold break-all">{stats.networkWeight?.toLocaleString() || 'N/A'}</p>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">Connections</label>
@@ -236,11 +241,11 @@ export function StatsContent() {
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">Difficulty</label>
-                                        <p className="text-lg font-semibold">{stats.difficulty.toFixed(6)}</p>
+                                        <p className="text-lg font-semibold break-all">{stats.difficulty.toFixed(6)}</p>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">Hash Rate</label>
-                                        <p className="text-lg font-semibold">{(stats.hashrate / 1000000).toFixed(2)} MH/s</p>
+                                        <p className="text-lg font-semibold break-all">{(stats.hashrate / 1000000).toFixed(2)} MH/s</p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -254,11 +259,11 @@ export function StatsContent() {
                                 />
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">Height</label>
                                         <p className="text-lg font-semibold">
-                                            <Link href={`/block/${stats.lastBlock.height}`} className="hover:underline">
+                                            <Link href={`/block/${stats.lastBlock.height}`} className="hover:underline break-all">
                                                 #{stats.lastBlock.height.toLocaleString()}
                                             </Link>
                                         </p>
@@ -273,7 +278,7 @@ export function StatsContent() {
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">Time</label>
-                                        <p className="text-sm">{new Date(stats.lastBlock.time * 1000).toLocaleString()}</p>
+                                        <p className="text-sm break-words">{new Date(stats.lastBlock.time * 1000).toLocaleString()}</p>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">Size</label>
@@ -293,79 +298,77 @@ export function StatsContent() {
                                 title="Supply & Economics"
                             />
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div>
-                                    <div className="flex justify-between text-sm mb-2">
-                                        <span>Current Supply</span>
-                                        <span>{stats.totalSupply.toLocaleString()} FAIR</span>
-                                    </div>
-                                    <div className="w-full bg-muted rounded-full h-2">
-                                        <div
-                                            className="bg-primary h-2 rounded-full"
-                                            style={{ width: `${supplyProgress}%` }}
-                                        ></div>
-                                    </div>
-                                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                                        <span>0 FAIR</span>
-                                        <span>{maxSupply.toLocaleString()} FAIR (Max)</span>
-                                    </div>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-4">
+                                <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
+                                    <span className="text-sm font-medium">Current Supply</span>
+                                    <span className="text-sm font-semibold">{stats.totalSupply.toLocaleString()} FAIR</span>
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-4 text-center">
-                                    <div className="border rounded-lg p-3">
-                                        <div className="text-lg font-bold">90%</div>
-                                        <div className="text-xs text-muted-foreground">Premine</div>
-                                    </div>
-                                    <div className="border rounded-lg p-3">
-                                        <div className="text-lg font-bold">10 FAIR</div>
-                                        <div className="text-xs text-muted-foreground">Per Block</div>
-                                    </div>
+                                <div className="w-full bg-muted rounded-full h-3">
+                                    <div
+                                        className="bg-primary h-3 rounded-full transition-all duration-300"
+                                        style={{ width: `${supplyProgress}%` }}
+                                    ></div>
+                                </div>
+                                <div className="flex flex-col space-y-1 sm:flex-row sm:justify-between sm:space-y-0">
+                                    <span className="text-xs text-muted-foreground">0 FAIR</span>
+                                    <span className="text-xs text-muted-foreground">{maxSupply.toLocaleString()} FAIR (Max)</span>
                                 </div>
                             </div>
 
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-3">
-                                    <div>
-                                        <div className="flex justify-between text-sm mb-1">
-                                            <span>Proof of Work Phase</span>
-                                            <span>Blocks 1-25,000</span>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="border rounded-lg p-4 text-center">
+                                    <div className="text-xl font-bold">90%</div>
+                                    <div className="text-xs text-muted-foreground">Premine</div>
+                                </div>
+                                <div className="border rounded-lg p-4 text-center">
+                                    <div className="text-lg font-bold">10 FAIR</div>
+                                    <div className="text-xs text-muted-foreground">Per Block</div>
+                                </div>
+                            </div>
+
+                            <div className="grid gap-6 lg:grid-cols-2">
+                                <div className="space-y-4">
+                                    <div className="border rounded-lg p-4">
+                                        <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
+                                            <span className="font-medium">Proof of Work Phase</span>
+                                            <span className="text-sm text-muted-foreground">Blocks 1-25,000</span>
                                         </div>
-                                        <div className="text-xs text-muted-foreground">
+                                        <div className="text-xs text-muted-foreground mt-2">
                                             Initial mining phase with Quark algorithm
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <div className="flex justify-between text-sm mb-1">
-                                            <span>Proof of Stake Phase</span>
-                                            <span>Blocks 25,001+</span>
+                                    <div className="border rounded-lg p-4">
+                                        <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
+                                            <span className="font-medium">Proof of Stake Phase</span>
+                                            <span className="text-sm text-muted-foreground">Blocks 25,001+</span>
                                         </div>
-                                        <div className="text-xs text-muted-foreground">
+                                        <div className="text-xs text-muted-foreground mt-2">
                                             Current phase: Energy-efficient staking
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="space-y-3">
-                                    <div className="text-center">
-                                        <Badge variant={stats.phase === 'PoS' ? 'default' : 'secondary'}>
+                                <div className="space-y-4">
+                                    <div className="flex justify-center">
+                                        <Badge variant={stats.phase === 'PoS' ? 'default' : 'secondary'} className="text-sm px-3 py-1">
                                             Current: {stats.phase || 'PoS'}
                                         </Badge>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between">
+                                    <div className="border rounded-lg p-4 space-y-3">
+                                        <div className="flex justify-between items-center">
                                             <span className="text-sm">Block Reward</span>
-                                            <span className="text-sm font-mono">10 FAIR</span>
+                                            <span className="text-sm font-mono font-semibold">10 FAIR</span>
                                         </div>
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                             <span className="text-sm">Block Time</span>
-                                            <span className="text-sm font-mono">120 seconds</span>
+                                            <span className="text-sm font-mono font-semibold">120 seconds</span>
                                         </div>
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                             <span className="text-sm">Daily Blocks</span>
-                                            <span className="text-sm font-mono">720</span>
+                                            <span className="text-sm font-mono font-semibold">720</span>
                                         </div>
                                     </div>
                                 </div>
@@ -375,7 +378,7 @@ export function StatsContent() {
                 </TabsContent>
 
                 <TabsContent value="staking" className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-4 lg:grid-cols-2">
                         <Card>
                             <CardHeader>
                                 <SectionHeader
@@ -383,13 +386,13 @@ export function StatsContent() {
                                     title="Masternode Staking"
                                 />
                             </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div className="border rounded-lg p-3">
-                                    <div className="flex items-center justify-between mb-2">
+                            <CardContent className="space-y-4">
+                                <div className="border rounded-lg p-4">
+                                    <div className="flex items-center justify-between mb-3">
                                         <span className="font-medium">Requirements</span>
                                         <Badge variant="default">Premium</Badge>
                                     </div>
-                                    <div className="text-sm text-muted-foreground space-y-1">
+                                    <div className="text-sm text-muted-foreground space-y-2">
                                         <p>• 25,000 FAIR collateral required</p>
                                         <p>• Provides network services (FastSend, Mixing)</p>
                                         <p>• Higher rewards than wallet staking</p>
@@ -397,8 +400,8 @@ export function StatsContent() {
                                     </div>
                                 </div>
 
-                                <div className="text-center">
-                                    <div className="text-2xl font-bold">{stats.masternodeCount || 'N/A'}</div>
+                                <div className="text-center p-4 border rounded-lg">
+                                    <div className="text-3xl font-bold mb-1">{stats.masternodeCount || 'N/A'}</div>
                                     <div className="text-sm text-muted-foreground">Active Masternodes</div>
                                 </div>
                             </CardContent>
@@ -411,13 +414,13 @@ export function StatsContent() {
                                     title="Wallet Staking"
                                 />
                             </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div className="border rounded-lg p-3">
-                                    <div className="flex items-center justify-between mb-2">
+                            <CardContent className="space-y-4">
+                                <div className="border rounded-lg p-4">
+                                    <div className="flex items-center justify-between mb-3">
                                         <span className="font-medium">Requirements</span>
                                         <Badge variant="secondary">Accessible</Badge>
                                     </div>
-                                    <div className="text-sm text-muted-foreground space-y-1">
+                                    <div className="text-sm text-muted-foreground space-y-2">
                                         <p>• Minimum 1 FAIR required</p>
                                         <p>• Stake directly from wallet</p>
                                         <p>• Lower barriers to entry</p>
@@ -425,8 +428,8 @@ export function StatsContent() {
                                     </div>
                                 </div>
 
-                                <div className="text-center">
-                                    <div className="text-2xl font-bold">
+                                <div className="text-center p-4 border rounded-lg">
+                                    <div className="text-3xl font-bold mb-1">
                                         {stats.stakingRewards?.toFixed(2) || 'N/A'}%
                                     </div>
                                     <div className="text-sm text-muted-foreground">
@@ -439,7 +442,7 @@ export function StatsContent() {
                 </TabsContent>
 
                 <TabsContent value="transactions" className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-4 lg:grid-cols-2">
                         <Card>
                             <CardHeader>
                                 <SectionHeader
@@ -448,10 +451,10 @@ export function StatsContent() {
                                 />
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">Total Transactions</label>
-                                        <p className="text-2xl font-bold">{stats.totalTransactions.toLocaleString()}</p>
+                                        <p className="text-2xl font-bold break-all">{stats.totalTransactions.toLocaleString()}</p>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">Avg TX per Block</label>
@@ -459,11 +462,11 @@ export function StatsContent() {
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">Mempool</label>
-                                        <p className="text-lg font-semibold">{stats.memPoolSize.toLocaleString()}</p>
+                                        <p className="text-lg font-semibold break-all">{stats.memPoolSize.toLocaleString()}</p>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">TPS (24h avg)</label>
-                                        <p className="text-lg font-semibold">
+                                        <p className="text-lg font-semibold break-all">
                                             {(stats.avgTransactionsPerBlock / (stats.avgBlockTime / 60)).toFixed(2)}
                                         </p>
                                     </div>
@@ -473,25 +476,25 @@ export function StatsContent() {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Quick Actions</CardTitle>
+                                <CardTitle className="text-lg">Quick Actions</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                <Button asChild variant="outline" className="w-full justify-start">
-                                    <Link href="/blocks">
-                                        <Database className="h-4 w-4 mr-2" />
-                                        View Recent Blocks
+                                <Button asChild variant="outline" className="w-full justify-start h-auto p-3">
+                                    <Link href="/blocks" className="flex items-center">
+                                        <Database className="h-5 w-5 mr-3 flex-shrink-0" />
+                                        <span className="text-left">View Recent Blocks</span>
                                     </Link>
                                 </Button>
-                                <Button asChild variant="outline" className="w-full justify-start">
-                                    <Link href="/masternodes">
-                                        <Shield className="h-4 w-4 mr-2" />
-                                        View Masternodes
+                                <Button asChild variant="outline" className="w-full justify-start h-auto p-3">
+                                    <Link href="/masternodes" className="flex items-center">
+                                        <Shield className="h-5 w-5 mr-3 flex-shrink-0" />
+                                        <span className="text-left">View Masternodes</span>
                                     </Link>
                                 </Button>
-                                <Button asChild variant="outline" className="w-full justify-start">
-                                    <Link href="/mempool">
-                                        <Clock className="h-4 w-4 mr-2" />
-                                        View Mempool
+                                <Button asChild variant="outline" className="w-full justify-start h-auto p-3">
+                                    <Link href="/mempool" className="flex items-center">
+                                        <Clock className="h-5 w-5 mr-3 flex-shrink-0" />
+                                        <span className="text-left">View Mempool</span>
                                     </Link>
                                 </Button>
                             </CardContent>
@@ -501,9 +504,9 @@ export function StatsContent() {
             </Tabs>
 
             {/* Navigation */}
-            <div className="flex justify-center">
-                <Button asChild variant="outline">
-                    <Link href="/">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
+                <Button asChild variant="outline" className="w-full sm:w-auto">
+                    <Link href="/" className="flex items-center justify-center">
                         <Home className="h-4 w-4 mr-2" />
                         Back to Home
                     </Link>

@@ -12,11 +12,12 @@ export const metadata: Metadata = {
   title: 'FairCoin Explorer',
   description: 'Fast, friendly FairCoin blockchain explorer',
   metadataBase: new URL('http://localhost:3000'),
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
