@@ -7,6 +7,7 @@ export { InfoGrid } from './info-grid'
 export { SimpleDataTable } from './simple-data-table'
 export { LoadingState } from './loading-state'
 export { VisuallyHidden } from './visually-hidden'
+export { BlocksTable } from './blocks-table'
 
 // Re-export existing UI components for convenience
 export * from './button'

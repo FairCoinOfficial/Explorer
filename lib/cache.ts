@@ -57,11 +57,8 @@ export class BlockchainCache {
       const cached = await collection.findOne({ _id: cacheKey } as any)
       
       if (cached && !this.isExpired(cached as any)) {
-        console.log(`Cache hit for ${method}`)
         return cached.data
       }
-
-      console.log(`Cache miss for ${method}, fetching from RPC`)
       
       // Fetch from RPC
       const data = await rpcWithNetwork<T>(method, params, options.network)
@@ -115,7 +112,10 @@ export class BlockchainCache {
       }
     } as any)
     
-    console.log(`Cleared ${result.deletedCount} expired cache entries`)
+    // Only log if there were expired entries to clean up
+    if (result.deletedCount > 0) {
+      console.log(`Cleared ${result.deletedCount} expired cache entries`)
+    }
   }
 }
 

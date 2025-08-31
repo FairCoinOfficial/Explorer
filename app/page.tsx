@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HeroSearch } from '@/components/site/hero-search';
 import { NetworkStatus } from '@/components/network-status';
+import { BlocksTable } from '@/components/ui/blocks-table';
 import { Activity, Blocks, TrendingUp, Clock, Hash, Users, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -151,97 +152,7 @@ export default async function Page() {
                 <h3 className="text-lg sm:text-xl font-semibold">Recent Blocks</h3>
               </div>
 
-              {/* Mobile Card View */}
-              <div className="block sm:hidden space-y-3">
-                {blocks.slice(0, 5).map((block) => (
-                  <Card key={block.hash} className="hover:shadow-md transition-shadow border-l-4 border-l-primary/20">
-                    <CardContent className="p-3">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <Blocks className="h-4 w-4 text-primary flex-shrink-0" />
-                          <Link
-                            href={`/block/${block.height}`}
-                            className="font-semibold text-base hover:underline text-primary truncate"
-                          >
-                            #{block.height}
-                          </Link>
-                        </div>
-                        <Badge variant="secondary" className="text-xs font-medium bg-primary/10 text-primary border-primary/20 ml-2 flex-shrink-0">
-                          {block.tx.length} TX
-                        </Badge>
-                      </div>
-
-                      <div className="space-y-1.5 mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground font-medium flex-shrink-0">Hash:</span>
-                          <Link
-                            href={`/block/${block.hash}`}
-                            className="font-mono text-sm hover:underline text-primary truncate"
-                          >
-                            {block.hash.slice(0, 16)}...
-                          </Link>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3 flex-shrink-0" />
-                        <span>{new Date(block.time * 1000).toLocaleDateString()}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {/* Desktop Table View */}
-              <div className="hidden sm:block">
-                <Card className="overflow-hidden shadow-sm">
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-muted/50">
-                            <TableHead className="w-[100px] font-semibold">Height</TableHead>
-                            <TableHead className="min-w-[180px] font-semibold">Hash</TableHead>
-                            <TableHead className="w-[140px] font-semibold">Time</TableHead>
-                            <TableHead className="w-[100px] text-right font-semibold">TX Count</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {blocks.slice(0, 5).map((block, index) => (
-                            <TableRow key={block.hash} className={`hover:bg-muted/50 transition-colors ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}>
-                              <TableCell className="font-medium">
-                                <Link href={`/block/${block.height}`} className="hover:underline text-primary font-semibold transition-colors">
-                                  {block.height}
-                                </Link>
-                              </TableCell>
-                              <TableCell className="font-mono text-sm">
-                                <Link href={`/block/${block.hash}`} className="hover:underline text-primary transition-colors">
-                                  <span className="hidden lg:inline">{block.hash.slice(0, 24)}...</span>
-                                  <span className="hidden md:inline lg:hidden">{block.hash.slice(0, 16)}...</span>
-                                  <span className="md:hidden">{block.hash.slice(0, 12)}...</span>
-                                </Link>
-                              </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
-                                <span className="hidden md:inline">
-                                  {new Date(block.time * 1000).toLocaleString()}
-                                </span>
-                                <span className="md:hidden">
-                                  {new Date(block.time * 1000).toLocaleDateString()}
-                                </span>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Badge variant="secondary" className="text-xs font-medium bg-primary/10 text-primary border-primary/20">
-                                  {block.tx.length}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <BlocksTable blocks={blocks.slice(0, 5)} currentPage={1} totalPages={1} loading={false} />
             </div>
 
             {/* Latest Transactions */}
@@ -292,97 +203,7 @@ export default async function Page() {
               <h3 className="text-lg sm:text-xl font-semibold">All Recent Blocks</h3>
             </div>
 
-            {/* Mobile Card View */}
-            <div className="block sm:hidden space-y-3">
-              {blocks.map((block) => (
-                <Card key={block.hash} className="hover:shadow-md transition-shadow border-l-4 border-l-primary/20">
-                  <CardContent className="p-3">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <Blocks className="h-4 w-4 text-primary flex-shrink-0" />
-                        <Link
-                          href={`/block/${block.height}`}
-                          className="font-semibold text-base hover:underline text-primary truncate"
-                        >
-                          #{block.height}
-                        </Link>
-                      </div>
-                      <Badge variant="secondary" className="text-xs font-medium bg-primary/10 text-primary border-primary/20 ml-2 flex-shrink-0">
-                        {block.tx.length} TX
-                      </Badge>
-                    </div>
-
-                    <div className="space-y-1.5 mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground font-medium flex-shrink-0">Hash:</span>
-                        <Link
-                          href={`/block/${block.hash}`}
-                          className="font-mono text-sm hover:underline text-primary truncate"
-                        >
-                          {block.hash.slice(0, 16)}...
-                        </Link>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3 flex-shrink-0" />
-                      <span>{new Date(block.time * 1000).toLocaleDateString()}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Desktop Table View */}
-            <div className="hidden sm:block">
-              <Card className="overflow-hidden shadow-sm">
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/50">
-                          <TableHead className="w-[100px] font-semibold">Height</TableHead>
-                          <TableHead className="min-w-[200px] font-semibold">Hash</TableHead>
-                          <TableHead className="w-[160px] font-semibold">Time</TableHead>
-                          <TableHead className="w-[120px] text-right font-semibold">TX Count</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {blocks.map((block, index) => (
-                          <TableRow key={block.hash} className={`hover:bg-muted/50 transition-colors ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}>
-                            <TableCell className="font-medium">
-                              <Link href={`/block/${block.height}`} className="hover:underline text-primary font-semibold transition-colors">
-                                {block.height}
-                              </Link>
-                            </TableCell>
-                            <TableCell className="font-mono text-sm">
-                              <Link href={`/block/${block.hash}`} className="hover:underline text-primary transition-colors">
-                                <span className="hidden lg:inline">{block.hash.slice(0, 28)}...</span>
-                                <span className="hidden md:inline lg:hidden">{block.hash.slice(0, 20)}...</span>
-                                <span className="md:hidden">{block.hash.slice(0, 12)}...</span>
-                              </Link>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              <span className="hidden md:inline">
-                                {new Date(block.time * 1000).toLocaleString()}
-                              </span>
-                              <span className="md:hidden">
-                                {new Date(block.time * 1000).toLocaleDateString()}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Badge variant="secondary" className="text-xs font-medium bg-primary/10 text-primary border-primary/20">
-                                {block.tx.length}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <BlocksTable blocks={blocks} currentPage={1} totalPages={1} loading={false} />
           </div>
         </TabsContent>
 
