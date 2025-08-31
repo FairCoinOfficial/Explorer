@@ -28,7 +28,7 @@ export function NetworkStatusContent() {
     const fetchNetworkStatus = useCallback(async () => {
         try {
             const startTime = Date.now()
-            
+
             // Fetch network info using correct FairCoin RPC commands
             const [blockcountRes, networkInfoRes, miningInfoRes] = await Promise.all([
                 fetch(`/api/blockcount?network=${currentNetwork}`),
@@ -37,7 +37,7 @@ export function NetworkStatusContent() {
             ])
 
             const latency = Date.now() - startTime
-            
+
             if (blockcountRes.ok) {
                 const blockcountData = await blockcountRes.json()
                 let networkData: any = { connections: 0, version: "Unknown" }
@@ -46,7 +46,7 @@ export function NetworkStatusContent() {
                 if (networkInfoRes.ok) {
                     networkData = await networkInfoRes.json()
                 }
-                
+
                 if (miningInfoRes.ok) {
                     miningData = await miningInfoRes.json()
                 }
@@ -96,15 +96,15 @@ export function NetworkStatusContent() {
 
     useEffect(() => {
         fetchNetworkStatus()
-        
+
         // Auto-refresh every 30 seconds
         const interval = setInterval(fetchNetworkStatus, 30000)
-        
+
         return () => clearInterval(interval)
     }, [fetchNetworkStatus])
 
     const getStatusColor = (isOnline: boolean) => {
-        return isOnline 
+        return isOnline
             ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
             : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
     }
@@ -123,7 +123,7 @@ export function NetworkStatusContent() {
 
     const formatHashrate = (hashrate: string | number) => {
         if (typeof hashrate === 'string') return hashrate
-        
+
         const rate = parseFloat(hashrate.toString())
         if (rate >= 1e12) return `${(rate / 1e12).toFixed(2)} TH/s`
         if (rate >= 1e9) return `${(rate / 1e9).toFixed(2)} GH/s`

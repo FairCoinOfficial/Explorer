@@ -56,7 +56,7 @@ export function AddressValidatorContent() {
         if (!base58Regex.test(cleanAddress)) {
             return {
                 isValid: false,
-                addressType: "unknown", 
+                addressType: "unknown",
                 network: "unknown",
                 error: "Invalid characters in address (must be Base58)"
             }
@@ -103,11 +103,11 @@ export function AddressValidatorContent() {
 
     const handleValidation = async () => {
         setIsValidating(true)
-        
+
         // Local validation first
         const localResult = validateAddress(address)
         setValidationResult(localResult)
-        
+
         // Network validation if locally valid
         if (localResult.isValid) {
             try {
@@ -122,7 +122,7 @@ export function AddressValidatorContent() {
         } else {
             setNetworkValidation(null)
         }
-        
+
         setIsValidating(false)
     }
 
@@ -181,7 +181,7 @@ export function AddressValidatorContent() {
                                 onChange={(e) => setAddress(e.target.value)}
                                 className="font-mono text-sm"
                             />
-                            <Button 
+                            <Button
                                 onClick={handleValidation}
                                 disabled={!address.trim() || isValidating}
                                 className="shrink-0"

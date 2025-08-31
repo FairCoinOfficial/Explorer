@@ -110,8 +110,8 @@ export function FeeCalculatorContent() {
 
                         <div className="space-y-2">
                             <label htmlFor="priority" className="block text-sm font-medium">Fee Priority</label>
-                            <select 
-                                value={priority} 
+                            <select
+                                value={priority}
                                 onChange={(e) => setPriority(e.target.value)}
                                 className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
                             >

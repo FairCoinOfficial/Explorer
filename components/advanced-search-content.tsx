@@ -20,10 +20,10 @@ export function AdvancedSearchContent() {
         if (!query.trim()) return
 
         setIsSearching(true)
-        
+
         // Add network parameter to search
         const searchUrl = `/search?q=${encodeURIComponent(query.trim())}&network=${currentNetwork}`
-        
+
         try {
             // Use the search API route which will redirect appropriately
             window.location.href = searchUrl
@@ -114,7 +114,7 @@ export function AdvancedSearchContent() {
                             onKeyPress={handleKeyPress}
                             className="font-mono text-sm"
                         />
-                        <Button 
+                        <Button
                             onClick={() => handleSearch(searchQuery)}
                             disabled={!searchQuery.trim() || isSearching}
                             className="shrink-0"
