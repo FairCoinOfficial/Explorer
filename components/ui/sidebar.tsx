@@ -201,7 +201,6 @@ const Sidebar = React.forwardRef<
             return (
                 <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
                     <SheetContent
-                        title="Navigation"
                         data-sidebar="sidebar"
                         data-mobile="true"
                         className="w-[--sidebar-width] bg-card p-0 text-card-foreground [&>button]:hidden"

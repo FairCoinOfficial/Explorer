@@ -21,21 +21,21 @@ export function InfoGrid({
 }: InfoGridProps) {
     const gridClasses = {
         1: 'grid-cols-1',
-        2: 'grid-cols-1 md:grid-cols-2',
-        3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+        2: 'grid-cols-1 sm:grid-cols-2',
+        3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
     }
 
     return (
-        <div className={`grid gap-4 ${gridClasses[columns]} ${className}`}>
+        <div className={`grid gap-3 sm:gap-4 ${gridClasses[columns]} ${className}`}>
             {items.map((item, index) => (
-                <div key={index} className={`space-y-2 ${item.className || ''}`}>
+                <div key={index} className={`space-y-1 sm:space-y-2 ${item.className || ''}`}>
                     <div>
-                        <label className="text-sm font-medium text-muted-foreground">
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground block">
                             {item.label}
                         </label>
                         <div className="mt-1">
                             {typeof item.value === 'string' || typeof item.value === 'number' ? (
-                                <p className="text-sm sm:text-base">{item.value}</p>
+                                <p className="text-sm sm:text-base break-words">{item.value}</p>
                             ) : (
                                 item.value
                             )}

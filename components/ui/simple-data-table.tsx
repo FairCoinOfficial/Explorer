@@ -27,12 +27,14 @@ export function SimpleDataTable({
     }
 
     return (
-        <div className={`rounded-md border ${className}`}>
-            <Table>
+        <div className={`rounded-md border overflow-x-auto ${className}`}>
+            <Table className="min-w-full">
                 <TableHeader>
                     <TableRow>
                         {headers.map((header, index) => (
-                            <TableHead key={index}>{header}</TableHead>
+                            <TableHead key={index} className="whitespace-nowrap text-xs sm:text-sm">
+                                {header}
+                            </TableHead>
                         ))}
                     </TableRow>
                 </TableHeader>
@@ -40,7 +42,9 @@ export function SimpleDataTable({
                     {data.map((row, rowIndex) => (
                         <TableRow key={rowIndex}>
                             {row.map((cell, cellIndex) => (
-                                <TableCell key={cellIndex}>{cell}</TableCell>
+                                <TableCell key={cellIndex} className="text-xs sm:text-sm break-words max-w-xs">
+                                    {cell}
+                                </TableCell>
                             ))}
                         </TableRow>
                     ))}

@@ -23,15 +23,19 @@ export function SectionHeader({
     className = ""
 }: SectionHeaderProps) {
     return (
-        <div className={`flex items-center gap-2 pb-2 border-b ${className}`}>
-            <Icon className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold">{title}</h3>
-            {badge && (
-                <Badge variant={badge.variant || 'secondary'} className="ml-auto">
-                    {badge.text}
-                </Badge>
-            )}
-            {children}
+        <div className={`flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 pb-2 border-b ${className}`}>
+            <div className="flex items-center gap-2">
+                <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                <h3 className="text-base sm:text-lg font-semibold">{title}</h3>
+            </div>
+            <div className="flex items-center gap-2">
+                {badge && (
+                    <Badge variant={badge.variant || 'secondary'} className="text-xs">
+                        {badge.text}
+                    </Badge>
+                )}
+                {children}
+            </div>
         </div>
     )
 }

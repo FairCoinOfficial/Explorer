@@ -6,6 +6,7 @@ export { EmptyState } from './empty-state'
 export { InfoGrid } from './info-grid'
 export { SimpleDataTable } from './simple-data-table'
 export { LoadingState } from './loading-state'
+export { VisuallyHidden } from './visually-hidden'
 
 // Re-export existing UI components for convenience
 export * from './button'

@@ -20,7 +20,7 @@ export function StatsGrid({
     className = ""
 }: StatsGridProps) {
     const gridClasses = [
-        `grid gap-4`,
+        `grid gap-3 sm:gap-4`,
         `grid-cols-${columns.default}`,
         columns.sm && `sm:grid-cols-${columns.sm}`,
         columns.md && `md:grid-cols-${columns.md}`,

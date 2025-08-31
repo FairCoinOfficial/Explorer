@@ -24,10 +24,10 @@ export function EmptyState({
     className = ""
 }: EmptyStateProps) {
     return (
-        <div className={`text-center py-8 ${className}`}>
-            <Icon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">{title}</h3>
-            <p className="text-muted-foreground mb-4 max-w-sm mx-auto">{description}</p>
+        <div className={`text-center py-6 sm:py-8 px-4 ${className}`}>
+            <Icon className="mx-auto h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-medium mb-2">{title}</h3>
+            <p className="text-sm sm:text-base text-muted-foreground mb-4 max-w-sm mx-auto leading-relaxed">{description}</p>
             {action && (
                 <Button
                     onClick={action.onClick}
