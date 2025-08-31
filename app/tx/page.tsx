@@ -30,9 +30,9 @@ export default function TxIndex() {
                 <label htmlFor="txid" className="text-sm font-medium">
                   Transaction ID
                 </label>
-                <Input 
+                <Input
                   id="txid"
-                  name="q" 
+                  name="q"
                   placeholder="Enter transaction hash (TXID)..."
                   className="font-mono"
                 />
@@ -43,7 +43,7 @@ export default function TxIndex() {
               </Button>
             </form>
           </div>
-          
+
           <div className="text-center py-4">
             <div className="text-sm text-muted-foreground">
               Or browse recent transactions on the dashboard

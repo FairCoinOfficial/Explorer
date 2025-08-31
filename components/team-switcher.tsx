@@ -3,6 +3,7 @@
 import * as React from "react"
 import { ChevronsUpDown, Plus, Check } from "lucide-react"
 import { useNetwork } from "@/contexts/network-context"
+import Image from "next/image"
 
 import {
     DropdownMenu,
@@ -33,8 +34,14 @@ export function TeamSwitcher() {
                             size="lg"
                             className="data-[state=open]:bg-primary data-[state=open]:text-primary-foreground"
                         >
-                            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                                <span className="text-sm font-bold">{networkConfig.shortName}</span>
+                            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white p-1">
+                                <Image
+                                    src="/images/FairCoin-Logo.jpg"
+                                    alt="FairCoin Logo"
+                                    width={24}
+                                    height={24}
+                                    className="rounded-sm"
+                                />
                             </div>
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-semibold">FairCoin</span>
@@ -52,23 +59,35 @@ export function TeamSwitcher() {
                         <DropdownMenuLabel className="text-xs text-muted-foreground">
                             Networks
                         </DropdownMenuLabel>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                             onClick={() => setNetwork('mainnet')}
                             className="cursor-pointer"
                         >
-                            <div className="flex size-6 items-center justify-center rounded-sm border bg-background">
-                                <span className="text-xs font-bold">{networks.mainnet.shortName}</span>
+                            <div className="flex size-6 items-center justify-center rounded-sm border bg-white p-0.5">
+                                <Image
+                                    src="/images/FairCoin-Logo.jpg"
+                                    alt="FairCoin"
+                                    width={16}
+                                    height={16}
+                                    className="rounded-xs"
+                                />
                             </div>
                             {networks.mainnet.displayName}
                             {currentNetwork === 'mainnet' && <Check className="ml-auto size-4" />}
                             <DropdownMenuShortcut>⌘M</DropdownMenuShortcut>
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                             onClick={() => setNetwork('testnet')}
                             className="cursor-pointer"
                         >
-                            <div className="flex size-6 items-center justify-center rounded-sm border bg-background">
-                                <span className="text-xs font-bold">{networks.testnet.shortName}</span>
+                            <div className="flex size-6 items-center justify-center rounded-sm border bg-white p-0.5">
+                                <Image
+                                    src="/images/FairCoin-Logo.jpg"
+                                    alt="FairCoin"
+                                    width={16}
+                                    height={16}
+                                    className="rounded-xs opacity-60"
+                                />
                             </div>
                             {networks.testnet.displayName}
                             {currentNetwork === 'testnet' && <Check className="ml-auto size-4" />}

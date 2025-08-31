@@ -103,4 +103,3 @@ The system automatically creates optimized indexes for:
 - Address balances require an indexed node; not included here to stay lightweight.
 - Add pagination or mempool via RPC if your node supports it.
 - Database sync is optional but highly recommended for production use.
-# Explorer
