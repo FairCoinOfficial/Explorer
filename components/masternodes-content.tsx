@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Shield, Server, Clock, Coins, RefreshCw, TrendingUp, Users, Lock } from 'lucide-react'
+import { SectionHeader, StatsGrid, StatsCard, EmptyState, LoadingState, InfoGrid } from '@/components/ui'
+import { Shield, Server, Clock, Coins, RefreshCw, TrendingUp, Users, Lock, AlertTriangle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface Masternode {
@@ -87,9 +88,7 @@ export function MasternodesContent() {
     if (loading) {
         return (
             <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-                <div className="flex items-center justify-center h-64">
-                    <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
+                <LoadingState message="Loading masternode data..." />
             </div>
         )
     }
@@ -97,16 +96,16 @@ export function MasternodesContent() {
     if (error) {
         return (
             <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                        <p className="text-lg text-muted-foreground mb-4">Error loading masternodes</p>
-                        <p className="text-sm text-destructive mb-4">{error}</p>
-                        <Button onClick={fetchMasternodes} variant="outline">
-                            <RefreshCw className="h-4 w-4 mr-2" />
-                            Try Again
-                        </Button>
-                    </div>
-                </div>
+                <EmptyState
+                    icon={AlertTriangle}
+                    title="Error Loading Masternodes"
+                    description={error}
+                    action={{
+                        label: "Try Again",
+                        onClick: fetchMasternodes,
+                        variant: "outline"
+                    }}
+                />
             </div>
         )
     }
@@ -137,95 +136,54 @@ export function MasternodesContent() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Masternodes</CardTitle>
-                        <Server className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{masternodes.length.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">Registered nodes</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Nodes</CardTitle>
-                        <Shield className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{enabledNodes.length.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">
-                            {masternodes.length > 0 ? ((enabledNodes.length / masternodes.length) * 100).toFixed(1) : 0}% active
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Collateral</CardTitle>
-                        <Lock className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            {(masternodes.length * collateralPerNode).toLocaleString()} FAIR
-                        </div>
-                        <p className="text-xs text-muted-foreground">25K FAIR per node</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Network Security</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            {((masternodes.length * collateralPerNode) / 53193831 * 100).toFixed(1)}%
-                        </div>
-                        <p className="text-xs text-muted-foreground">Of total supply locked</p>
-                    </CardContent>
-                </Card>
+            <div className="space-y-4">
+                <SectionHeader
+                    icon={Server}
+                    title="Network Statistics"
+                />
+                <StatsGrid>
+                    <StatsCard
+                        icon={Server}
+                        title="Total Masternodes"
+                        value={masternodes.length.toLocaleString()}
+                        description="Registered nodes"
+                    />
+                    <StatsCard
+                        icon={Shield}
+                        title="Active Nodes"
+                        value={enabledNodes.length.toLocaleString()}
+                        description={`${masternodes.length > 0 ? ((enabledNodes.length / masternodes.length) * 100).toFixed(1) : 0}% active`}
+                    />
+                    <StatsCard
+                        icon={Lock}
+                        title="Total Collateral"
+                        value={`${(masternodes.length * collateralPerNode).toLocaleString()} FAIR`}
+                        description="25K FAIR per node"
+                    />
+                    <StatsCard
+                        icon={TrendingUp}
+                        title="Network Security"
+                        value={`${((masternodes.length * collateralPerNode) / 53193831 * 100).toFixed(1)}%`}
+                        description="Of total supply locked"
+                    />
+                </StatsGrid>
             </div>
 
             {/* Masternode Information */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Shield className="h-5 w-5" />
-                        Masternode Requirements
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <div className="space-y-3">
-                            <div>
-                                <label className="text-sm font-medium">Collateral Required</label>
-                                <p className="text-lg font-bold">25,000 FAIR</p>
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium">Reward Type</label>
-                                <p className="text-sm text-muted-foreground">Block rewards + transaction fees</p>
-                            </div>
-                        </div>
-                        <div className="space-y-3">
-                            <div>
-                                <label className="text-sm font-medium">Network Benefits</label>
-                                <p className="text-sm text-muted-foreground">
-                                    Masternodes enable Coin Mixing and FastSend features
-                                </p>
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium">Governance</label>
-                                <p className="text-sm text-muted-foreground">
-                                    Decentralized blockchain voting for network decisions
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="space-y-4">
+                <SectionHeader
+                    icon={Shield}
+                    title="Masternode Requirements"
+                />
+                <InfoGrid
+                    items={[
+                        { label: "Collateral Required", value: "25,000 FAIR" },
+                        { label: "Reward Type", value: "Block rewards + transaction fees" },
+                        { label: "Network Benefits", value: "Masternodes enable Coin Mixing and FastSend features" },
+                        { label: "Governance", value: "Decentralized blockchain voting for network decisions" }
+                    ]}
+                />
+            </div>
 
             {/* Masternodes Table */}
             <Tabs defaultValue="active" className="space-y-4">
@@ -235,127 +193,129 @@ export function MasternodesContent() {
                 </TabsList>
 
                 <TabsContent value="active">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Active Masternodes</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {enabledNodes.length > 0 ? (
-                                <div className="rounded-md border">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Address</TableHead>
-                                                <TableHead>IP/Location</TableHead>
-                                                <TableHead>Status</TableHead>
-                                                <TableHead>Last Seen</TableHead>
-                                                <TableHead>Active Time</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {enabledNodes.slice(0, 50).map((node, index) => (
-                                                <TableRow key={node.txid || index}>
-                                                    <TableCell className="font-mono text-sm">
-                                                        {node.address ? `${node.address.substring(0, 16)}...` : 'N/A'}
-                                                    </TableCell>
-                                                    <TableCell className="font-mono text-sm">
-                                                        {node.address || 'N/A'}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="default">
-                                                            <Shield className="w-3 h-3 mr-1" />
-                                                            {node.status}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {node.lastSeen
-                                                            ? new Date(node.lastSeen * 1000).toLocaleString()
-                                                            : 'N/A'
-                                                        }
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {node.activeTime
-                                                            ? `${Math.floor(node.activeTime / 86400)} days`
-                                                            : 'N/A'
-                                                        }
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            ) : (
-                                <div className="text-center py-8">
-                                    <Shield className="mx-auto h-12 w-12 text-muted-foreground" />
-                                    <h3 className="mt-4 text-lg font-medium">No Active Masternodes</h3>
-                                    <p className="mt-2 text-muted-foreground">
-                                        No active masternodes found on the network.
-                                    </p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                    <div className="space-y-4">
+                        <SectionHeader
+                            icon={Shield}
+                            title="Active Masternodes"
+                            badge={{
+                                text: `${enabledNodes.length} active`,
+                                variant: 'secondary'
+                            }}
+                        />
 
-                <TabsContent value="all">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>All Masternodes</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {masternodes.length > 0 ? (
-                                <div className="rounded-md border">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Address</TableHead>
-                                                <TableHead>Network</TableHead>
-                                                <TableHead>Status</TableHead>
-                                                <TableHead>Protocol</TableHead>
-                                                <TableHead>Last Seen</TableHead>
+                        {enabledNodes.length > 0 ? (
+                            <div className="rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Address</TableHead>
+                                            <TableHead>IP/Location</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead>Last Seen</TableHead>
+                                            <TableHead>Active Time</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {enabledNodes.slice(0, 50).map((node, index) => (
+                                            <TableRow key={node.txid || index}>
+                                                <TableCell className="font-mono text-sm">
+                                                    {node.address ? `${node.address.substring(0, 16)}...` : 'N/A'}
+                                                </TableCell>
+                                                <TableCell className="font-mono text-sm">
+                                                    {node.address || 'N/A'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="default">
+                                                        <Shield className="w-3 h-3 mr-1" />
+                                                        {node.status}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {node.lastSeen
+                                                        ? new Date(node.lastSeen * 1000).toLocaleString()
+                                                        : 'N/A'
+                                                    }
+                                                </TableCell>
+                                                <TableCell>
+                                                    {node.activeTime
+                                                        ? `${Math.floor(node.activeTime / 86400)} days`
+                                                        : 'N/A'
+                                                    }
+                                                </TableCell>
                                             </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {masternodes.slice(0, 100).map((node, index) => (
-                                                <TableRow key={node.txid || index}>
-                                                    <TableCell className="font-mono text-sm">
-                                                        {node.address ? `${node.address.substring(0, 16)}...` : 'N/A'}
-                                                    </TableCell>
-                                                    <TableCell className="font-mono text-sm">
-                                                        {node.address || 'N/A'}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge
-                                                            variant={node.status === 'ENABLED' ? 'default' : 'secondary'}
-                                                        >
-                                                            {node.status}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="font-mono">
-                                                        {node.protocol || 'N/A'}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {node.lastSeen
-                                                            ? new Date(node.lastSeen * 1000).toLocaleString()
-                                                            : 'N/A'
-                                                        }
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            ) : (
-                                <div className="text-center py-8">
-                                    <Server className="mx-auto h-12 w-12 text-muted-foreground" />
-                                    <h3 className="mt-4 text-lg font-medium">No Masternodes Found</h3>
-                                    <p className="mt-2 text-muted-foreground">
-                                        Unable to fetch masternode data.
-                                    </p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        ) : (
+                            <EmptyState
+                                icon={Shield}
+                                title="No Active Masternodes"
+                                description="No active masternodes found on the network"
+                            />
+                        )}
+                    </div>
+                </TabsContent>                                <TabsContent value="all">
+                    <div className="space-y-4">
+                        <SectionHeader
+                            icon={Server}
+                            title="All Masternodes"
+                            badge={{
+                                text: `${masternodes.length} total`,
+                                variant: 'secondary'
+                            }}
+                        />
+
+                        {masternodes.length > 0 ? (
+                            <div className="rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Address</TableHead>
+                                            <TableHead>Network</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead>Protocol</TableHead>
+                                            <TableHead>Last Seen</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {masternodes.slice(0, 100).map((node, index) => (
+                                            <TableRow key={node.txid || index}>
+                                                <TableCell className="font-mono text-sm">
+                                                    {node.address ? `${node.address.substring(0, 16)}...` : 'N/A'}
+                                                </TableCell>
+                                                <TableCell className="font-mono text-sm">
+                                                    {node.address || 'N/A'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge
+                                                        variant={node.status === 'ENABLED' ? 'default' : 'secondary'}
+                                                    >
+                                                        {node.status}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="font-mono">
+                                                    {node.protocol || 'N/A'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {node.lastSeen
+                                                        ? new Date(node.lastSeen * 1000).toLocaleString()
+                                                        : 'N/A'
+                                                    }
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        ) : (
+                            <EmptyState
+                                icon={Server}
+                                title="No Masternodes Found"
+                                description="Unable to fetch masternode data"
+                            />
+                        )}
+                    </div>
                 </TabsContent>
             </Tabs>
         </div>

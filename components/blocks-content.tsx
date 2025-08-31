@@ -2,13 +2,14 @@
 
 import { useNetwork } from '@/contexts/network-context'
 import { NetworkStatus } from '@/components/network-status'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Database, Search, Home, Hash, Clock, RefreshCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { SectionHeader, StatsCard, StatsGrid, LoadingState, EmptyState } from '@/components/ui'
 
 interface Block {
     height: number
@@ -54,12 +55,7 @@ export function BlocksContent() {
     if (loading) {
         return (
             <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                        <RefreshCw className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-                        <p className="text-sm text-muted-foreground">Loading blocks...</p>
-                    </div>
-                </div>
+                <LoadingState message="Loading blocks..." />
             </div>
         )
     }
@@ -67,19 +63,15 @@ export function BlocksContent() {
     if (error) {
         return (
             <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-center max-w-sm mx-auto px-4">
-                        <div className="text-red-500 mb-4">
-                            <Database className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        </div>
-                        <p className="text-lg font-medium text-muted-foreground mb-2">Error loading blocks</p>
-                        <p className="text-sm text-red-500 mb-4">{error}</p>
-                        <Button onClick={fetchBlocks} variant="outline" className="w-full sm:w-auto">
-                            <RefreshCw className="h-4 w-4 mr-2" />
-                            Try Again
-                        </Button>
-                    </div>
-                </div>
+                <EmptyState
+                    icon={Database}
+                    title="Error loading blocks"
+                    description={error}
+                    action={{
+                        label: "Try Again",
+                        onClick: fetchBlocks
+                    }}
+                />
             </div>
         )
     }
@@ -107,47 +99,38 @@ export function BlocksContent() {
             </div>
 
             {/* Stats */}
-            <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                <Card className="hover:shadow-md transition-shadow">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Current Height</CardTitle>
-                        <Hash className="h-4 w-4 text-primary" />
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                        <div className="text-xl font-bold sm:text-2xl">{height?.toLocaleString() ?? 'N/A'}</div>
-                        <p className="text-xs text-muted-foreground">Latest block number</p>
-                    </CardContent>
-                </Card>
-
-                <Card className="hover:shadow-md transition-shadow">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Blocks Shown</CardTitle>
-                        <Database className="h-4 w-4 text-primary" />
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                        <div className="text-xl font-bold sm:text-2xl">{blocks.length}</div>
-                        <p className="text-xs text-muted-foreground">Recent blocks</p>
-                    </CardContent>
-                </Card>
-
-                <Card className="hover:shadow-md transition-shadow sm:col-span-2 lg:col-span-1">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Network</CardTitle>
-                        <Clock className="h-4 w-4 text-primary" />
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                        <div className="text-lg font-bold sm:text-xl">{currentNetwork}</div>
-                        <p className="text-xs text-muted-foreground">Active network</p>
-                    </CardContent>
-                </Card>
-            </div>
+            <StatsGrid columns={{ default: 1, sm: 2, lg: 3 }}>
+                <StatsCard
+                    title="Current Height"
+                    value={height?.toLocaleString() ?? 'N/A'}
+                    description="Latest block number"
+                    icon={Hash}
+                />
+                <StatsCard
+                    title="Blocks Shown"
+                    value={blocks.length}
+                    description="Recent blocks"
+                    icon={Database}
+                />
+                <StatsCard
+                    title="Network"
+                    value={currentNetwork}
+                    description="Active network"
+                    icon={Clock}
+                    className="sm:col-span-2 lg:col-span-1"
+                />
+            </StatsGrid>
 
             {/* Recent Blocks Section */}
             <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b">
-                    <Database className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg sm:text-xl font-semibold">Recent Blocks</h3>
-                </div>
+                <SectionHeader
+                    icon={Database}
+                    title="Recent Blocks"
+                    badge={{
+                        text: `${blocks.length} blocks`,
+                        variant: 'secondary'
+                    }}
+                />
 
                 {/* Mobile Card View */}
                 <div className="block sm:hidden space-y-2">

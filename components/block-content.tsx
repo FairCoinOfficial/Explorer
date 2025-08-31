@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CopyButton } from '@/components/copy-button'
-import { Hash, Clock, Database, ArrowLeft, ArrowRight, RefreshCw, Home } from 'lucide-react'
+import { Hash, Clock, Database, ArrowLeft, ArrowRight, RefreshCw, Home, Receipt } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
@@ -300,54 +300,49 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
             </div>
 
             {/* Transactions */}
-            <Tabs defaultValue="transactions" className="space-y-4">
-                <TabsList>
-                    <TabsTrigger value="transactions">Transactions ({block.tx.length})</TabsTrigger>
-                </TabsList>
+            <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b">
+                    <Receipt className="h-5 w-5 text-primary" />
+                    <h2 className="text-lg font-semibold">Block Transactions</h2>
+                    <Badge variant="secondary" className="ml-auto">
+                        {block.tx.length} transactions
+                    </Badge>
+                </div>
 
-                <TabsContent value="transactions">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Block Transactions</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {block.tx.length > 0 ? (
-                                <div className="rounded-md border">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Transaction ID</TableHead>
-                                                <TableHead className="text-right">Index</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {block.tx.map((txid, index) => (
-                                                <TableRow key={txid}>
-                                                    <TableCell className="font-mono text-sm">
-                                                        <Link
-                                                            href={`/tx/${txid}`}
-                                                            className="hover:underline break-all"
-                                                        >
-                                                            {txid}
-                                                        </Link>
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Badge variant="outline">#{index}</Badge>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            ) : (
-                                <div className="text-center py-8">
-                                    <p className="text-muted-foreground">No transactions in this block</p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
+                {block.tx.length > 0 ? (
+                    <div className="rounded-md border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Transaction ID</TableHead>
+                                    <TableHead className="text-right">Index</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {block.tx.map((txid, index) => (
+                                    <TableRow key={txid}>
+                                        <TableCell className="font-mono text-sm">
+                                            <Link
+                                                href={`/tx/${txid}`}
+                                                className="hover:underline break-all"
+                                            >
+                                                {txid}
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Badge variant="outline">#{index}</Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                ) : (
+                    <div className="text-center py-8">
+                        <p className="text-muted-foreground">No transactions in this block</p>
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

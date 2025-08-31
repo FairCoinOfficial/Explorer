@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CopyButton } from '@/components/copy-button'
-import { Hash, Clock, CheckCircle, XCircle, Database, LinkIcon, FileText, AlertTriangle, RefreshCw, Home } from 'lucide-react'
+import { SectionHeader, StatsGrid, StatsCard, EmptyState, LoadingState, InfoGrid } from '@/components/ui'
+import { Hash, Clock, CheckCircle, XCircle, Database, LinkIcon, FileText, AlertTriangle, RefreshCw, Home, ArrowLeft, ArrowRight, DollarSign } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -103,9 +104,7 @@ export function TransactionContent({ txid }: { txid: string }) {
     if (loading) {
         return (
             <div className="flex-1 space-y-4 p-3 pt-4 md:p-6 lg:p-8">
-                <div className="flex items-center justify-center h-64">
-                    <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
+                <LoadingState message="Loading transaction details..." />
             </div>
         )
     }
@@ -164,16 +163,16 @@ export function TransactionContent({ txid }: { txid: string }) {
     if (error) {
         return (
             <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                        <p className="text-lg text-muted-foreground mb-4">Error loading transaction</p>
-                        <p className="text-sm text-destructive mb-4">{error}</p>
-                        <Button onClick={fetchTransaction} variant="outline">
-                            <RefreshCw className="h-4 w-4 mr-2" />
-                            Try Again
-                        </Button>
-                    </div>
-                </div>
+                <EmptyState
+                    icon={AlertTriangle}
+                    title="Error Loading Transaction"
+                    description={error}
+                    action={{
+                        label: "Try Again",
+                        onClick: fetchTransaction,
+                        variant: "outline"
+                    }}
+                />
             </div>
         )
     }
@@ -300,27 +299,32 @@ export function TransactionContent({ txid }: { txid: string }) {
             </Card>
 
             {/* Transaction Summary */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Transaction Summary</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
-                        <div>
-                            <div className="text-xl font-bold sm:text-2xl">{totalInput.toFixed(8)} FAIR</div>
-                            <div className="text-sm text-muted-foreground">Total Input</div>
-                        </div>
-                        <div>
-                            <div className="text-xl font-bold sm:text-2xl">{totalOutput.toFixed(8)} FAIR</div>
-                            <div className="text-sm text-muted-foreground">Total Output</div>
-                        </div>
-                        <div>
-                            <div className="text-xl font-bold sm:text-2xl">{fee.toFixed(8)} FAIR</div>
-                            <div className="text-sm text-muted-foreground">Transaction Fee</div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="space-y-4">
+                <SectionHeader
+                    icon={Database}
+                    title="Transaction Summary"
+                />
+                <StatsGrid>
+                    <StatsCard
+                        icon={ArrowLeft}
+                        title="Total Input"
+                        value={`${totalInput.toFixed(8)} FAIR`}
+                        description="Sum of all input values"
+                    />
+                    <StatsCard
+                        icon={ArrowRight}
+                        title="Total Output"
+                        value={`${totalOutput.toFixed(8)} FAIR`}
+                        description="Sum of all output values"
+                    />
+                    <StatsCard
+                        icon={DollarSign}
+                        title="Transaction Fee"
+                        value={`${fee.toFixed(8)} FAIR`}
+                        description="Network fee paid"
+                    />
+                </StatsGrid>
+            </div>
 
             {/* Inputs and Outputs */}
             <Tabs defaultValue="inputs" className="space-y-4">
@@ -331,118 +335,120 @@ export function TransactionContent({ txid }: { txid: string }) {
                 </TabsList>
 
                 <TabsContent value="inputs">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Transaction Inputs</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {transaction.vin.map((input, index) => (
-                                    <div key={index} className="border rounded-lg p-4">
-                                        <div className="grid gap-2">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm font-medium">Input #{index}</span>
-                                                {input.value && (
-                                                    <Badge variant="outline">{input.value.toFixed(8)} FAIR</Badge>
+                    <div className="space-y-4">
+                        <SectionHeader
+                            icon={ArrowLeft}
+                            title="Transaction Inputs"
+                            badge={{
+                                text: `${transaction.vin.length} inputs`,
+                                variant: 'secondary'
+                            }}
+                        />
+                        <div className="space-y-4">
+                            {transaction.vin.map((input, index) => (
+                                <div key={index} className="border rounded-lg p-4">
+                                    <div className="grid gap-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium">Input #{index}</span>
+                                            {input.value && (
+                                                <Badge variant="outline">{input.value.toFixed(8)} FAIR</Badge>
+                                            )}
+                                        </div>
+
+                                        {input.txid !== '0000000000000000000000000000000000000000000000000000000000000000' ? (
+                                            <div className="space-y-2">
+                                                <div>
+                                                    <label className="text-xs text-muted-foreground">Previous Transaction</label>
+                                                    <div className="flex items-center gap-2">
+                                                        <Link
+                                                            href={`/tx/${input.txid}`}
+                                                            className="text-sm font-mono hover:underline break-all"
+                                                        >
+                                                            {input.txid}
+                                                        </Link>
+                                                        <span className="text-sm text-muted-foreground">#{input.vout}</span>
+                                                    </div>
+                                                </div>
+                                                {input.address && (
+                                                    <div>
+                                                        <label className="text-xs text-muted-foreground">Address</label>
+                                                        <p className="text-sm font-mono break-all">{input.address}</p>
+                                                    </div>
                                                 )}
                                             </div>
+                                        ) : (
+                                            <div>
+                                                <Badge variant="secondary">Coinbase Transaction</Badge>
+                                                <p className="text-sm text-muted-foreground mt-1">
+                                                    This is a newly generated coin from mining
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </TabsContent>
 
-                                            {input.txid !== '0000000000000000000000000000000000000000000000000000000000000000' ? (
-                                                <div className="space-y-2">
-                                                    <div>
-                                                        <label className="text-xs text-muted-foreground">Previous Transaction</label>
-                                                        <div className="flex items-center gap-2">
-                                                            <Link
-                                                                href={`/tx/${input.txid}`}
-                                                                className="text-sm font-mono hover:underline break-all"
-                                                            >
-                                                                {input.txid}
-                                                            </Link>
-                                                            <span className="text-sm text-muted-foreground">#{input.vout}</span>
-                                                        </div>
-                                                    </div>
-                                                    {input.address && (
-                                                        <div>
-                                                            <label className="text-xs text-muted-foreground">Address</label>
-                                                            <p className="text-sm font-mono break-all">{input.address}</p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ) : (
+                <TabsContent value="outputs">
+                    <div className="space-y-4">
+                        <SectionHeader
+                            icon={ArrowRight}
+                            title="Transaction Outputs"
+                            badge={{
+                                text: `${transaction.vout.length} outputs`,
+                                variant: 'secondary'
+                            }}
+                        />
+                        <div className="space-y-4">
+                            {transaction.vout.map((output, index) => (
+                                <div key={index} className="border rounded-lg p-4">
+                                    <div className="grid gap-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium">Output #{output.n}</span>
+                                            <Badge variant="outline">{output.value.toFixed(8)} FAIR</Badge>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <div>
+                                                <label className="text-xs text-muted-foreground">Script Type</label>
+                                                <p className="text-sm font-mono">{output.scriptPubKey.type}</p>
+                                            </div>
+
+                                            {output.scriptPubKey.addresses && (
                                                 <div>
-                                                    <Badge variant="secondary">Coinbase Transaction</Badge>
-                                                    <p className="text-sm text-muted-foreground mt-1">
-                                                        This is a newly generated coin from mining
+                                                    <label className="text-xs text-muted-foreground">Address</label>
+                                                    <p className="text-sm font-mono break-all">
+                                                        {output.scriptPubKey.addresses[0]}
                                                     </p>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="outputs">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Transaction Outputs</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {transaction.vout.map((output, index) => (
-                                    <div key={index} className="border rounded-lg p-4">
-                                        <div className="grid gap-2">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm font-medium">Output #{output.n}</span>
-                                                <Badge variant="outline">{output.value.toFixed(8)} FAIR</Badge>
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <div>
-                                                    <label className="text-xs text-muted-foreground">Script Type</label>
-                                                    <p className="text-sm font-mono">{output.scriptPubKey.type}</p>
-                                                </div>
-
-                                                {output.scriptPubKey.addresses && (
-                                                    <div>
-                                                        <label className="text-xs text-muted-foreground">Address</label>
-                                                        <p className="text-sm font-mono break-all">
-                                                            {output.scriptPubKey.addresses[0]}
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </TabsContent>
 
                 <TabsContent value="raw">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <FileText className="h-5 w-5" />
-                                Raw Transaction Data
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="text-sm font-medium text-muted-foreground">Hex</label>
-                                    <div className="mt-1">
-                                        <code className="block p-3 bg-muted rounded text-xs font-mono break-all whitespace-pre-wrap">
-                                            {transaction.hex}
-                                        </code>
-                                    </div>
+                    <div className="space-y-4">
+                        <SectionHeader
+                            icon={FileText}
+                            title="Raw Transaction Data"
+                        />
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-sm font-medium text-muted-foreground">Hex</label>
+                                <div className="mt-1">
+                                    <code className="block p-3 bg-muted rounded text-xs font-mono break-all whitespace-pre-wrap">
+                                        {transaction.hex}
+                                    </code>
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </TabsContent>
             </Tabs>
 

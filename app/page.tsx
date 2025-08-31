@@ -102,7 +102,7 @@ export default async function Page() {
           </CardHeader>
           <CardContent className="pt-0">
             <div className="text-lg sm:text-xl font-bold">
-              {blocks[0] ? new Date(blocks[0].time * 1000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '-'}
+              {blocks[0] ? new Date(blocks[0].time * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
             </div>
             <p className="text-xs text-muted-foreground">
               {blocks[0] ? new Date(blocks[0].time * 1000).toLocaleDateString() : 'No data'}
