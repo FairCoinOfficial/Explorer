@@ -81,16 +81,16 @@ export function BlocksContent() {
     return (
         <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
             {/* Header */}
-            <div className="flex items-center justify-between space-y-2">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Recent Blocks</h2>
-                    <p className="text-muted-foreground">
+                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Recent Blocks</h2>
+                    <p className="text-muted-foreground text-sm sm:text-base">
                         Latest blocks on the FairCoin blockchain
                     </p>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
                     <NetworkStatus />
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 self-start">
                         <Database className="w-3 h-3 mr-1" />
                         Current: {height?.toLocaleString() ?? 'N/A'}
                     </Badge>
@@ -101,7 +101,7 @@ export function BlocksContent() {
             </div>
 
             {/* Stats */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Current Height</CardTitle>
@@ -145,7 +145,7 @@ export function BlocksContent() {
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="rounded-md border">
+                    <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -172,18 +172,24 @@ export function BlocksContent() {
                                                 href={`/block/${block.hash}`}
                                                 className="hover:underline"
                                             >
-                                                {block.hash.substring(0, 16)}...
+                                                <span className="hidden sm:inline">{block.hash.substring(0, 16)}...</span>
+                                                <span className="sm:hidden">{block.hash.substring(0, 8)}...</span>
                                             </Link>
                                         </TableCell>
-                                        <TableCell>
-                                            {new Date(block.time * 1000).toLocaleString()}
+                                        <TableCell className="text-sm">
+                                            <span className="hidden sm:inline">
+                                                {new Date(block.time * 1000).toLocaleString()}
+                                            </span>
+                                            <span className="sm:hidden">
+                                                {new Date(block.time * 1000).toLocaleDateString()}
+                                            </span>
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant="secondary">
                                                 {block.nTx?.toLocaleString() ?? block.tx?.length?.toLocaleString() ?? 0}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="text-sm">
                                             {block.size ? `${(block.size / 1024).toFixed(1)} KB` : 'N/A'}
                                         </TableCell>
                                     </TableRow>

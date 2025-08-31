@@ -113,14 +113,16 @@ export function TransactionContent({ txid }: { txid: string }) {
     if (isBlockHashError) {
         return (
             <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-                <div className="flex items-center justify-between space-y-2">
+                <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
                     <div>
-                        <h2 className="text-3xl font-bold tracking-tight">Transaction Not Found</h2>
-                        <p className="text-muted-foreground">
+                        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Transaction Not Found</h2>
+                        <p className="text-muted-foreground text-sm sm:text-base">
                             The provided ID does not correspond to a valid transaction
                         </p>
                     </div>
-                    <NetworkStatus />
+                    <div className="self-start">
+                        <NetworkStatus />
+                    </div>
                 </div>
 
                 <Card>
@@ -193,14 +195,14 @@ export function TransactionContent({ txid }: { txid: string }) {
     return (
         <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
             {/* Header */}
-            <div className="flex items-center justify-between space-y-2">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Transaction Details</h2>
-                    <p className="text-muted-foreground">
+                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Transaction Details</h2>
+                    <p className="text-muted-foreground text-sm sm:text-base">
                         Transaction information on the FairCoin blockchain
                     </p>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 self-start">
                     <NetworkStatus />
                     <Button onClick={fetchTransaction} variant="outline" size="sm">
                         <RefreshCw className="h-4 w-4" />
@@ -228,11 +230,11 @@ export function TransactionContent({ txid }: { txid: string }) {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div>
                                 <label className="text-sm font-medium text-muted-foreground">Status</label>
                                 <div className="mt-1">
-                                    <Badge variant={transaction.confirmations ? "default" : "secondary"} className="flex items-center gap-1">
+                                    <Badge variant={transaction.confirmations ? "default" : "secondary"} className="flex items-center gap-1 w-fit">
                                         {transaction.confirmations ? (
                                             <>
                                                 <CheckCircle className="h-3 w-3" />
@@ -250,12 +252,12 @@ export function TransactionContent({ txid }: { txid: string }) {
 
                             <div>
                                 <label className="text-sm font-medium text-muted-foreground">Confirmations</label>
-                                <p className="mt-1 font-mono">{transaction.confirmations?.toLocaleString() ?? '0'}</p>
+                                <p className="mt-1 font-mono text-sm sm:text-base">{transaction.confirmations?.toLocaleString() ?? '0'}</p>
                             </div>
 
                             <div>
                                 <label className="text-sm font-medium text-muted-foreground">Block Time</label>
-                                <p className="mt-1">
+                                <p className="mt-1 text-sm sm:text-base">
                                     {transaction.blocktime
                                         ? new Date(transaction.blocktime * 1000).toLocaleString()
                                         : 'Pending'
@@ -265,17 +267,17 @@ export function TransactionContent({ txid }: { txid: string }) {
 
                             <div>
                                 <label className="text-sm font-medium text-muted-foreground">Size</label>
-                                <p className="mt-1 font-mono">{transaction.size} bytes</p>
+                                <p className="mt-1 font-mono text-sm sm:text-base">{transaction.size} bytes</p>
                             </div>
 
                             <div>
                                 <label className="text-sm font-medium text-muted-foreground">Version</label>
-                                <p className="mt-1 font-mono">{transaction.version}</p>
+                                <p className="mt-1 font-mono text-sm sm:text-base">{transaction.version}</p>
                             </div>
 
                             <div>
                                 <label className="text-sm font-medium text-muted-foreground">Lock Time</label>
-                                <p className="mt-1 font-mono">{transaction.locktime}</p>
+                                <p className="mt-1 font-mono text-sm sm:text-base">{transaction.locktime}</p>
                             </div>
                         </div>
 
@@ -303,17 +305,17 @@ export function TransactionContent({ txid }: { txid: string }) {
                     <CardTitle>Transaction Summary</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
                         <div>
-                            <div className="text-2xl font-bold">{totalInput.toFixed(8)} FAIR</div>
+                            <div className="text-xl font-bold sm:text-2xl">{totalInput.toFixed(8)} FAIR</div>
                             <div className="text-sm text-muted-foreground">Total Input</div>
                         </div>
                         <div>
-                            <div className="text-2xl font-bold">{totalOutput.toFixed(8)} FAIR</div>
+                            <div className="text-xl font-bold sm:text-2xl">{totalOutput.toFixed(8)} FAIR</div>
                             <div className="text-sm text-muted-foreground">Total Output</div>
                         </div>
                         <div>
-                            <div className="text-2xl font-bold">{fee.toFixed(8)} FAIR</div>
+                            <div className="text-xl font-bold sm:text-2xl">{fee.toFixed(8)} FAIR</div>
                             <div className="text-sm text-muted-foreground">Transaction Fee</div>
                         </div>
                     </div>
