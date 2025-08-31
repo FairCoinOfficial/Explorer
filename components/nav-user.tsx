@@ -31,8 +31,12 @@ import {
 } from "@/components/ui/sidebar"
 
 export function NavUser() {
-    const { isMobile } = useSidebar()
+    const { isMobile, setOpenMobile } = useSidebar()
     const { currentNetwork } = useNetwork()
+
+    const handleNavigation = () => {
+        setOpenMobile(false)
+    }
 
     return (
         <SidebarMenu>
@@ -65,19 +69,19 @@ export function NavUser() {
                         </DropdownMenuLabel>
                         <DropdownMenuGroup>
                             <DropdownMenuItem asChild>
-                                <Link href="/search" className="cursor-pointer">
+                                <Link href="/search" className="cursor-pointer" onClick={handleNavigation}>
                                     <Search className="size-4" />
                                     Advanced Search
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                                <Link href="/tools/fee-calculator" className="cursor-pointer">
+                                <Link href="/tools/fee-calculator" className="cursor-pointer" onClick={handleNavigation}>
                                     <Calculator className="size-4" />
                                     Fee Calculator
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                                <Link href="/tools/address-validator" className="cursor-pointer">
+                                <Link href="/tools/address-validator" className="cursor-pointer" onClick={handleNavigation}>
                                     <Wallet className="size-4" />
                                     Address Validator
                                 </Link>
@@ -89,13 +93,13 @@ export function NavUser() {
                         </DropdownMenuLabel>
                         <DropdownMenuGroup>
                             <DropdownMenuItem asChild>
-                                <Link href="/stats" className="cursor-pointer">
+                                <Link href="/stats" className="cursor-pointer" onClick={handleNavigation}>
                                     <TrendingUp className="size-4" />
                                     Network Statistics
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                                <Link href="/network-status" className="cursor-pointer">
+                                <Link href="/network-status" className="cursor-pointer" onClick={handleNavigation}>
                                     <Activity className="size-4" />
                                     Network Status
                                 </Link>
@@ -104,7 +108,7 @@ export function NavUser() {
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
                             <DropdownMenuItem asChild>
-                                <Link href="https://docs.fairco.in" target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                                <Link href="https://docs.fairco.in" target="_blank" rel="noopener noreferrer" className="cursor-pointer" onClick={handleNavigation}>
                                     <Info className="size-4" />
                                     API Documentation
                                     <ExternalLink className="ml-auto size-3" />

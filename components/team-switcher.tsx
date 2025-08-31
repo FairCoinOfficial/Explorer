@@ -22,8 +22,13 @@ import {
 } from "@/components/ui/sidebar"
 
 export function TeamSwitcher() {
-    const { isMobile } = useSidebar()
+    const { isMobile, setOpenMobile } = useSidebar()
     const { currentNetwork, setNetwork, networkConfig, networks } = useNetwork()
+
+    const handleNetworkSwitch = (network: 'mainnet' | 'testnet') => {
+        setNetwork(network)
+        setOpenMobile(false)
+    }
 
     return (
         <SidebarMenu>
@@ -61,7 +66,7 @@ export function TeamSwitcher() {
                             Networks
                         </DropdownMenuLabel>
                         <DropdownMenuItem
-                            onClick={() => setNetwork('mainnet')}
+                            onClick={() => handleNetworkSwitch('mainnet')}
                             className="cursor-pointer"
                         >
                             <div className="flex size-6 items-center justify-center rounded-sm border bg-white p-0.5">
@@ -78,7 +83,7 @@ export function TeamSwitcher() {
                             <DropdownMenuShortcut>⌘M</DropdownMenuShortcut>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                            onClick={() => setNetwork('testnet')}
+                            onClick={() => handleNetworkSwitch('testnet')}
                             className="cursor-pointer"
                         >
                             <div className="flex size-6 items-center justify-center rounded-sm border bg-white p-0.5">

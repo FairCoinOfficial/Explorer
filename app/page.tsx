@@ -1,4 +1,4 @@
-import { getCachedBlockCount, getCachedBlocks } from '@/lib/cached-rpc';
+import { blockCache } from '@/lib/cache';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,8 +10,8 @@ import { Activity, Blocks, TrendingUp, Clock, Hash, Users, ArrowUpRight } from '
 import Link from 'next/link';
 
 async function getLatestBlocks(limit = 10) {
-  const height = await getCachedBlockCount();
-  const blocks = await getCachedBlocks(limit, 0);
+  const height = await blockCache.getBlockCount('mainnet');
+  const blocks = await blockCache.getRecentBlocks('mainnet', limit);
   return { height, blocks };
 }
 

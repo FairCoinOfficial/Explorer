@@ -15,8 +15,15 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { useSidebar } from "@/components/ui/sidebar"
 
 export function NavProjects() {
+    const { setOpenMobile } = useSidebar()
+
+    const handleNavigation = () => {
+        setOpenMobile(false)
+    }
+
     return (
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
             <SidebarGroupLabel className="flex items-center gap-2">
@@ -32,7 +39,7 @@ export function NavProjects() {
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip="Official FairCoin Website">
-                        <Link href="https://fairco.in" target="_blank" rel="noopener noreferrer">
+                        <Link href="https://fairco.in" target="_blank" rel="noopener noreferrer" onClick={handleNavigation}>
                             <Globe />
                             <span>Official Website</span>
                             <ExternalLink className="ml-auto h-3 w-3" />
@@ -41,7 +48,7 @@ export function NavProjects() {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip="FairCoin GitHub Repository">
-                        <Link href="https://github.com/FairCoinOfficial/" target="_blank" rel="noopener noreferrer">
+                        <Link href="https://github.com/FairCoinOfficial/" target="_blank" rel="noopener noreferrer" onClick={handleNavigation}>
                             <Github />
                             <span>GitHub</span>
                             <ExternalLink className="ml-auto h-3 w-3" />
@@ -49,8 +56,8 @@ export function NavProjects() {
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                        <Link href="https://t.me/FairCoinOfficial" target="_blank" rel="noopener noreferrer">
+                    <SidebarMenuButton asChild tooltip="Join FairCoin Telegram Community">
+                        <Link href="https://t.me/FairCoinOfficial" target="_blank" rel="noopener noreferrer" onClick={handleNavigation}>
                             <MessageCircle />
                             <span>Telegram</span>
                             <ExternalLink className="ml-auto h-3 w-3" />
@@ -58,8 +65,8 @@ export function NavProjects() {
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                        <Link href="https://docs.fairco.in" target="_blank" rel="noopener noreferrer">
+                    <SidebarMenuButton asChild tooltip="FairCoin Documentation">
+                        <Link href="https://docs.fairco.in" target="_blank" rel="noopener noreferrer" onClick={handleNavigation}>
                             <BookOpen />
                             <span>Documentation</span>
                             <ExternalLink className="ml-auto h-3 w-3" />
