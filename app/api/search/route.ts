@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic'
+
 export function GET(req: NextRequest) {
   const q = (req.nextUrl.searchParams.get('q') || '').trim();
   const network = req.nextUrl.searchParams.get('network') || 'mainnet';

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { NetworkType } from '@/lib/rpc'
 import { blockCache } from '@/lib/cache'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
