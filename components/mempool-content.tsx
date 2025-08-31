@@ -64,7 +64,7 @@ export function MempoolContent() {
 
     if (loading) {
         return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <LoadingState message="Loading mempool..." />
             </div>
         )
@@ -72,7 +72,7 @@ export function MempoolContent() {
 
     if (error) {
         return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <EmptyState
                     icon={Database}
                     title="Error loading mempool"
@@ -88,7 +88,7 @@ export function MempoolContent() {
 
     if (!mempoolInfo) {
         return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <div className="flex items-center justify-center h-64">
                     <p className="text-lg text-muted-foreground">No mempool information available</p>
                 </div>
@@ -101,23 +101,26 @@ export function MempoolContent() {
         : 0
 
     return (
-        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+        <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
             {/* Header */}
-            <div className="flex items-center justify-between space-y-2">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Memory Pool</h2>
-                    <p className="text-muted-foreground">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                <div className="space-y-1">
+                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Memory Pool</h2>
+                    <p className="text-sm text-muted-foreground sm:text-base">
                         Unconfirmed transactions waiting to be included in blocks
                     </p>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <NetworkStatus />
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                        <Clock className="w-3 h-3 mr-1" />
-                        Auto-refresh: 10s
-                    </Badge>
-                    <Button onClick={fetchMempool} variant="outline" size="sm">
-                        <RefreshCw className="h-4 w-4" />
+                <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
+                    <div className="flex items-center space-x-2">
+                        <NetworkStatus />
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
+                            <Clock className="w-3 h-3 mr-1" />
+                            Auto-refresh: 10s
+                        </Badge>
+                    </div>
+                    <Button onClick={fetchMempool} variant="outline" size="sm" className="w-full sm:w-auto">
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Refresh
                     </Button>
                 </div>
             </div>

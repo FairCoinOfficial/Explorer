@@ -87,7 +87,7 @@ export function MasternodesContent() {
 
     if (loading) {
         return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <LoadingState message="Loading masternode data..." />
             </div>
         )
@@ -95,7 +95,7 @@ export function MasternodesContent() {
 
     if (error) {
         return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <EmptyState
                     icon={AlertTriangle}
                     title="Error Loading Masternodes"
@@ -114,23 +114,26 @@ export function MasternodesContent() {
     const collateralPerNode = 25000 // 25K FAIR per masternode
 
     return (
-        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+        <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
             {/* Header */}
-            <div className="flex items-center justify-between space-y-2">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Masternodes</h2>
-                    <p className="text-muted-foreground">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                <div className="space-y-1">
+                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Masternodes</h2>
+                    <p className="text-sm text-muted-foreground sm:text-base">
                         FairCoin network masternodes securing the blockchain
                     </p>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <NetworkStatus />
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                        <Shield className="w-3 h-3 mr-1" />
-                        {enabledNodes.length} Active
-                    </Badge>
-                    <Button onClick={fetchMasternodes} variant="outline" size="sm">
-                        <RefreshCw className="h-4 w-4" />
+                <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
+                    <div className="flex items-center space-x-2">
+                        <NetworkStatus />
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
+                            <Shield className="w-3 h-3 mr-1" />
+                            {enabledNodes.length} Active
+                        </Badge>
+                    </div>
+                    <Button onClick={fetchMasternodes} variant="outline" size="sm" className="w-full sm:w-auto">
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Refresh
                     </Button>
                 </div>
             </div>

@@ -64,7 +64,7 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
 
     if (loading) {
         return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <div className="flex items-center justify-center h-64">
                     <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
@@ -74,7 +74,7 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
 
     if (error) {
         return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <div className="flex items-center justify-center h-64">
                     <div className="text-center">
                         <p className="text-lg text-muted-foreground mb-4">Error loading block</p>
@@ -91,7 +91,7 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
 
     if (!block) {
         return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-8">
                 <div className="flex items-center justify-center h-64">
                     <p className="text-lg text-muted-foreground">Block not found</p>
                 </div>
@@ -100,23 +100,26 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
     }
 
     return (
-        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+        <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
             {/* Header */}
-            <div className="flex items-center justify-between space-y-2">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Block #{block.height}</h2>
-                    <p className="text-muted-foreground">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                <div className="space-y-1">
+                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Block #{block.height}</h2>
+                    <p className="text-sm text-muted-foreground sm:text-base">
                         Block details and transactions
                     </p>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <NetworkStatus />
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                        <Database className="w-3 h-3 mr-1" />
-                        {block.tx.length} TX
-                    </Badge>
-                    <Button onClick={fetchBlock} variant="outline" size="sm">
-                        <RefreshCw className="h-4 w-4" />
+                <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
+                    <div className="flex items-center space-x-2">
+                        <NetworkStatus />
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
+                            <Database className="w-3 h-3 mr-1" />
+                            {block.tx.length} TX
+                        </Badge>
+                    </div>
+                    <Button onClick={fetchBlock} variant="outline" size="sm" className="w-full sm:w-auto">
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Refresh
                     </Button>
                 </div>
             </div>

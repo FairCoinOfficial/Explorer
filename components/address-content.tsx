@@ -64,7 +64,7 @@ export function AddressContent({ address }: { address: string }) {
 
     if (loading) {
         return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <LoadingState message="Loading address information..." />
             </div>
         )
@@ -72,7 +72,7 @@ export function AddressContent({ address }: { address: string }) {
 
     if (error) {
         return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <EmptyState
                     icon={AlertTriangle}
                     title="Error Loading Address"
@@ -89,7 +89,7 @@ export function AddressContent({ address }: { address: string }) {
 
     if (!addressInfo) {
         return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <div className="flex items-center justify-center h-64">
                     <p className="text-lg text-muted-foreground">Address information not found</p>
                 </div>
@@ -98,19 +98,20 @@ export function AddressContent({ address }: { address: string }) {
     }
 
     return (
-        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+        <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
             {/* Header */}
-            <div className="flex items-center justify-between space-y-2">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Address Details</h2>
-                    <p className="text-muted-foreground">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                <div className="space-y-1">
+                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Address Details</h2>
+                    <p className="text-sm text-muted-foreground sm:text-base">
                         Address information and transaction history
                     </p>
                 </div>
                 <div className="flex items-center space-x-2">
                     <NetworkStatus />
-                    <Button onClick={fetchAddressInfo} variant="outline" size="sm">
-                        <RefreshCw className="h-4 w-4" />
+                    <Button onClick={fetchAddressInfo} variant="outline" size="sm" className="w-full sm:w-auto">
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Refresh
                     </Button>
                 </div>
             </div>

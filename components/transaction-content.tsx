@@ -103,7 +103,7 @@ export function TransactionContent({ txid }: { txid: string }) {
 
     if (loading) {
         return (
-            <div className="flex-1 space-y-4 p-3 pt-4 md:p-6 lg:p-8">
+            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <LoadingState message="Loading transaction details..." />
             </div>
         )
@@ -111,7 +111,7 @@ export function TransactionContent({ txid }: { txid: string }) {
 
     if (isBlockHashError) {
         return (
-            <div className="flex-1 space-y-4 p-3 pt-4 md:p-6 lg:p-8">
+            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Transaction Not Found</h2>
@@ -162,7 +162,7 @@ export function TransactionContent({ txid }: { txid: string }) {
 
     if (error) {
         return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <EmptyState
                     icon={AlertTriangle}
                     title="Error Loading Transaction"
@@ -179,7 +179,7 @@ export function TransactionContent({ txid }: { txid: string }) {
 
     if (!transaction) {
         return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <div className="flex items-center justify-center h-64">
                     <p className="text-lg text-muted-foreground">Transaction not found</p>
                 </div>
@@ -192,12 +192,12 @@ export function TransactionContent({ txid }: { txid: string }) {
     const fee = totalInput - totalOutput
 
     return (
-        <div className="flex-1 space-y-4 p-3 pt-4 md:p-6 lg:p-8">
+        <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
             {/* Header */}
-            <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
-                <div>
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                <div className="space-y-1">
                     <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Transaction Details</h2>
-                    <p className="text-muted-foreground text-sm sm:text-base">
+                    <p className="text-sm text-muted-foreground sm:text-base">
                         Transaction information on the FairCoin blockchain
                     </p>
                 </div>
