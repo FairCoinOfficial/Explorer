@@ -1,5 +1,6 @@
 "use client"
 
+import Link from 'next/link'
 import {
     Home,
     Search,
@@ -28,10 +29,10 @@ export function NavMain() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild>
-                            <a href="/">
+                            <Link href="/">
                                 <Home />
                                 <span>Home</span>
-                            </a>
+                            </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
@@ -52,10 +53,10 @@ export function NavMain() {
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild>
-                            <a href="/tx">
+                            <Link href="/tx">
                                 <Receipt />
                                 <span>Transactions</span>
-                            </a>
+                            </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>

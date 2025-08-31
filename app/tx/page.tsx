@@ -2,6 +2,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Hash, Search, Home } from 'lucide-react';
+import Link from 'next/link';
 
 export default function TxIndex() {
   return (
@@ -49,10 +50,10 @@ export default function TxIndex() {
               Or browse recent transactions on the dashboard
             </div>
             <Button variant="outline" className="mt-4" asChild>
-              <a href="/">
+              <Link href="/">
                 <Home className="w-4 h-4 mr-2" />
                 Go to Dashboard
-              </a>
+              </Link>
             </Button>
           </div>
         </CardContent>
