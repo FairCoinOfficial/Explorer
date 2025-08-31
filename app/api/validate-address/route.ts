@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { rpcWithNetwork, NetworkType } from '@/lib/rpc'
+import { NetworkType } from '@/lib/rpc'
+import { blockCache } from '@/lib/cache'
 
 export async function GET(request: NextRequest) {
     try {
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        const validation = await rpcWithNetwork('validateaddress', [address], network as NetworkType)
+        const validation = await blockCache.validateAddress(address, network as NetworkType)
         
         return NextResponse.json(validation)
     } catch (error) {

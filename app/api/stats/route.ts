@@ -1,38 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { rpcWithNetwork, NetworkType } from '@/lib/rpc'
+import { NetworkType } from '@/lib/rpc'
+import { blockCache } from '@/lib/cache'
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const network = (searchParams.get('network') || 'mainnet') as NetworkType
     
-    // Fetch various network statistics
+    // Fetch various network statistics using cache
     const [
       blockHeight,
       blockchainInfo,
       miningInfo,
       mempoolInfo,
       networkInfo,
-      masternodeList,
-      stakingInfo
+      masternodeList
     ] = await Promise.all([
-      rpcWithNetwork<number>('getblockcount', [], network),
-      rpcWithNetwork<any>('getblockchaininfo', [], network).catch(() => null),
-      rpcWithNetwork<any>('getmininginfo', [], network).catch(() => null),
-      rpcWithNetwork<any>('getmempoolinfo', [], network).catch(() => null),
-      rpcWithNetwork<any>('getnetworkinfo', [], network).catch(() => null),
-      rpcWithNetwork<any>('masternodelist', [], network).catch(() => ({})),
-      rpcWithNetwork<any>('getstakinginfo', [], network).catch(() => ({}))
+      blockCache.getBlockCount(network),
+      blockCache.get<any>('getblockchaininfo', [], { network, ttl: 300 }).catch(() => null),
+      blockCache.getMiningInfo(network).catch(() => null),
+      blockCache.getMempoolInfo(network).catch(() => null),
+      blockCache.getNetworkInfo(network).catch(() => null),
+      blockCache.getMasternodeList(network).catch(() => ({}))
     ])
 
-    // Get latest block info
-    const latestBlockHash = await rpcWithNetwork<string>('getblockhash', [blockHeight], network)
-    const latestBlock = await rpcWithNetwork<any>('getblock', [latestBlockHash, true], network)
+    // Get latest block info from cache
+    const latestBlock = await blockCache.getBlock(blockHeight, network, true)
 
     // FairCoin-specific calculations
-    const totalSupply = blockchainInfo?.moneysupply || 0
+    const totalSupply = blockchainInfo?.moneysupply || 53193831 // Max supply if not available
     const circulatingSupply = totalSupply * 0.9 // 90% premine is circulating
-    const masternodeCount = Object.keys(masternodeList).length
+    const masternodeCount = typeof masternodeList === 'object' ? Object.keys(masternodeList).length : 0
     const avgBlockTime = 120 // FairCoin target block time (2 minutes)
     
     // Determine current phase (PoW blocks 1-25000, PoS 25001+)
@@ -45,12 +43,8 @@ export async function GET(request: NextRequest) {
       : 0 // PoS doesn't have traditional hashrate
 
     // Staking information (for PoS phase)
-    const stakingRewards = stakingInfo?.expectedtime 
-      ? (365 * 24 * 3600) / stakingInfo.expectedtime * 100 
-      : 5.0 // Default estimate
-    const stakePercentage = stakingInfo?.netstakeweight && totalSupply > 0
-      ? (stakingInfo.netstakeweight / totalSupply) * 100 
-      : 0
+    const stakingRewards = 5.0 // FairCoin PoS rewards estimate
+    const stakePercentage = 0 // Will need getstakinginfo RPC command
 
     // Calculate some derived statistics
     const stats = {
@@ -62,7 +56,7 @@ export async function GET(request: NextRequest) {
       avgBlockTime,
       memPoolSize: mempoolInfo?.size || 0,
       totalTransactions: blockHeight * (latestBlock?.nTx || 1), // Better estimate based on actual transactions
-      networkWeight: stakingInfo?.netstakeweight || 0,
+      networkWeight: 0, // Will need getstakinginfo
       avgTransactionsPerBlock: latestBlock?.nTx || 1,
       masternodeCount,
       stakingRewards,
@@ -71,7 +65,7 @@ export async function GET(request: NextRequest) {
       phase,
       lastBlock: {
         height: latestBlock?.height || blockHeight,
-        hash: latestBlock?.hash || latestBlockHash,
+        hash: latestBlock?.hash || '',
         time: latestBlock?.time || Date.now() / 1000,
         size: latestBlock?.size || 0
       }

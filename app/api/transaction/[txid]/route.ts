@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { rpcWithNetwork, NetworkType } from '@/lib/rpc'
+import { NetworkType } from '@/lib/rpc'
+import { blockCache } from '@/lib/cache'
 
 export async function GET(
   request: NextRequest,
@@ -10,8 +11,8 @@ export async function GET(
     const network = (searchParams.get('network') || 'mainnet') as NetworkType
     const { txid } = params
     
-    // Get transaction details
-    const transaction = await rpcWithNetwork<any>('getrawtransaction', [txid, 1], network)
+    // Use cached transaction retrieval
+    const transaction = await blockCache.getTransaction(txid, network, true)
     
     return NextResponse.json({ 
       transaction,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { rpcWithNetwork, NetworkType } from '@/lib/rpc'
+import { NetworkType } from '@/lib/rpc'
+import { blockCache } from '@/lib/cache'
 
 export async function GET(
   request: NextRequest,
@@ -10,16 +11,8 @@ export async function GET(
     const network = (searchParams.get('network') || 'mainnet') as NetworkType
     const { hashOrHeight } = params
     
-    let blockHash = hashOrHeight
-    
-    // If it's a number, get the block hash first
-    if (/^\d+$/.test(hashOrHeight)) {
-      const height = parseInt(hashOrHeight, 10)
-      blockHash = await rpcWithNetwork<string>('getblockhash', [height], network)
-    }
-    
-    // Get block details
-    const block = await rpcWithNetwork<any>('getblock', [blockHash, true], network)
+    // Use cached block retrieval
+    const block = await blockCache.getBlock(hashOrHeight, network, true)
     
     return NextResponse.json({ 
       block,

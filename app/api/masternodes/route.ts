@@ -1,22 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { rpcWithNetwork, NetworkType } from '@/lib/rpc'
+import { NetworkType } from '@/lib/rpc'
+import { blockCache } from '@/lib/cache'
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const network = (searchParams.get('network') || 'mainnet') as NetworkType
     
-    // Get masternode list and related information
+    // Get masternode list and related information using cache
     const [
       masternodeList,
-      masternodeCount,
-      stakingInfo,
       blockchainInfo
     ] = await Promise.all([
-      rpcWithNetwork<any>('masternodelist', ['full'], network).catch(() => ({})),
-      rpcWithNetwork<any>('masternodecount', [], network).catch(() => ({ total: 0, enabled: 0 })),
-      rpcWithNetwork<any>('getstakinginfo', [], network).catch(() => ({})),
-      rpcWithNetwork<any>('getblockchaininfo', [], network).catch(() => ({ moneysupply: 0 }))
+      blockCache.getMasternodeList(network, 'full').catch(() => ({})),
+      blockCache.get<any>('getblockchaininfo', [], { network, ttl: 300 }).catch(() => ({ moneysupply: 53193831 }))
     ])
 
     // Process masternode data
@@ -34,7 +31,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Calculate statistics
-    const totalSupply = blockchainInfo.moneysupply || 0
+    const totalSupply = blockchainInfo.moneysupply || 53193831
     const collateralPerMasternode = 25000 // FairCoin masternode collateral
     const totalCollateral = masternodes.length * collateralPerMasternode
     const collateralPercentage = totalSupply > 0 ? (totalCollateral / totalSupply) * 100 : 0

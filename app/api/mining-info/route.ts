@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { rpcWithNetwork, NetworkType } from '@/lib/rpc'
+import { NetworkType } from '@/lib/rpc'
+import { blockCache } from '@/lib/cache'
 
 export async function GET(request: NextRequest) {
     try {
         const searchParams = request.nextUrl.searchParams
         const network = searchParams.get('network') || 'mainnet'
 
-        const miningInfo = await rpcWithNetwork('getmininginfo', [], network as NetworkType)
+        const miningInfo = await blockCache.getMiningInfo(network as NetworkType)
         
         return NextResponse.json(miningInfo)
     } catch (error) {
