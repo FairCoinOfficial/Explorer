@@ -53,9 +53,12 @@ export function BlocksContent() {
 
     if (loading) {
         return (
-            <div className="flex-1 space-y-4 p-3 pt-4 md:p-6 lg:p-8">
+            <div className="flex-1 space-y-4 p-2 pt-3 md:p-6 lg:p-8">
                 <div className="flex items-center justify-center h-64">
-                    <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <div className="text-center">
+                        <RefreshCw className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+                        <p className="text-sm text-muted-foreground">Loading blocks...</p>
+                    </div>
                 </div>
             </div>
         )
@@ -63,12 +66,15 @@ export function BlocksContent() {
 
     if (error) {
         return (
-            <div className="flex-1 space-y-4 p-3 pt-4 md:p-6 lg:p-8">
+            <div className="flex-1 space-y-4 p-2 pt-3 md:p-6 lg:p-8">
                 <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                        <p className="text-lg text-muted-foreground mb-4">Error loading blocks</p>
+                    <div className="text-center max-w-sm mx-auto">
+                        <div className="text-red-500 mb-4">
+                            <Database className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        </div>
+                        <p className="text-lg font-medium text-muted-foreground mb-2">Error loading blocks</p>
                         <p className="text-sm text-red-500 mb-4">{error}</p>
-                        <Button onClick={fetchBlocks} variant="outline">
+                        <Button onClick={fetchBlocks} variant="outline" className="w-full sm:w-auto">
                             <RefreshCw className="h-4 w-4 mr-2" />
                             Try Again
                         </Button>
@@ -79,18 +85,18 @@ export function BlocksContent() {
     }
 
     return (
-        <div className="flex-1 space-y-4 p-3 pt-4 md:p-6 lg:p-8">
+        <div className="flex-1 space-y-4 p-2 pt-3 md:p-6 lg:p-8">
             {/* Header */}
             <div className="flex flex-col space-y-3 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
                 <div className="flex-1">
-                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Recent Blocks</h2>
+                    <h2 className="text-xl font-bold tracking-tight sm:text-2xl lg:text-3xl">Recent Blocks</h2>
                     <p className="text-muted-foreground text-sm sm:text-base mt-1">
                         Latest blocks on the FairCoin blockchain
                     </p>
                 </div>
                 <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0 sm:flex-shrink-0">
                     <NetworkStatus />
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 self-start sm:self-auto">
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 self-start sm:self-auto text-xs sm:text-sm">
                         <Database className="w-3 h-3 mr-1" />
                         <span className="hidden sm:inline">Current: </span>{height?.toLocaleString() ?? 'N/A'}
                     </Badge>
@@ -101,11 +107,11 @@ export function BlocksContent() {
             </div>
 
             {/* Stats */}
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                <Card>
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                <Card className="hover:shadow-md transition-shadow">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Current Height</CardTitle>
-                        <Hash className="h-4 w-4 text-muted-foreground" />
+                        <Hash className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-xl font-bold sm:text-2xl">{height?.toLocaleString() ?? 'N/A'}</div>
@@ -113,10 +119,10 @@ export function BlocksContent() {
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="hover:shadow-md transition-shadow">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Blocks Shown</CardTitle>
-                        <Database className="h-4 w-4 text-muted-foreground" />
+                        <Database className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-xl font-bold sm:text-2xl">{blocks.length}</div>
@@ -124,64 +130,73 @@ export function BlocksContent() {
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="hover:shadow-md transition-shadow sm:col-span-2 lg:col-span-1">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Network</CardTitle>
-                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <Clock className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-xl font-bold">{currentNetwork}</div>
+                        <div className="text-lg font-bold sm:text-xl">{currentNetwork}</div>
                         <p className="text-xs text-muted-foreground">Active network</p>
                     </CardContent>
                 </Card>
             </div>
 
             {/* Blocks Table */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Database className="h-5 w-5" />
+            <Card className="overflow-hidden">
+                <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                        <Database className="h-5 w-5 text-primary" />
                         Recent Blocks
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0 sm:p-6">
                     {/* Mobile Card View */}
-                    <div className="block sm:hidden space-y-4">
+                    <div className="block sm:hidden p-4 space-y-3">
                         {blocks.map((block) => (
-                            <div key={block.height} className="border rounded-lg p-4 space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <div className="font-medium">
-                                        <Link
-                                            href={`/block/${block.height}`}
-                                            className="hover:underline"
-                                        >
-                                            Block #{block.height.toLocaleString()}
-                                        </Link>
+                            <Card key={block.height} className="hover:shadow-md transition-shadow">
+                                <CardContent className="p-4">
+                                    <div className="flex items-start justify-between mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <Hash className="h-4 w-4 text-primary" />
+                                            <Link
+                                                href={`/block/${block.height}`}
+                                                className="font-semibold text-lg hover:underline"
+                                            >
+                                                #{block.height.toLocaleString()}
+                                            </Link>
+                                        </div>
+                                        <Badge variant="secondary" className="text-xs font-medium">
+                                            {block.nTx?.toLocaleString() ?? block.tx?.length?.toLocaleString() ?? 0} TX
+                                        </Badge>
                                     </div>
-                                    <Badge variant="secondary" className="text-xs">
-                                        {block.nTx?.toLocaleString() ?? block.tx?.length?.toLocaleString() ?? 0} TX
-                                    </Badge>
-                                </div>
-                                <div className="space-y-2">
-                                    <div>
-                                        <span className="text-xs text-muted-foreground">Hash: </span>
-                                        <Link
-                                            href={`/block/${block.hash}`}
-                                            className="font-mono text-sm hover:underline"
-                                        >
-                                            {block.hash.substring(0, 12)}...
-                                        </Link>
+
+                                    <div className="space-y-2 mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-muted-foreground font-medium">Hash:</span>
+                                            <Link
+                                                href={`/block/${block.hash}`}
+                                                className="font-mono text-sm hover:underline truncate flex-1"
+                                            >
+                                                {block.hash.substring(0, 16)}...
+                                            </Link>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-muted-foreground">
-                                            {new Date(block.time * 1000).toLocaleDateString()}
-                                        </span>
-                                        <span className="text-muted-foreground">
-                                            {block.size ? `${(block.size / 1024).toFixed(1)} KB` : 'N/A'}
-                                        </span>
+
+                                    <div className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-1 text-muted-foreground">
+                                            <Clock className="h-3 w-3" />
+                                            <span>{new Date(block.time * 1000).toLocaleDateString()}</span>
+                                        </div>
+                                        {block.size && (
+                                            <div className="flex items-center gap-1 text-muted-foreground">
+                                                <Database className="h-3 w-3" />
+                                                <span>{(block.size / 1024).toFixed(1)} KB</span>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            </div>
+                                </CardContent>
+                            </Card>
                         ))}
                     </div>
 
@@ -190,11 +205,11 @@ export function BlocksContent() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Height</TableHead>
-                                    <TableHead>Hash</TableHead>
-                                    <TableHead>Time</TableHead>
-                                    <TableHead className="hidden sm:table-cell">Transactions</TableHead>
-                                    <TableHead className="hidden md:table-cell">Size</TableHead>
+                                    <TableHead className="w-[100px]">Height</TableHead>
+                                    <TableHead className="min-w-[200px]">Hash</TableHead>
+                                    <TableHead className="w-[160px]">Time</TableHead>
+                                    <TableHead className="w-[120px] hidden md:table-cell">Transactions</TableHead>
+                                    <TableHead className="w-[100px] hidden lg:table-cell">Size</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -203,7 +218,7 @@ export function BlocksContent() {
                                         <TableCell className="font-medium">
                                             <Link
                                                 href={`/block/${block.height}`}
-                                                className="hover:underline"
+                                                className="hover:underline text-primary"
                                             >
                                                 {block.height.toLocaleString()}
                                             </Link>
@@ -213,24 +228,25 @@ export function BlocksContent() {
                                                 href={`/block/${block.hash}`}
                                                 className="hover:underline"
                                             >
-                                                <span className="hidden sm:inline">{block.hash.substring(0, 16)}...</span>
-                                                <span className="sm:hidden">{block.hash.substring(0, 8)}...</span>
+                                                <span className="hidden lg:inline">{block.hash.substring(0, 24)}...</span>
+                                                <span className="hidden md:inline lg:hidden">{block.hash.substring(0, 16)}...</span>
+                                                <span className="md:hidden">{block.hash.substring(0, 12)}...</span>
                                             </Link>
                                         </TableCell>
-                                        <TableCell className="text-sm">
-                                            <span className="hidden sm:inline">
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            <span className="hidden md:inline">
                                                 {new Date(block.time * 1000).toLocaleString()}
                                             </span>
-                                            <span className="sm:hidden">
+                                            <span className="md:hidden">
                                                 {new Date(block.time * 1000).toLocaleDateString()}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="hidden sm:table-cell">
-                                            <Badge variant="secondary" className="text-xs">
+                                        <TableCell className="hidden md:table-cell">
+                                            <Badge variant="secondary" className="text-xs font-medium">
                                                 {block.nTx?.toLocaleString() ?? block.tx?.length?.toLocaleString() ?? 0}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell className="hidden md:table-cell text-sm">
+                                        <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                                             {block.size ? `${(block.size / 1024).toFixed(1)} KB` : 'N/A'}
                                         </TableCell>
                                     </TableRow>
@@ -242,11 +258,12 @@ export function BlocksContent() {
             </Card>
 
             {/* Navigation */}
-            <div className="flex justify-center pt-4">
-                <Button asChild variant="outline" className="w-full sm:w-auto">
+            <div className="flex justify-center pt-2 sm:pt-4">
+                <Button asChild variant="outline" className="w-full sm:w-auto px-6 py-2">
                     <Link href="/">
                         <Home className="h-4 w-4 mr-2" />
-                        Back to Home
+                        <span className="hidden xs:inline">Back to Home</span>
+                        <span className="xs:hidden">Home</span>
                     </Link>
                 </Button>
             </div>
