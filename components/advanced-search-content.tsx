@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from 'next-intl'
 import { useNetwork } from "@/contexts/network-context"
 import { Search, Hash, Clock, Wallet, FileText, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,6 +12,8 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 
 export function AdvancedSearchContent() {
+    const t = useTranslations('search')
+    const tCommon = useTranslations('common')
     const { currentNetwork } = useNetwork()
     const router = useRouter()
     const [searchQuery, setSearchQuery] = useState("")
@@ -43,29 +46,29 @@ export function AdvancedSearchContent() {
     const searchExamples = [
         {
             icon: Hash,
-            title: "Block Hash",
-            description: "Search by 64-character hexadecimal block hash",
+            title: t('blockHash'),
+            description: t('blockHashDescription'),
             example: "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
             color: "text-blue-600"
         },
         {
             icon: Clock,
-            title: "Block Height",
-            description: "Search by numeric block height",
+            title: t('blockHeight'),
+            description: t('blockHeightDescription'),
             example: "680000",
             color: "text-green-600"
         },
         {
             icon: FileText,
-            title: "Transaction ID",
-            description: "Search by 64-character transaction hash",
+            title: t('transactionId'),
+            description: t('transactionIdDescription'),
             example: "f4184fc596403b9d638783cf57adfe4c75c605f6356fbc91338530e9831e9e16",
             color: "text-purple-600"
         },
         {
             icon: Wallet,
-            title: "Address",
-            description: "Search by FairCoin address",
+            title: t('address'),
+            description: t('addressDescription'),
             example: "f1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0",
             color: "text-orange-600"
         }
@@ -73,20 +76,20 @@ export function AdvancedSearchContent() {
 
     const quickActions = [
         {
-            title: "Latest Blocks",
-            description: "View recent blocks",
+            title: t('latestBlocks'),
+            description: t('viewRecentBlocks'),
             action: () => router.push('/blocks'),
             icon: Hash
         },
         {
-            title: "Network Stats",
-            description: "View network statistics",
+            title: t('networkStats'),
+            description: t('viewNetworkStats'),
             action: () => router.push('/stats'),
             icon: TrendingUp
         },
         {
-            title: "Masternodes",
-            description: "View masternode information",
+            title: t('masternodes'),
+            description: t('viewMasternodesInfo'),
             action: () => router.push('/masternodes'),
             icon: Wallet
         }
@@ -96,19 +99,19 @@ export function AdvancedSearchContent() {
         <div className="space-y-6">
             <div className="flex items-center gap-2">
                 <Search className="h-5 w-5" />
-                <h1 className="text-2xl font-bold">Advanced Search</h1>
+                <h1 className="text-2xl font-bold">{t('title')}</h1>
                 <Badge variant="outline">{currentNetwork.toUpperCase()}</Badge>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Search the FairCoin Blockchain</CardTitle>
+                    <CardTitle>{t('searchBlockchain')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex gap-2">
                         <Input
                             type="text"
-                            placeholder="Enter block hash, height, transaction ID, or address..."
+                            placeholder={t('searchPlaceholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onKeyPress={handleKeyPress}
@@ -119,17 +122,17 @@ export function AdvancedSearchContent() {
                             disabled={!searchQuery.trim() || isSearching}
                             className="shrink-0"
                         >
-                            {isSearching ? "Searching..." : "Search"}
+                            {isSearching ? t('searching') : tCommon('search')}
                         </Button>
                     </div>
 
                     <div className="text-sm text-muted-foreground">
-                        <p>Search supports:</p>
+                        <p>{t('searchSupports')}:</p>
                         <ul className="mt-1 ml-4 space-y-1">
-                            <li>• Block heights (numbers like 680000)</li>
-                            <li>• Block hashes (64-character hex strings)</li>
-                            <li>• Transaction IDs (64-character hex strings)</li>
-                            <li>• FairCoin addresses (starting with f, F, m, n, or 2)</li>
+                            <li>• {t('supportBlockHeights')}</li>
+                            <li>• {t('supportBlockHashes')}</li>
+                            <li>• {t('supportTransactionIds')}</li>
+                            <li>• {t('supportAddresses')}</li>
                         </ul>
                     </div>
                 </CardContent>
@@ -156,7 +159,7 @@ export function AdvancedSearchContent() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Quick Actions</CardTitle>
+                    <CardTitle>{t('quickActions')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid gap-3 md:grid-cols-3">
@@ -182,26 +185,26 @@ export function AdvancedSearchContent() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Search Tips</CardTitle>
+                    <CardTitle>{t('searchTips')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid gap-4 md:grid-cols-2">
                         <div>
-                            <h4 className="font-semibold mb-2">Format Recognition</h4>
+                            <h4 className="font-semibold mb-2">{t('formatRecognition')}</h4>
                             <ul className="text-sm text-muted-foreground space-y-1">
-                                <li>• Numbers: Treated as block heights</li>
-                                <li>• 64-char hex: Block hash or transaction ID</li>
-                                <li>• Addresses: Automatically detected by prefix</li>
-                                <li>• Case insensitive for hex values</li>
+                                <li>• {t('formatNumbers')}</li>
+                                <li>• {t('formatHex')}</li>
+                                <li>• {t('formatAddresses')}</li>
+                                <li>• {t('formatCaseInsensitive')}</li>
                             </ul>
                         </div>
                         <div>
-                            <h4 className="font-semibold mb-2">Network Awareness</h4>
+                            <h4 className="font-semibold mb-2">{t('networkAwareness')}</h4>
                             <ul className="text-sm text-muted-foreground space-y-1">
-                                <li>• Searches are network-specific</li>
-                                <li>• Switch networks for different data</li>
-                                <li>• Address validation includes network check</li>
-                                <li>• Testnet and mainnet have separate indices</li>
+                                <li>• {t('networkSpecific')}</li>
+                                <li>• {t('networkSwitch')}</li>
+                                <li>• {t('networkAddressValidation')}</li>
+                                <li>• {t('networkSeparateIndices')}</li>
                             </ul>
                         </div>
                     </div>
