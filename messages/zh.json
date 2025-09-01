@@ -330,5 +330,33 @@
     "totalFees": "总费用",
     "averageFee": "平均费用",
     "empty": "内存池为空"
+  },
+  "networkStatus": {
+    "title": "网络状态",
+    "loading": "正在加载网络状态...",
+    "unknown": "未知",
+    "connectionStatus": "连接状态",
+    "online": "在线",
+    "offline": "离线",
+    "latency": "延迟",
+    "lastUpdate": "最后更新",
+    "blockHeight": "区块高度",
+    "currentBlockHeight": "当前区块高度",
+    "connections": "连接数",
+    "peerConnections": "节点连接",
+    "difficulty": "难度",
+    "networkDifficulty": "网络难度",
+    "hashrate": "算力",
+    "networkHashrate": "网络算力",
+    "lastBlock": "最新区块",
+    "lastBlockTime": "最新区块时间",
+    "networkInformation": "网络信息",
+    "nodeInformation": "节点信息",
+    "version": "版本",
+    "mempool": "内存池",
+    "transactions": "交易",
+    "statusIndicators": "状态指示器",
+    "nodeConnection": "节点连接",
+    "blockchainSync": "区块链同步"
   }
 }

@@ -420,5 +420,33 @@
     "fair": "FAIR",
     "satoshi": "сатоши",
     "satoshis": "сатоши"
+  },
+  "networkStatus": {
+    "title": "Состояние Сети",
+    "loading": "Загрузка состояния сети...",
+    "unknown": "Неизвестно",
+    "connectionStatus": "Состояние Подключения",
+    "online": "В сети",
+    "offline": "Не в сети",
+    "latency": "Задержка",
+    "lastUpdate": "Последнее обновление",
+    "blockHeight": "Высота Блока",
+    "currentBlockHeight": "Текущая высота блока",
+    "connections": "Подключения",
+    "peerConnections": "Подключения узлов",
+    "difficulty": "Сложность",
+    "networkDifficulty": "Сложность сети",
+    "hashrate": "Хешрейт",
+    "networkHashrate": "Хешрейт сети",
+    "lastBlock": "Последний Блок",
+    "lastBlockTime": "Время последнего блока",
+    "networkInformation": "Информация о Сети",
+    "nodeInformation": "Информация об Узле",
+    "version": "Версия",
+    "mempool": "Мемпул",
+    "transactions": "транзакции",
+    "statusIndicators": "Индикаторы Состояния",
+    "nodeConnection": "Подключение Узла",
+    "blockchainSync": "Синхронизация Блокчейна"
   }
 }

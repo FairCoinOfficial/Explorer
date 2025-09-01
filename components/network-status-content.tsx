@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useTranslations } from 'next-intl'
 import { useNetwork } from "@/contexts/network-context"
 import { Activity, Wifi, WifiOff, CheckCircle, XCircle, Clock, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,6 +21,8 @@ interface NetworkStatus {
 }
 
 export function NetworkStatusContent() {
+    const t = useTranslations('networkStatus')
+    const tCommon = useTranslations('common')
     const { currentNetwork } = useNetwork()
     const [status, setStatus] = useState<NetworkStatus | null>(null)
     const [isLoading, setIsLoading] = useState(true)
@@ -60,7 +63,7 @@ export function NetworkStatusContent() {
                     hashrate: miningData.networkhashps || miningData.hashrate || "0 H/s",
                     lastBlockTime: Date.now(), // Will get from getblock later
                     mempool: 0, // Will get from getmempoolinfo
-                    version: networkData.subversion || networkData.version || "Unknown"
+                    version: networkData.subversion || networkData.version || t('unknown')
                 })
             } else {
                 setStatus({
@@ -72,7 +75,7 @@ export function NetworkStatusContent() {
                     hashrate: "0 H/s",
                     lastBlockTime: 0,
                     mempool: 0,
-                    version: "Unknown"
+                    version: t('unknown')
                 })
             }
         } catch (error) {
@@ -86,7 +89,7 @@ export function NetworkStatusContent() {
                 hashrate: "0 H/s",
                 lastBlockTime: 0,
                 mempool: 0,
-                version: "Unknown"
+                version: t('unknown')
             })
         } finally {
             setIsLoading(false)
@@ -116,7 +119,7 @@ export function NetworkStatusContent() {
     }
 
     const formatTime = (timestamp: number) => {
-        if (!timestamp) return "Unknown"
+        if (!timestamp) return t('unknown')
         const date = new Date(timestamp * 1000)
         return date.toLocaleString()
     }
@@ -137,12 +140,12 @@ export function NetworkStatusContent() {
             <div className="space-y-6">
                 <div className="flex items-center gap-2">
                     <Activity className="h-5 w-5" />
-                    <h1 className="text-2xl font-bold">Network Status</h1>
+                    <h1 className="text-2xl font-bold">{t('title')}</h1>
                     <Badge variant="outline">{currentNetwork.toUpperCase()}</Badge>
                 </div>
                 <div className="text-center py-8">
                     <Activity className="h-8 w-8 mx-auto mb-2 opacity-50 animate-spin" />
-                    <p className="text-muted-foreground">Loading network status...</p>
+                    <p className="text-muted-foreground">{t('loading')}</p>
                 </div>
             </div>
         )
@@ -152,7 +155,7 @@ export function NetworkStatusContent() {
         <div className="space-y-6">
             <div className="flex items-center gap-2">
                 <Activity className="h-5 w-5" />
-                <h1 className="text-2xl font-bold">Network Status</h1>
+                <h1 className="text-2xl font-bold">{t('title')}</h1>
                 <Badge variant="outline">{currentNetwork.toUpperCase()}</Badge>
             </div>
 
@@ -165,19 +168,19 @@ export function NetworkStatusContent() {
                             ) : (
                                 <WifiOff className="h-4 w-4 text-red-600" />
                             )}
-                            Connection Status
+                            {t('connectionStatus')}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
                             <Badge className={getStatusColor(status?.isOnline || false)}>
-                                {status?.isOnline ? "Online" : "Offline"}
+                                {status?.isOnline ? t('online') : t('offline')}
                             </Badge>
                             <div className="text-sm text-muted-foreground">
                                 <p className={getLatencyColor(status?.latency || 0)}>
-                                    Latency: {status?.latency || 0}ms
+                                    {t('latency')}: {status?.latency || 0}ms
                                 </p>
-                                <p>Last update: {lastUpdate.toLocaleTimeString()}</p>
+                                <p>{t('lastUpdate')}: {lastUpdate.toLocaleTimeString()}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -187,13 +190,13 @@ export function NetworkStatusContent() {
                     <CardHeader className="pb-2">
                         <CardTitle className="flex items-center gap-2 text-base">
                             <CheckCircle className="h-4 w-4" />
-                            Block Height
+                            {t('blockHeight')}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
                             <p className="text-2xl font-bold">{status?.blockHeight?.toLocaleString() || 0}</p>
-                            <p className="text-sm text-muted-foreground">Current block height</p>
+                            <p className="text-sm text-muted-foreground">{t('currentBlockHeight')}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -202,13 +205,13 @@ export function NetworkStatusContent() {
                     <CardHeader className="pb-2">
                         <CardTitle className="flex items-center gap-2 text-base">
                             <Activity className="h-4 w-4" />
-                            Connections
+                            {t('connections')}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
                             <p className="text-2xl font-bold">{status?.connections || 0}</p>
-                            <p className="text-sm text-muted-foreground">Peer connections</p>
+                            <p className="text-sm text-muted-foreground">{t('peerConnections')}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -217,13 +220,13 @@ export function NetworkStatusContent() {
                     <CardHeader className="pb-2">
                         <CardTitle className="flex items-center gap-2 text-base">
                             <TrendingUp className="h-4 w-4" />
-                            Difficulty
+                            {t('difficulty')}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
                             <p className="text-xl font-bold">{status?.difficulty?.toExponential(2) || "0"}</p>
-                            <p className="text-sm text-muted-foreground">Network difficulty</p>
+                            <p className="text-sm text-muted-foreground">{t('networkDifficulty')}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -232,13 +235,13 @@ export function NetworkStatusContent() {
                     <CardHeader className="pb-2">
                         <CardTitle className="flex items-center gap-2 text-base">
                             <Activity className="h-4 w-4" />
-                            Hashrate
+                            {t('hashrate')}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
                             <p className="text-xl font-bold">{formatHashrate(status?.hashrate || "0")}</p>
-                            <p className="text-sm text-muted-foreground">Network hashrate</p>
+                            <p className="text-sm text-muted-foreground">{t('networkHashrate')}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -247,13 +250,13 @@ export function NetworkStatusContent() {
                     <CardHeader className="pb-2">
                         <CardTitle className="flex items-center gap-2 text-base">
                             <Clock className="h-4 w-4" />
-                            Last Block
+                            {t('lastBlock')}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
                             <p className="text-sm font-mono">{formatTime(status?.lastBlockTime || 0)}</p>
-                            <p className="text-sm text-muted-foreground">Last block time</p>
+                            <p className="text-sm text-muted-foreground">{t('lastBlockTime')}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -261,29 +264,29 @@ export function NetworkStatusContent() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Network Information</CardTitle>
+                    <CardTitle>{t('networkInformation')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
-                            <h4 className="font-semibold">Node Information</h4>
+                            <h4 className="font-semibold">{t('nodeInformation')}</h4>
                             <div className="text-sm space-y-1">
                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Version:</span>
-                                    <span className="font-mono">{status?.version || "Unknown"}</span>
+                                    <span className="text-muted-foreground">{t('version')}:</span>
+                                    <span className="font-mono">{status?.version || t('unknown')}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Network:</span>
+                                    <span className="text-muted-foreground">{tCommon('network')}:</span>
                                     <Badge variant="outline">{currentNetwork}</Badge>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Mempool:</span>
-                                    <span>{status?.mempool || 0} transactions</span>
+                                    <span className="text-muted-foreground">{t('mempool')}:</span>
+                                    <span>{status?.mempool || 0} {t('transactions')}</span>
                                 </div>
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <h4 className="font-semibold">Status Indicators</h4>
+                            <h4 className="font-semibold">{t('statusIndicators')}</h4>
                             <div className="text-sm space-y-1">
                                 <div className="flex items-center gap-2">
                                     {status?.isOnline ? (
@@ -291,7 +294,7 @@ export function NetworkStatusContent() {
                                     ) : (
                                         <XCircle className="h-3 w-3 text-red-600" />
                                     )}
-                                    <span>Node Connection</span>
+                                    <span>{t('nodeConnection')}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {(status?.connections || 0) > 0 ? (
@@ -299,7 +302,7 @@ export function NetworkStatusContent() {
                                     ) : (
                                         <XCircle className="h-3 w-3 text-red-600" />
                                     )}
-                                    <span>Peer Connections</span>
+                                    <span>{t('peerConnections')}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {(status?.blockHeight || 0) > 0 ? (
@@ -307,7 +310,7 @@ export function NetworkStatusContent() {
                                     ) : (
                                         <XCircle className="h-3 w-3 text-red-600" />
                                     )}
-                                    <span>Blockchain Sync</span>
+                                    <span>{t('blockchainSync')}</span>
                                 </div>
                             </div>
                         </div>

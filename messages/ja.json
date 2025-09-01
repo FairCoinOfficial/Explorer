@@ -420,5 +420,33 @@
     "fair": "FAIR",
     "satoshi": "サトシ",
     "satoshis": "サトシ"
+  },
+  "networkStatus": {
+    "title": "ネットワーク状況",
+    "loading": "ネットワーク状況を読み込み中...",
+    "unknown": "不明",
+    "connectionStatus": "接続状況",
+    "online": "オンライン",
+    "offline": "オフライン",
+    "latency": "レイテンシ",
+    "lastUpdate": "最終更新",
+    "blockHeight": "ブロック高",
+    "currentBlockHeight": "現在のブロック高",
+    "connections": "接続数",
+    "peerConnections": "ピア接続",
+    "difficulty": "難易度",
+    "networkDifficulty": "ネットワーク難易度",
+    "hashrate": "ハッシュレート",
+    "networkHashrate": "ネットワークハッシュレート",
+    "lastBlock": "最新ブロック",
+    "lastBlockTime": "最新ブロック時刻",
+    "networkInformation": "ネットワーク情報",
+    "nodeInformation": "ノード情報",
+    "version": "バージョン",
+    "mempool": "メモリプール",
+    "transactions": "トランザクション",
+    "statusIndicators": "ステータス表示",
+    "nodeConnection": "ノード接続",
+    "blockchainSync": "ブロックチェーン同期"
   }
 }

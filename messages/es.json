@@ -439,5 +439,33 @@
     "fair": "FAIR",
     "satoshi": "satoshi",
     "satoshis": "satoshis"
+  },
+  "networkStatus": {
+    "title": "Estado de la Red",
+    "loading": "Cargando estado de la red...",
+    "unknown": "Desconocido",
+    "connectionStatus": "Estado de Conexión",
+    "online": "En línea",
+    "offline": "Fuera de línea",
+    "latency": "Latencia",
+    "lastUpdate": "Última actualización",
+    "blockHeight": "Altura del Bloque",
+    "currentBlockHeight": "Altura actual del bloque",
+    "connections": "Conexiones",
+    "peerConnections": "Conexiones de pares",
+    "difficulty": "Dificultad",
+    "networkDifficulty": "Dificultad de la red",
+    "hashrate": "Tasa de Hash",
+    "networkHashrate": "Tasa de hash de la red",
+    "lastBlock": "Último Bloque",
+    "lastBlockTime": "Tiempo del último bloque",
+    "networkInformation": "Información de la Red",
+    "nodeInformation": "Información del Nodo",
+    "version": "Versión",
+    "mempool": "Mempool",
+    "transactions": "transacciones",
+    "statusIndicators": "Indicadores de Estado",
+    "nodeConnection": "Conexión del Nodo",
+    "blockchainSync": "Sincronización de Blockchain"
   }
 }
