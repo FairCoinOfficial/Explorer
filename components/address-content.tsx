@@ -185,22 +185,22 @@ export function AddressContent({ address }: { address: string }) {
                 />
 
                 {addressInfo.transactions.length > 0 ? (
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-auto custom-scrollbar">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Transaction</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Amount</TableHead>
-                                    <TableHead>Block</TableHead>
-                                    <TableHead>Time</TableHead>
-                                    <TableHead>Status</TableHead>
+                                    <TableHead className="h-8 px-2">Transaction</TableHead>
+                                    <TableHead className="h-8 px-2">Type</TableHead>
+                                    <TableHead className="h-8 px-2">Amount</TableHead>
+                                    <TableHead className="h-8 px-2">Block</TableHead>
+                                    <TableHead className="h-8 px-2">Time</TableHead>
+                                    <TableHead className="h-8 px-2">Status</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {addressInfo.transactions.map((tx) => (
                                     <TableRow key={tx.txid}>
-                                        <TableCell className="font-mono text-sm">
+                                        <TableCell className="font-mono text-sm whitespace-nowrap py-2 px-2">
                                             <Link
                                                 href={`/tx/${tx.txid}`}
                                                 className="hover:underline break-all"
@@ -208,7 +208,7 @@ export function AddressContent({ address }: { address: string }) {
                                                 {tx.txid.substring(0, 16)}...
                                             </Link>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="py-2 px-2">
                                             <Badge
                                                 variant={tx.type === 'received' ? 'default' : 'secondary'}
                                                 className="flex items-center gap-1 w-fit"
@@ -221,12 +221,12 @@ export function AddressContent({ address }: { address: string }) {
                                                 {tx.type === 'received' ? 'Received' : 'Sent'}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell className="font-mono">
+                                        <TableCell className="font-mono whitespace-nowrap py-2 px-2">
                                             <span className={tx.type === 'received' ? '' : ''}>
                                                 {tx.type === 'received' ? '+' : '-'}{Math.abs(tx.amount).toFixed(8)} FAIR
                                             </span>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="whitespace-nowrap py-2 px-2">
                                             {tx.blockHeight ? (
                                                 <Link
                                                     href={`/block/${tx.blockHeight}`}
@@ -238,10 +238,10 @@ export function AddressContent({ address }: { address: string }) {
                                                 <Badge variant="outline">Pending</Badge>
                                             )}
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="whitespace-nowrap py-2 px-2">
                                             {new Date(tx.time * 1000).toLocaleString()}
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="py-2 px-2">
                                             <Badge variant={tx.confirmations > 0 ? 'default' : 'secondary'}>
                                                 {tx.confirmations > 0 ? `${tx.confirmations} conf` : 'Unconfirmed'}
                                             </Badge>

@@ -214,7 +214,7 @@ export function StatsContent() {
 
             {/* Detailed Statistics */}
             <Tabs defaultValue="network" className="space-y-4">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto custom-scrollbar">
                     <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 lg:w-auto lg:inline-grid">
                         <TabsTrigger value="network" className="text-xs sm:text-sm">{t('network')}</TabsTrigger>
                         <TabsTrigger value="supply" className="text-xs sm:text-sm">{t('supply')}</TabsTrigger>

@@ -113,21 +113,21 @@ export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loa
             <div className="hidden md:block">
                 <Card className="overflow-hidden shadow-sm">
                     <CardContent className="p-0">
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto custom-scrollbar">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/50">
-                                        <TableHead className="w-[100px] font-semibold">{t('height')}</TableHead>
-                                        <TableHead className="min-w-[200px] lg:min-w-[280px] font-semibold">{t('hash')}</TableHead>
-                                        <TableHead className="w-[140px] font-semibold">{t('time')}</TableHead>
-                                        <TableHead className="w-[110px] hidden lg:table-cell font-semibold">{t('transactions')}</TableHead>
-                                        <TableHead className="w-[90px] hidden lg:table-cell font-semibold">{t('size')}</TableHead>
+                                        <TableHead className="w-[100px] font-semibold whitespace-nowrap h-8 px-2">{t('height')}</TableHead>
+                                        <TableHead className="min-w-[200px] lg:min-w-[280px] font-semibold whitespace-nowrap h-8 px-2">{t('hash')}</TableHead>
+                                        <TableHead className="w-[140px] font-semibold whitespace-nowrap h-8 px-2">{t('time')}</TableHead>
+                                        <TableHead className="w-[110px] hidden lg:table-cell font-semibold whitespace-nowrap h-8 px-2">{t('transactions')}</TableHead>
+                                        <TableHead className="w-[90px] hidden lg:table-cell font-semibold whitespace-nowrap h-8 px-2">{t('size')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {blocks.map((block, index) => (
                                         <TableRow key={block.height} className={`group hover:bg-muted/50 transition-colors ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}>
-                                            <TableCell className="font-medium">
+                                            <TableCell className="font-medium whitespace-nowrap py-2 px-2">
                                                 <div className="flex items-center gap-2">
                                                     <Link
                                                         href={`/block/${block.height}`}
@@ -138,7 +138,7 @@ export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loa
                                                     <CopyButton text={block.hash} className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="font-mono text-sm min-w-0">
+                                            <TableCell className="font-mono text-sm min-w-0 whitespace-nowrap py-2 px-2">
                                                 <div className="flex items-center gap-2">
                                                     <Link
                                                         href={`/block/${block.hash}`}
@@ -149,7 +149,7 @@ export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loa
                                                     <CopyButton text={block.hash} className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-sm text-muted-foreground">
+                                            <TableCell className="text-sm text-muted-foreground whitespace-nowrap py-2 px-2">
                                                 <span className="hidden lg:inline">
                                                     {new Date(block.time * 1000).toLocaleString()}
                                                 </span>
@@ -157,12 +157,12 @@ export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loa
                                                     {new Date(block.time * 1000).toLocaleDateString()}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="hidden lg:table-cell">
+                                            <TableCell className="hidden lg:table-cell whitespace-nowrap py-2 px-2">
                                                 <Badge variant="secondary" className="text-xs font-medium bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors">
                                                     {block.nTx?.toLocaleString() ?? block.tx?.length?.toLocaleString() ?? 0}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="hidden lg:table-cell text-sm text-muted-foreground font-medium">
+                                            <TableCell className="hidden lg:table-cell text-sm text-muted-foreground font-medium whitespace-nowrap py-2 px-2">
                                                 {block.size ? `${(block.size / 1024).toFixed(1)} KB` : 'N/A'}
                                             </TableCell>
                                         </TableRow>

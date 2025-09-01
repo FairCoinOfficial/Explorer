@@ -222,7 +222,7 @@ export default function MempoolContent() {
                 />
 
                 {mempoolInfo.transactions.length > 0 ? (
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-auto custom-scrollbar">
                         <Table>
                             <TableHeader>
                                 <TableRow>

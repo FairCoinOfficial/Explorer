@@ -241,14 +241,14 @@ export function DataTable({ data }: DataTableProps) {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-auto custom-scrollbar">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => {
                                     return (
-                                        <TableHead key={header.id}>
+                                        <TableHead key={header.id} className="whitespace-nowrap h-8 px-2">
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(
@@ -269,7 +269,7 @@ export function DataTable({ data }: DataTableProps) {
                                     data-state={row.getIsSelected() && "selected"}
                                 >
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
+                                        <TableCell key={cell.id} className="whitespace-nowrap py-2 px-2">
                                             {flexRender(
                                                 cell.column.columnDef.cell,
                                                 cell.getContext()
@@ -282,7 +282,7 @@ export function DataTable({ data }: DataTableProps) {
                             <TableRow>
                                 <TableCell
                                     colSpan={columns.length}
-                                    className="h-24 text-center"
+                                    className="h-24 text-center whitespace-nowrap py-2 px-2"
                                 >
                                     {t('noResults')}
                                 </TableCell>
