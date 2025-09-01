@@ -9,6 +9,7 @@ import { NetworkStatus } from '@/components/network-status';
 import { BlocksTable } from '@/components/ui/blocks-table';
 import { Activity, Blocks, TrendingUp, Clock, Hash, Users, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 async function getLatestBlocks(limit = 10) {
   const height = await blockCache.getBlockCount('mainnet');
@@ -18,6 +19,7 @@ async function getLatestBlocks(limit = 10) {
 
 export default async function Page() {
   const { height, blocks } = await getLatestBlocks(10);
+  const t = await getTranslations('home');
 
   // transactions feed: take tx ids from the latest block (if available)
   const latest = blocks[0] ?? null;
@@ -28,14 +30,14 @@ export default async function Page() {
       {/* Header */}
       <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div className="flex-1">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">FairCoin Explorer</h1>
-          <p className="text-sm text-muted-foreground mt-1 hidden sm:block">Explore the FairCoin blockchain</p>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1 hidden sm:block">{t('subtitle')}</p>
         </div>
         <div className="flex items-center space-x-2">
           <NetworkStatus />
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">
             <Activity className="w-3 h-3 mr-1" />
-            <span className="hidden sm:inline">Live</span>
+            <span className="hidden sm:inline">{t('live')}</span>
           </Badge>
         </div>
       </div>
@@ -45,29 +47,29 @@ export default async function Page() {
         <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
           <Link href="/blocks">
             <Blocks className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">View All Blocks</span>
-            <span className="sm:hidden">Blocks</span>
+            <span className="hidden sm:inline">{t('viewAllBlocks')}</span>
+            <span className="sm:hidden">{t('blocks')}</span>
           </Link>
         </Button>
         <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
           <Link href="/mempool">
             <Activity className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Mempool</span>
-            <span className="sm:hidden">Mempool</span>
+            <span className="hidden sm:inline">{t('mempool')}</span>
+            <span className="sm:hidden">{t('mempool')}</span>
           </Link>
         </Button>
         <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
           <Link href="/network-status">
             <TrendingUp className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Network Status</span>
-            <span className="sm:hidden">Network</span>
+            <span className="hidden sm:inline">{t('networkStatus')}</span>
+            <span className="sm:hidden">{t('network')}</span>
           </Link>
         </Button>
         <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
           <Link href="/tools">
             <Hash className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Tools</span>
-            <span className="sm:hidden">Tools</span>
+            <span className="hidden sm:inline">{t('tools')}</span>
+            <span className="sm:hidden">{t('tools')}</span>
           </Link>
         </Button>
       </div>
@@ -76,29 +78,29 @@ export default async function Page() {
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Height</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('currentHeight')}</CardTitle>
             <Blocks className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent className="pt-0">
             <div className="text-xl sm:text-2xl font-bold">{height?.toLocaleString() ?? '-'}</div>
-            <p className="text-xs text-muted-foreground">Latest block height</p>
+            <p className="text-xs text-muted-foreground">{t('latestBlockHeight')}</p>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Latest Block</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('latestBlock')}</CardTitle>
             <Hash className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent className="pt-0">
             <div className="text-xl sm:text-2xl font-bold">{blocks[0]?.height ?? '-'}</div>
-            <p className="text-xs text-muted-foreground">{blocks[0]?.tx?.length ?? 0} transactions</p>
+            <p className="text-xs text-muted-foreground">{blocks[0]?.tx?.length ?? 0} {t('transactions')}</p>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Block Time</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('blockTime')}</CardTitle>
             <Clock className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent className="pt-0">
@@ -106,19 +108,19 @@ export default async function Page() {
               {blocks[0] ? new Date(blocks[0].time * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
             </div>
             <p className="text-xs text-muted-foreground">
-              {blocks[0] ? new Date(blocks[0].time * 1000).toLocaleDateString() : 'No data'}
+              {blocks[0] ? new Date(blocks[0].time * 1000).toLocaleDateString() : t('noData')}
             </p>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-md transition-shadow sm:col-span-2 lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Network</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('network')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="text-lg sm:text-xl font-bold">Mainnet</div>
-            <p className="text-xs text-muted-foreground">FairCoin blockchain</p>
+            <div className="text-lg sm:text-xl font-bold">{t('mainnet')}</div>
+            <p className="text-xs text-muted-foreground">{t('fairCoinBlockchain')}</p>
           </CardContent>
         </Card>
       </div>
@@ -128,18 +130,18 @@ export default async function Page() {
         <TabsList className="grid w-full grid-cols-3 h-auto p-1">
           <TabsTrigger value="overview" className="flex items-center gap-2 py-2 px-3 text-xs sm:text-sm">
             <Activity className="h-4 w-4" />
-            <span className="hidden sm:inline">Overview</span>
-            <span className="sm:hidden">Home</span>
+            <span className="hidden sm:inline">{t('overview')}</span>
+            <span className="sm:hidden">{t('home')}</span>
           </TabsTrigger>
           <TabsTrigger value="blocks" className="flex items-center gap-2 py-2 px-3 text-xs sm:text-sm">
             <Blocks className="h-4 w-4" />
-            <span className="hidden sm:inline">Blocks</span>
-            <span className="sm:hidden">Blocks</span>
+            <span className="hidden sm:inline">{t('blocks')}</span>
+            <span className="sm:hidden">{t('blocks')}</span>
           </TabsTrigger>
           <TabsTrigger value="transactions" className="flex items-center gap-2 py-2 px-3 text-xs sm:text-sm">
             <Hash className="h-4 w-4" />
-            <span className="hidden sm:inline">Transactions</span>
-            <span className="sm:hidden">TXs</span>
+            <span className="hidden sm:inline">{t('transactions')}</span>
+            <span className="sm:hidden">{t('txs')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -149,7 +151,7 @@ export default async function Page() {
             <div className="lg:col-span-4 space-y-4">
               <div className="flex items-center gap-2 pb-2 border-b">
                 <Blocks className="h-5 w-5 text-primary" />
-                <h3 className="text-lg sm:text-xl font-semibold">Recent Blocks</h3>
+                <h3 className="text-lg sm:text-xl font-semibold">{t('recentBlocks')}</h3>
               </div>
 
               <BlocksTable blocks={blocks.slice(0, 5)} currentPage={1} totalPages={1} loading={false} />
@@ -159,7 +161,7 @@ export default async function Page() {
             <div className="lg:col-span-3 space-y-4">
               <div className="flex items-center gap-2 pb-2 border-b">
                 <Activity className="h-5 w-5 text-primary" />
-                <h3 className="text-lg sm:text-xl font-semibold">Latest Transactions</h3>
+                <h3 className="text-lg sm:text-xl font-semibold">{t('latestTransactions')}</h3>
               </div>
 
               <div className="space-y-2 sm:space-y-3">
@@ -180,7 +182,7 @@ export default async function Page() {
                               <span className="sm:hidden">{txid.slice(0, 12)}...</span>
                             </Link>
                             <p className="text-xs text-muted-foreground">
-                              Block #{latest?.height ?? '-'}
+                              {t('blockNumber')}{latest?.height ?? '-'}
                             </p>
                           </div>
                         </div>
@@ -200,7 +202,7 @@ export default async function Page() {
           <div className="space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b">
               <Blocks className="h-5 w-5 text-primary" />
-              <h3 className="text-lg sm:text-xl font-semibold">All Recent Blocks</h3>
+              <h3 className="text-lg sm:text-xl font-semibold">{t('allRecentBlocks')}</h3>
             </div>
 
             <BlocksTable blocks={blocks} currentPage={1} totalPages={1} loading={false} />
@@ -211,14 +213,14 @@ export default async function Page() {
           <div className="space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b">
               <Activity className="h-5 w-5 text-primary" />
-              <h3 className="text-lg sm:text-xl font-semibold">Latest Block Transactions</h3>
+              <h3 className="text-lg sm:text-xl font-semibold">{t('latestBlockTransactions')}</h3>
             </div>
 
             {txFeed.length === 0 ? (
               <div className="text-center py-12 px-4">
                 <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-lg font-medium text-muted-foreground mb-2">No transactions available</p>
-                <p className="text-sm text-muted-foreground">The latest block doesn&apos;t contain any transactions yet.</p>
+                <p className="text-lg font-medium text-muted-foreground mb-2">{t('noTransactionsAvailable')}</p>
+                <p className="text-sm text-muted-foreground">{t('noTransactionsDescription')}</p>
               </div>
             ) : (
               <div className="space-y-2 sm:space-y-3">
@@ -242,14 +244,14 @@ export default async function Page() {
                             </Link>
                             <p className="text-xs text-muted-foreground flex items-center gap-1">
                               <Blocks className="h-3 w-3" />
-                              Block #{latest?.height ?? '-'}
+                              {t('blockNumber')}{latest?.height ?? '-'}
                             </p>
                           </div>
                         </div>
                         <div className="flex-shrink-0">
                           <Button variant="ghost" size="sm" className="hover:bg-primary/10 hover:text-primary transition-colors">
-                            <span className="hidden sm:inline">View Details</span>
-                            <span className="sm:hidden">View</span>
+                            <span className="hidden sm:inline">{t('viewDetails')}</span>
+                            <span className="sm:hidden">{t('view')}</span>
                             <ArrowUpRight className="h-3 w-3 ml-1" />
                           </Button>
                         </div>
