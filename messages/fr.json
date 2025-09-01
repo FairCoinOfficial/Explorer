@@ -15,7 +15,6 @@
     "common": {
         "loading": "Chargement...",
         "error": "Erreur",
-        "notFound": "Non Trouvé",
         "search": "Rechercher",
         "searchPlaceholder": "Rechercher par adresse, bloc ou transaction...",
         "copy": "Copier",
@@ -74,6 +73,17 @@
         "view_recent_blocks": "Voir les Blocs Récents",
         "network_statistics": "Statistiques du Réseau",
         "back_to_home": "Retour à l\"Accueil",
+        "notFound": {
+            "title": "Page Non Trouvée",
+            "description": "La page que vous cherchez n'existe pas ou a pu être déplacée.",
+            "backHome": "Retour à l'Accueil",
+            "search": "Rechercher",
+            "searchShort": "Recherche",
+            "blocks": "Voir les Blocs",
+            "blocksShort": "Blocs",
+            "goBack": "Retour",
+            "help": "Besoin d'aide ? Essayez de rechercher ou retournez à la page d'accueil."
+        },
         "table": {
             "loading": "Chargement...",
             "height": "Hauteur",

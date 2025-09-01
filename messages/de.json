@@ -15,7 +15,6 @@
     "common": {
         "loading": "Laden...",
         "error": "Fehler",
-        "notFound": "Nicht Gefunden",
         "search": "Suchen",
         "searchPlaceholder": "Nach Adresse, Block oder Transaktion suchen...",
         "copy": "Kopieren",
@@ -74,6 +73,17 @@
         "view_recent_blocks": "Aktuelle Blöcke Anzeigen",
         "network_statistics": "Netzwerk-Statistiken",
         "back_to_home": "Zurück zur Startseite",
+        "notFound": {
+            "title": "Seite Nicht Gefunden",
+            "description": "Die gesuchte Seite existiert nicht oder wurde möglicherweise verschoben.",
+            "backHome": "Zurück zur Startseite",
+            "search": "Suchen",
+            "searchShort": "Suche",
+            "blocks": "Blöcke Anzeigen",
+            "blocksShort": "Blöcke",
+            "goBack": "Zurück",
+            "help": "Brauchen Sie Hilfe? Versuchen Sie zu suchen oder kehren Sie zur Startseite zurück."
+        },
         "table": {
             "loading": "Laden...",
             "height": "Höhe",

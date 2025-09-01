@@ -14,7 +14,6 @@
     "common": {
         "loading": "読み込み中...",
         "error": "エラー",
-        "notFound": "見つかりません",
         "search": "検索",
         "searchPlaceholder": "アドレス、ブロック、または取引で検索...",
         "copy": "コピー",
@@ -55,6 +54,17 @@
         "view_recent_blocks": "最近のブロックを表示",
         "network_statistics": "ネットワーク統計",
         "back_to_home": "ホームに戻る",
+        "notFound": {
+            "title": "ページが見つかりません",
+            "description": "お探しのページは存在しないか、移動された可能性があります。",
+            "backHome": "ホームに戻る",
+            "search": "検索",
+            "searchShort": "検索",
+            "blocks": "ブロックを表示",
+            "blocksShort": "ブロック",
+            "goBack": "戻る",
+            "help": "ヘルプが必要ですか？検索するか、ホームページに戻ってください。"
+        },
         "table": {
             "loading": "読み込み中...",
             "height": "高さ",

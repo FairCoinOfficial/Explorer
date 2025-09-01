@@ -117,7 +117,6 @@
     "common": {
         "loading": "Loading...",
         "error": "Error",
-        "notFound": "Not Found",
         "search": "Search",
         "searchPlaceholder": "Search by address, block, or transaction...",
         "copy": "Copy",
@@ -178,6 +177,17 @@
         "view_recent_blocks": "View Recent Blocks",
         "network_statistics": "Network Statistics",
         "back_to_home": "Back to Home",
+        "notFound": {
+            "title": "Page Not Found",
+            "description": "The page you're looking for doesn't exist or may have been moved.",
+            "backHome": "Back to Home",
+            "search": "Search",
+            "searchShort": "Search",
+            "blocks": "View Blocks",
+            "blocksShort": "Blocks",
+            "goBack": "Go Back",
+            "help": "Need help? Try searching or go back to the homepage."
+        },
         "table": {
             "loading": "Loading...",
             "height": "Height",

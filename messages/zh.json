@@ -15,7 +15,6 @@
     "common": {
         "loading": "加载中...",
         "error": "错误",
-        "notFound": "未找到",
         "search": "搜索",
         "searchPlaceholder": "按地址、区块或交易搜索...",
         "copy": "复制",
@@ -74,6 +73,17 @@
         "view_recent_blocks": "查看最近区块",
         "network_statistics": "网络统计",
         "back_to_home": "返回首页",
+        "notFound": {
+            "title": "页面未找到",
+            "description": "您寻找的页面不存在或可能已被移动。",
+            "backHome": "返回首页",
+            "search": "搜索",
+            "searchShort": "搜索",
+            "blocks": "查看区块",
+            "blocksShort": "区块",
+            "goBack": "返回",
+            "help": "需要帮助吗？尝试搜索或返回主页。"
+        },
         "table": {
             "loading": "加载中...",
             "height": "高度",
