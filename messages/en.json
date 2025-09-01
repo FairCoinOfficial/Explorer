@@ -177,7 +177,36 @@
         "navigation": "Navigation",
         "view_recent_blocks": "View Recent Blocks",
         "network_statistics": "Network Statistics",
-        "back_to_home": "Back to Home"
+        "back_to_home": "Back to Home",
+        "table": {
+            "loading": "Loading...",
+            "height": "Height",
+            "hash": "Hash",
+            "time": "Time",
+            "transactions": "Transactions",
+            "size": "Size",
+            "txCount": "TX Count",
+            "bytes": "bytes",
+            "na": "N/A",
+            "selectAll": "Select all",
+            "selectRow": "Select row",
+            "openMenu": "Open menu",
+            "actions": "Actions",
+            "copyBlockHash": "Copy block hash",
+            "viewBlockDetails": "View block details",
+            "viewByHash": "View by hash",
+            "filterByHeight": "Filter by height...",
+            "columns": "Columns",
+            "noResults": "No results.",
+            "pagination": {
+                "page": "Page",
+                "of": "of",
+                "blocks": "blocks",
+                "previous": "Previous",
+                "next": "Next",
+                "rowsSelected": "row(s) selected."
+            }
+        }
     },
     "transactions": {
         "title": "Transactions",

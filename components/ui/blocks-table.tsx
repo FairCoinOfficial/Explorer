@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { CopyButton } from '@/components/copy-button'
+import { useTranslations } from 'next-intl'
 
 interface Block {
     height: number
@@ -27,6 +28,8 @@ interface BlocksTableProps {
 }
 
 export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loading = false }: BlocksTableProps) {
+    const t = useTranslations('common.table')
+
     if (loading) {
         return (
             <Card className="overflow-hidden shadow-sm">
@@ -37,7 +40,6 @@ export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loa
                                 <div className="h-4 bg-muted rounded w-20"></div>
                                 <div className="h-4 bg-muted rounded flex-1"></div>
                                 <div className="h-4 bg-muted rounded w-32"></div>
-                                <div className="h-4 bg-muted rounded w-16"></div>
                             </div>
                         ))}
                     </div>
@@ -72,7 +74,7 @@ export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loa
 
                             <div className="space-y-1 mb-2">
                                 <div className="flex items-start gap-2">
-                                    <span className="text-xs text-muted-foreground font-medium flex-shrink-0 mt-0.5">Hash:</span>
+                                    <span className="text-xs text-muted-foreground font-medium flex-shrink-0 mt-0.5">{t('hash')}:</span>
                                     <div className="flex items-center gap-1 min-w-0 flex-1">
                                         <Link
                                             href={`/block/${block.hash}`}
@@ -115,11 +117,11 @@ export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loa
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/50">
-                                        <TableHead className="w-[100px] font-semibold">Height</TableHead>
-                                        <TableHead className="min-w-[200px] lg:min-w-[280px] font-semibold">Hash</TableHead>
-                                        <TableHead className="w-[140px] font-semibold">Time</TableHead>
-                                        <TableHead className="w-[110px] hidden lg:table-cell font-semibold">Transactions</TableHead>
-                                        <TableHead className="w-[90px] hidden lg:table-cell font-semibold">Size</TableHead>
+                                        <TableHead className="w-[100px] font-semibold">{t('height')}</TableHead>
+                                        <TableHead className="min-w-[200px] lg:min-w-[280px] font-semibold">{t('hash')}</TableHead>
+                                        <TableHead className="w-[140px] font-semibold">{t('time')}</TableHead>
+                                        <TableHead className="w-[110px] hidden lg:table-cell font-semibold">{t('transactions')}</TableHead>
+                                        <TableHead className="w-[90px] hidden lg:table-cell font-semibold">{t('size')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -176,9 +178,9 @@ export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loa
             {totalPages > 1 && (
                 <div className="flex items-center justify-between pt-4">
                     <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                        <span>Page {currentPage} of {totalPages}</span>
+                        <span>{t('pagination.page')} {currentPage} {t('pagination.of')} {totalPages}</span>
                         <span>•</span>
-                        <span>{blocks.length} blocks</span>
+                        <span>{blocks.length} {t('pagination.blocks')}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Button
@@ -188,7 +190,7 @@ export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loa
                             disabled={currentPage === 1}
                         >
                             <ChevronLeft className="h-4 w-4" />
-                            Previous
+                            {t('pagination.previous')}
                         </Button>
                         <Button
                             variant="outline"
@@ -196,7 +198,7 @@ export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loa
                             onClick={() => onPageChange?.(currentPage + 1)}
                             disabled={currentPage === totalPages}
                         >
-                            Next
+                            {t('pagination.next')}
                             <ChevronRight className="h-4 w-4" />
                         </Button>
                     </div>

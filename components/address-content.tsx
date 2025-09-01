@@ -12,6 +12,7 @@ import { SectionHeader, StatsGrid, StatsCard, EmptyState, LoadingState, SimpleDa
 import { Wallet, TrendingUp, TrendingDown, RefreshCw, Home, Hash, Clock, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 
 interface AddressTransaction {
     txid: string
@@ -32,6 +33,7 @@ interface AddressInfo {
 }
 
 export function AddressContent({ address }: { address: string }) {
+    const t = useTranslations('common')
     const { currentNetwork } = useNetwork()
     const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null)
     const [loading, setLoading] = useState(true)
@@ -65,7 +67,7 @@ export function AddressContent({ address }: { address: string }) {
     if (loading) {
         return (
             <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-                <LoadingState message="Loading address information..." />
+                <LoadingState message={t('loading')} />
             </div>
         )
     }

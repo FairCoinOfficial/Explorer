@@ -1,6 +1,7 @@
 "use client"
 
 import { LucideIcon } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface LoadingStateProps {
     message?: string
@@ -9,15 +10,18 @@ interface LoadingStateProps {
 }
 
 export function LoadingState({
-    message = "Loading...",
+    message,
     icon: Icon,
     className = ""
 }: LoadingStateProps) {
+    const t = useTranslations('common')
+    const defaultMessage = message || t('loading')
+
     return (
         <div className={`flex items-center justify-center h-48 sm:h-64 px-4 ${className}`}>
             <div className="text-center">
                 {Icon && <Icon className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary mx-auto mb-3 sm:mb-4" />}
-                <p className="text-sm sm:text-base text-muted-foreground">{message}</p>
+                <p className="text-sm sm:text-base text-muted-foreground">{defaultMessage}</p>
             </div>
         </div>
     )
