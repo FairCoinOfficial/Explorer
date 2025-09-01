@@ -54,7 +54,9 @@
     "navigation": "Навигация",
     "view_recent_blocks": "Просмотреть Недавние Блоки",
     "network_statistics": "Статистика Сети",
-    "back_to_home": "Вернуться Домой"
+    "back_to_home": "Вернуться Домой",
+    "yes": "Да",
+    "no": "Нет"
   },
   "home": {
     "title": "FairCoin Обозреватель",
@@ -369,17 +371,76 @@
     "title": "Инструменты",
     "subtitle": "Утилиты блокчейна",
     "addressValidator": {
-      "title": "Валидатор адресов",
+      "title": "Валидатор Адресов",
       "subtitle": "Проверка адресов FairCoin",
-      "description": "Проверьте, является ли адрес FairCoin действительным и получите подробную информацию о нем",
-      "placeholder": "Введите адрес FairCoin...",
-      "validate": "Проверить",
-      "validAddress": "Действительный адрес",
-      "invalidAddress": "Недействительный адрес",
-      "addressInfo": "Информация об адресе",
-      "isValid": "Действителен",
-      "isScript": "Скрипт-адрес",
-      "isPubkey": "Адрес публичного ключа"
+      "description": "Проверьте, действителен ли адрес FairCoin, и получите подробную информацию о нем",
+      "validateSection": {
+        "title": "Проверить Адрес FairCoin"
+      },
+      "form": {
+        "label": "Адрес FairCoin",
+        "placeholder": "Введите адрес FairCoin для проверки",
+        "validate": "Проверить",
+        "validating": "Проверка..."
+      },
+      "results": {
+        "valid": "Действительный Адрес",
+        "invalid": "Недействительный Адрес",
+        "network": "Сеть",
+        "addressType": "Тип Адреса"
+      },
+      "errors": {
+        "title": "Ошибка Проверки",
+        "empty": "Адрес не может быть пустым",
+        "invalidLength": "Недействительная длина адреса",
+        "invalidCharacters": "Недопустимые символы в адресе (должен быть Base58)",
+        "unknownFormat": "Неизвестный формат адреса"
+      },
+      "addressTypes": {
+        "p2pkh": "P2PKH (Платеж к Хешу Публичного Ключа)",
+        "p2sh": "P2SH (Платеж к Хешу Скрипта - Мультиподпись)",
+        "p2pkhTestnet": "P2PKH (Тестовая Сеть)",
+        "p2shTestnet": "P2SH (Тестовая Сеть - Мультиподпись)"
+      },
+      "addressDescriptions": {
+        "p2pkh": "Стандартный адрес с одной подписью",
+        "p2sh": "Адрес с множественными подписями (создан с addmultisigaddress)",
+        "p2pkhTestnet": "Адрес тестовой сети с одной подписью",
+        "p2shTestnet": "Адрес тестовой сети с множественными подписями",
+        "unknown": "Неизвестный тип адреса"
+      },
+      "warnings": {
+        "networkMismatch": {
+          "title": "Несоответствие Сети",
+          "description": "Этот адрес для {addressNetwork}, но вы сейчас на {currentNetwork}."
+        }
+      },
+      "networkValidation": {
+        "title": "Результаты Проверки Сети",
+        "valid": "Действительный",
+        "isMine": "Мой",
+        "watchOnly": "Только Просмотр",
+        "scriptAddress": "Адрес Скрипта"
+      },
+      "addressInfo": {
+        "title": "Информация о Формате Адреса",
+        "mainnetP2PKH": "Основная Сеть P2PKH",
+        "mainnetP2PKHExample": "Начинается с 'f' (например, f1234...)",
+        "mainnetP2SH": "Основная Сеть P2SH",
+        "mainnetP2SHExample": "Начинается с 'F' (например, F5678...)",
+        "mainnetLength": "Длина Основной Сети",
+        "mainnetLengthValue": "25-34 символа",
+        "mainnetUsage": "Использование Основной Сети",
+        "mainnetUsageValue": "Используется для реальных транзакций",
+        "testnetP2PKH": "Тестовая Сеть P2PKH",
+        "testnetP2PKHValue": "Начинается с 'm' или 'n'",
+        "testnetP2SH": "Тестовая Сеть P2SH",
+        "testnetP2SHValue": "Начинается с '2'",
+        "testnetLength": "Длина Тестовой Сети",
+        "testnetLengthValue": "25-34 символа",
+        "testnetUsage": "Использование Тестовой Сети",
+        "testnetUsageValue": "Используется только для тестирования"
+      }
     },
     "feeCalculator": {
       "title": "Калькулятор комиссий",

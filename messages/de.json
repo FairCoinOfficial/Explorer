@@ -73,7 +73,9 @@
     "navigation": "Navigation",
     "view_recent_blocks": "Aktuelle Blöcke Anzeigen",
     "network_statistics": "Netzwerk-Statistiken",
-    "back_to_home": "Zurück zur Startseite"
+    "back_to_home": "Zurück zur Startseite",
+    "yes": "Ja",
+    "no": "Nein"
   },
   "home": {
     "title": "FairCoin Explorer",
@@ -388,17 +390,76 @@
     "title": "Werkzeuge",
     "subtitle": "Blockchain-Dienstprogramme",
     "addressValidator": {
-      "title": "Adressvalidator",
+      "title": "Adressen-Validator",
       "subtitle": "FairCoin-Adressen validieren",
       "description": "Überprüfen Sie, ob eine FairCoin-Adresse gültig ist und erhalten Sie detaillierte Informationen darüber",
-      "placeholder": "FairCoin-Adresse eingeben...",
-      "validate": "Validieren",
-      "validAddress": "Gültige Adresse",
-      "invalidAddress": "Ungültige Adresse",
-      "addressInfo": "Adressinformationen",
-      "isValid": "Gültig",
-      "isScript": "Skriptadresse",
-      "isPubkey": "Öffentliche Schlüsseladresse"
+      "validateSection": {
+        "title": "FairCoin-Adresse Validieren"
+      },
+      "form": {
+        "label": "FairCoin-Adresse",
+        "placeholder": "FairCoin-Adresse zur Validierung eingeben",
+        "validate": "Validieren",
+        "validating": "Validiere..."
+      },
+      "results": {
+        "valid": "Gültige Adresse",
+        "invalid": "Ungültige Adresse",
+        "network": "Netzwerk",
+        "addressType": "Adresstyp"
+      },
+      "errors": {
+        "title": "Validierungsfehler",
+        "empty": "Adresse darf nicht leer sein",
+        "invalidLength": "Ungültige Adresslänge",
+        "invalidCharacters": "Ungültige Zeichen in der Adresse (muss Base58 sein)",
+        "unknownFormat": "Unbekanntes Adressformat"
+      },
+      "addressTypes": {
+        "p2pkh": "P2PKH (Zahlung an Öffentlichen Schlüssel-Hash)",
+        "p2sh": "P2SH (Zahlung an Script-Hash - Multisig)",
+        "p2pkhTestnet": "P2PKH (Testnetz)",
+        "p2shTestnet": "P2SH (Testnetz - Multisig)"
+      },
+      "addressDescriptions": {
+        "p2pkh": "Standard-Einzelsignatur-Adresse",
+        "p2sh": "Multisignatur-Adresse (erstellt mit addmultisigaddress)",
+        "p2pkhTestnet": "Testnetz-Einzelsignatur-Adresse",
+        "p2shTestnet": "Testnetz-Multisignatur-Adresse",
+        "unknown": "Unbekannter Adresstyp"
+      },
+      "warnings": {
+        "networkMismatch": {
+          "title": "Netzwerk-Konflikt",
+          "description": "Diese Adresse ist für {addressNetwork}, aber Sie sind derzeit auf {currentNetwork}."
+        }
+      },
+      "networkValidation": {
+        "title": "Netzwerk-Validierungsergebnisse",
+        "valid": "Gültig",
+        "isMine": "Ist Meine",
+        "watchOnly": "Nur Beobachten",
+        "scriptAddress": "Script-Adresse"
+      },
+      "addressInfo": {
+        "title": "Adressformat-Informationen",
+        "mainnetP2PKH": "Hauptnetz P2PKH",
+        "mainnetP2PKHExample": "Beginnt mit 'f' (z.B., f1234...)",
+        "mainnetP2SH": "Hauptnetz P2SH",
+        "mainnetP2SHExample": "Beginnt mit 'F' (z.B., F5678...)",
+        "mainnetLength": "Hauptnetz Länge",
+        "mainnetLengthValue": "25-34 Zeichen",
+        "mainnetUsage": "Hauptnetz Verwendung",
+        "mainnetUsageValue": "Für echte Transaktionen verwendet",
+        "testnetP2PKH": "Testnetz P2PKH",
+        "testnetP2PKHValue": "Beginnt mit 'm' oder 'n'",
+        "testnetP2SH": "Testnetz P2SH",
+        "testnetP2SHValue": "Beginnt mit '2'",
+        "testnetLength": "Testnetz Länge",
+        "testnetLengthValue": "25-34 Zeichen",
+        "testnetUsage": "Testnetz Verwendung",
+        "testnetUsageValue": "Nur zum Testen verwendet"
+      }
     },
     "feeCalculator": {
       "title": "Gebührenrechner",

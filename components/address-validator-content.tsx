@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { useNetwork } from "@/contexts/network-context"
 import { Wallet, CheckCircle, XCircle, Info, Shield } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,6 +19,8 @@ interface ValidationResult {
 }
 
 export function AddressValidatorContent() {
+    const t = useTranslations('tools.addressValidator')
+    const tCommon = useTranslations('common')
     const { currentNetwork } = useNetwork()
     const [address, setAddress] = useState("")
     const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
@@ -31,7 +34,7 @@ export function AddressValidatorContent() {
                 isValid: false,
                 addressType: "unknown",
                 network: "unknown",
-                error: "Address cannot be empty"
+                error: t('errors.empty')
             }
         }
 
@@ -48,7 +51,7 @@ export function AddressValidatorContent() {
                 isValid: false,
                 addressType: "unknown",
                 network: "unknown",
-                error: "Invalid address length"
+                error: t('errors.invalidLength')
             }
         }
 
@@ -59,7 +62,7 @@ export function AddressValidatorContent() {
                 isValid: false,
                 addressType: "unknown",
                 network: "unknown",
-                error: "Invalid characters in address (must be Base58)"
+                error: t('errors.invalidCharacters')
             }
         }
 
@@ -68,28 +71,28 @@ export function AddressValidatorContent() {
             // FairCoin mainnet P2PKH
             return {
                 isValid: true,
-                addressType: "P2PKH (Pay to Public Key Hash)",
+                addressType: t('addressTypes.p2pkh'),
                 network: "mainnet"
             }
         } else if (cleanAddress.startsWith('F')) {
             // FairCoin mainnet P2SH (multisig)
             return {
                 isValid: true,
-                addressType: "P2SH (Pay to Script Hash - Multisig)",
+                addressType: t('addressTypes.p2sh'),
                 network: "mainnet"
             }
         } else if (cleanAddress.startsWith('m') || cleanAddress.startsWith('n')) {
             // FairCoin testnet P2PKH
             return {
                 isValid: true,
-                addressType: "P2PKH (Testnet)",
+                addressType: t('addressTypes.p2pkhTestnet'),
                 network: "testnet"
             }
         } else if (cleanAddress.startsWith('2')) {
             // Testnet P2SH (multisig)
             return {
                 isValid: true,
-                addressType: "P2SH (Testnet - Multisig)",
+                addressType: t('addressTypes.p2shTestnet'),
                 network: "testnet"
             }
         }
@@ -98,7 +101,7 @@ export function AddressValidatorContent() {
             isValid: false,
             addressType: "unknown",
             network: "unknown",
-            error: "Unknown address format"
+            error: t('errors.unknownFormat')
         }
     }
 
@@ -139,17 +142,16 @@ export function AddressValidatorContent() {
     }
 
     const getTypeDescription = (type: string) => {
-        switch (type) {
-            case "P2PKH (Pay to Public Key Hash)":
-                return "Standard single-signature address"
-            case "P2SH (Pay to Script Hash - Multisig)":
-                return "Multi-signature address (created with addmultisigaddress)"
-            case "P2PKH (Testnet)":
-                return "Testnet single-signature address"
-            case "P2SH (Testnet - Multisig)":
-                return "Testnet multi-signature address"
-            default:
-                return "Unknown address type"
+        if (type === t('addressTypes.p2pkh')) {
+            return t('addressDescriptions.p2pkh')
+        } else if (type === t('addressTypes.p2sh')) {
+            return t('addressDescriptions.p2sh')
+        } else if (type === t('addressTypes.p2pkhTestnet')) {
+            return t('addressDescriptions.p2pkhTestnet')
+        } else if (type === t('addressTypes.p2shTestnet')) {
+            return t('addressDescriptions.p2shTestnet')
+        } else {
+            return t('addressDescriptions.unknown')
         }
     }
 
@@ -157,7 +159,7 @@ export function AddressValidatorContent() {
         <div className="space-y-6">
             <div className="flex items-center gap-2">
                 <Wallet className="h-5 w-5" />
-                <h1 className="text-2xl font-bold">Address Validator</h1>
+                <h1 className="text-2xl font-bold">{t('title')}</h1>
                 <Badge variant="outline">{currentNetwork.toUpperCase()}</Badge>
             </div>
 
@@ -165,19 +167,19 @@ export function AddressValidatorContent() {
                 <CardHeader>
                     <SectionHeader
                         icon={Shield}
-                        title="Validate FairCoin Address"
+                        title={t('validateSection.title')}
                     />
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <label htmlFor="address" className="block text-sm font-medium">
-                            FairCoin Address
+                            {t('form.label')}
                         </label>
                         <div className="flex gap-2">
                             <Input
                                 id="address"
                                 type="text"
-                                placeholder="Enter FairCoin address to validate"
+                                placeholder={t('form.placeholder')}
                                 value={address}
                                 onChange={(e) => setAddress(e.target.value)}
                                 className="font-mono text-sm"
@@ -187,7 +189,7 @@ export function AddressValidatorContent() {
                                 disabled={!address.trim() || isValidating}
                                 className="shrink-0"
                             >
-                                {isValidating ? "Validating..." : "Validate"}
+                                {isValidating ? t('form.validating') : t('form.validate')}
                             </Button>
                         </div>
                     </div>
@@ -203,7 +205,7 @@ export function AddressValidatorContent() {
                                         <XCircle className="h-5 w-5 text-red-600" />
                                     )}
                                     <span className="font-semibold">
-                                        {validationResult.isValid ? "Valid Address" : "Invalid Address"}
+                                        {validationResult.isValid ? t('results.valid') : t('results.invalid')}
                                     </span>
                                 </div>
 
@@ -211,7 +213,7 @@ export function AddressValidatorContent() {
                                     <div className="space-y-3">
                                         <div className="grid gap-2 md:grid-cols-2">
                                             <div>
-                                                <span className="text-sm text-muted-foreground">Network:</span>
+                                                <span className="text-sm text-muted-foreground">{t('results.network')}:</span>
                                                 <div className="mt-1">
                                                     <Badge className={getNetworkBadgeColor(validationResult.network)}>
                                                         {validationResult.network.toUpperCase()}
@@ -219,7 +221,7 @@ export function AddressValidatorContent() {
                                                 </div>
                                             </div>
                                             <div>
-                                                <span className="text-sm text-muted-foreground">Address Type:</span>
+                                                <span className="text-sm text-muted-foreground">{t('results.addressType')}:</span>
                                                 <div className="mt-1">
                                                     <p className="text-sm font-medium">{validationResult.addressType}</p>
                                                     <p className="text-xs text-muted-foreground">
@@ -235,10 +237,13 @@ export function AddressValidatorContent() {
                                                     <Info className="h-4 w-4 text-amber-600 mt-0.5" />
                                                     <div className="text-sm">
                                                         <p className="font-medium text-amber-800 dark:text-amber-200">
-                                                            Network Mismatch
+                                                            {t('warnings.networkMismatch.title')}
                                                         </p>
                                                         <p className="text-amber-700 dark:text-amber-300">
-                                                            This address is for {validationResult.network} but you&apos;re currently on {currentNetwork}.
+                                                            {t('warnings.networkMismatch.description', {
+                                                                addressNetwork: validationResult.network,
+                                                                currentNetwork: currentNetwork
+                                                            })}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -248,31 +253,31 @@ export function AddressValidatorContent() {
                                         {networkValidation && (
                                             <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md">
                                                 <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
-                                                    Network Validation Results
+                                                    {t('networkValidation.title')}
                                                 </h5>
                                                 <div className="text-sm space-y-1">
                                                     <div className="flex justify-between">
-                                                        <span className="text-blue-700 dark:text-blue-300">Valid:</span>
+                                                        <span className="text-blue-700 dark:text-blue-300">{t('networkValidation.valid')}:</span>
                                                         <span className={networkValidation.isvalid ? "text-green-600" : "text-red-600"}>
-                                                            {networkValidation.isvalid ? "Yes" : "No"}
+                                                            {networkValidation.isvalid ? tCommon('yes') : tCommon('no')}
                                                         </span>
                                                     </div>
                                                     {networkValidation.ismine !== undefined && (
                                                         <div className="flex justify-between">
-                                                            <span className="text-blue-700 dark:text-blue-300">Is Mine:</span>
-                                                            <span>{networkValidation.ismine ? "Yes" : "No"}</span>
+                                                            <span className="text-blue-700 dark:text-blue-300">{t('networkValidation.isMine')}:</span>
+                                                            <span>{networkValidation.ismine ? tCommon('yes') : tCommon('no')}</span>
                                                         </div>
                                                     )}
                                                     {networkValidation.iswatchonly !== undefined && (
                                                         <div className="flex justify-between">
-                                                            <span className="text-blue-700 dark:text-blue-300">Watch Only:</span>
-                                                            <span>{networkValidation.iswatchonly ? "Yes" : "No"}</span>
+                                                            <span className="text-blue-700 dark:text-blue-300">{t('networkValidation.watchOnly')}:</span>
+                                                            <span>{networkValidation.iswatchonly ? tCommon('yes') : tCommon('no')}</span>
                                                         </div>
                                                     )}
                                                     {networkValidation.isscript !== undefined && (
                                                         <div className="flex justify-between">
-                                                            <span className="text-blue-700 dark:text-blue-300">Script Address:</span>
-                                                            <span>{networkValidation.isscript ? "Yes" : "No"}</span>
+                                                            <span className="text-blue-700 dark:text-blue-300">{t('networkValidation.scriptAddress')}:</span>
+                                                            <span>{networkValidation.isscript ? tCommon('yes') : tCommon('no')}</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -285,7 +290,7 @@ export function AddressValidatorContent() {
                                             <XCircle className="h-4 w-4 text-red-600 mt-0.5" />
                                             <div className="text-sm">
                                                 <p className="font-medium text-red-800 dark:text-red-200">
-                                                    Validation Error
+                                                    {t('errors.title')}
                                                 </p>
                                                 <p className="text-red-700 dark:text-red-300">
                                                     {validationResult.error}
@@ -304,20 +309,20 @@ export function AddressValidatorContent() {
                 <CardHeader>
                     <SectionHeader
                         icon={Info}
-                        title="Address Format Information"
+                        title={t('addressInfo.title')}
                     />
                 </CardHeader>
                 <CardContent>
                     <InfoGrid
                         items={[
-                            { label: "Mainnet P2PKH", value: "Starts with 'f' (e.g., f1234...)" },
-                            { label: "Mainnet P2SH", value: "Starts with 'F' (e.g., F5678...)" },
-                            { label: "Mainnet Length", value: "25-34 characters" },
-                            { label: "Mainnet Usage", value: "Used for real transactions" },
-                            { label: "Testnet P2PKH", value: "Starts with 'm' or 'n'" },
-                            { label: "Testnet P2SH", value: "Starts with '2'" },
-                            { label: "Testnet Length", value: "25-34 characters" },
-                            { label: "Testnet Usage", value: "Used for testing only" }
+                            { label: t('addressInfo.mainnetP2PKH'), value: t('addressInfo.mainnetP2PKHExample') },
+                            { label: t('addressInfo.mainnetP2SH'), value: t('addressInfo.mainnetP2SHExample') },
+                            { label: t('addressInfo.mainnetLength'), value: t('addressInfo.mainnetLengthValue') },
+                            { label: t('addressInfo.mainnetUsage'), value: t('addressInfo.mainnetUsageValue') },
+                            { label: t('addressInfo.testnetP2PKH'), value: t('addressInfo.testnetP2PKHValue') },
+                            { label: t('addressInfo.testnetP2SH'), value: t('addressInfo.testnetP2SHValue') },
+                            { label: t('addressInfo.testnetLength'), value: t('addressInfo.testnetLengthValue') },
+                            { label: t('addressInfo.testnetUsage'), value: t('addressInfo.testnetUsageValue') }
                         ]}
                     />
                 </CardContent>

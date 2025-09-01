@@ -73,7 +73,9 @@
     "navigation": "Navegación",
     "view_recent_blocks": "Ver Bloques Recientes",
     "network_statistics": "Estadísticas de la Red",
-    "back_to_home": "Volver al Inicio"
+    "back_to_home": "Volver al Inicio",
+    "yes": "Sí",
+    "no": "No"
   },
   "home": {
     "title": "Explorador FairCoin",
@@ -389,16 +391,75 @@
     "subtitle": "Utilidades de blockchain",
     "addressValidator": {
       "title": "Validador de Direcciones",
-      "subtitle": "Validar direcciones FairCoin",
-      "description": "Verifica si una dirección FairCoin es válida y obtén información detallada sobre ella",
-      "placeholder": "Ingresa dirección FairCoin...",
-      "validate": "Validar",
-      "validAddress": "Dirección Válida",
-      "invalidAddress": "Dirección Inválida",
-      "addressInfo": "Información de Dirección",
-      "isValid": "Válida",
-      "isScript": "Dirección de Script",
-      "isPubkey": "Dirección de Clave Pública"
+      "subtitle": "Validar direcciones de FairCoin",
+      "description": "Verificar si una dirección de FairCoin es válida y obtener información detallada sobre ella",
+      "validateSection": {
+        "title": "Validar Dirección de FairCoin"
+      },
+      "form": {
+        "label": "Dirección de FairCoin",
+        "placeholder": "Ingrese la dirección de FairCoin para validar",
+        "validate": "Validar",
+        "validating": "Validando..."
+      },
+      "results": {
+        "valid": "Dirección Válida",
+        "invalid": "Dirección Inválida",
+        "network": "Red",
+        "addressType": "Tipo de Dirección"
+      },
+      "errors": {
+        "title": "Error de Validación",
+        "empty": "La dirección no puede estar vacía",
+        "invalidLength": "Longitud de dirección inválida",
+        "invalidCharacters": "Caracteres inválidos en la dirección (debe ser Base58)",
+        "unknownFormat": "Formato de dirección desconocido"
+      },
+      "addressTypes": {
+        "p2pkh": "P2PKH (Pago a Hash de Clave Pública)",
+        "p2sh": "P2SH (Pago a Hash de Script - Multifirma)",
+        "p2pkhTestnet": "P2PKH (Red de Prueba)",
+        "p2shTestnet": "P2SH (Red de Prueba - Multifirma)"
+      },
+      "addressDescriptions": {
+        "p2pkh": "Dirección estándar de firma única",
+        "p2sh": "Dirección multifirma (creada con addmultisigaddress)",
+        "p2pkhTestnet": "Dirección de firma única de red de prueba",
+        "p2shTestnet": "Dirección multifirma de red de prueba",
+        "unknown": "Tipo de dirección desconocido"
+      },
+      "warnings": {
+        "networkMismatch": {
+          "title": "Desajuste de Red",
+          "description": "Esta dirección es para {addressNetwork} pero actualmente estás en {currentNetwork}."
+        }
+      },
+      "networkValidation": {
+        "title": "Resultados de Validación de Red",
+        "valid": "Válido",
+        "isMine": "Es Mía",
+        "watchOnly": "Solo Observación",
+        "scriptAddress": "Dirección de Script"
+      },
+      "addressInfo": {
+        "title": "Información del Formato de Dirección",
+        "mainnetP2PKH": "P2PKH Red Principal",
+        "mainnetP2PKHExample": "Comienza con 'f' (ej., f1234...)",
+        "mainnetP2SH": "P2SH Red Principal",
+        "mainnetP2SHExample": "Comienza con 'F' (ej., F5678...)",
+        "mainnetLength": "Longitud Red Principal",
+        "mainnetLengthValue": "25-34 caracteres",
+        "mainnetUsage": "Uso Red Principal",
+        "mainnetUsageValue": "Usado para transacciones reales",
+        "testnetP2PKH": "P2PKH Red de Prueba",
+        "testnetP2PKHValue": "Comienza con 'm' o 'n'",
+        "testnetP2SH": "P2SH Red de Prueba",
+        "testnetP2SHValue": "Comienza con '2'",
+        "testnetLength": "Longitud Red de Prueba",
+        "testnetLengthValue": "25-34 caracteres",
+        "testnetUsage": "Uso Red de Prueba",
+        "testnetUsageValue": "Usado solo para pruebas"
+      }
     },
     "feeCalculator": {
       "title": "Calculadora de Comisiones",

@@ -54,7 +54,9 @@
     "navigation": "ナビゲーション",
     "view_recent_blocks": "最近のブロックを表示",
     "network_statistics": "ネットワーク統計",
-    "back_to_home": "ホームに戻る"
+    "back_to_home": "ホームに戻る",
+    "yes": "はい",
+    "no": "いいえ"
   },
   "home": {
     "title": "FairCoin エクスプローラー",
@@ -369,17 +371,76 @@
     "title": "ツール",
     "subtitle": "ブロックチェーンユーティリティ",
     "addressValidator": {
-      "title": "アドレス検証",
-      "subtitle": "FairCoin アドレスを検証",
-      "description": "FairCoin アドレスが有効かどうかをチェックし、詳細情報を取得",
-      "placeholder": "FairCoin アドレスを入力...",
-      "validate": "検証",
-      "validAddress": "有効なアドレス",
-      "invalidAddress": "無効なアドレス",
-      "addressInfo": "アドレス情報",
-      "isValid": "有効",
-      "isScript": "スクリプトアドレス",
-      "isPubkey": "公開鍵アドレス"
+      "title": "アドレス検証ツール",
+      "subtitle": "FairCoinアドレスを検証",
+      "description": "FairCoinアドレスが有効かどうかを確認し、詳細情報を取得します",
+      "validateSection": {
+        "title": "FairCoinアドレスを検証"
+      },
+      "form": {
+        "label": "FairCoinアドレス",
+        "placeholder": "検証するFairCoinアドレスを入力",
+        "validate": "検証",
+        "validating": "検証中..."
+      },
+      "results": {
+        "valid": "有効なアドレス",
+        "invalid": "無効なアドレス",
+        "network": "ネットワーク",
+        "addressType": "アドレスタイプ"
+      },
+      "errors": {
+        "title": "検証エラー",
+        "empty": "アドレスを空にすることはできません",
+        "invalidLength": "無効なアドレス長",
+        "invalidCharacters": "アドレスに無効な文字が含まれています（Base58である必要があります）",
+        "unknownFormat": "不明なアドレス形式"
+      },
+      "addressTypes": {
+        "p2pkh": "P2PKH（公開鍵ハッシュへの支払い）",
+        "p2sh": "P2SH（スクリプトハッシュへの支払い - マルチシグ）",
+        "p2pkhTestnet": "P2PKH（テストネット）",
+        "p2shTestnet": "P2SH（テストネット - マルチシグ）"
+      },
+      "addressDescriptions": {
+        "p2pkh": "標準的な単一署名アドレス",
+        "p2sh": "マルチシグアドレス（addmultisigaddressで作成）",
+        "p2pkhTestnet": "テストネット単一署名アドレス",
+        "p2shTestnet": "テストネットマルチシグアドレス",
+        "unknown": "不明なアドレスタイプ"
+      },
+      "warnings": {
+        "networkMismatch": {
+          "title": "ネットワークの不一致",
+          "description": "このアドレスは{addressNetwork}用ですが、現在{currentNetwork}にいます。"
+        }
+      },
+      "networkValidation": {
+        "title": "ネットワーク検証結果",
+        "valid": "有効",
+        "isMine": "私のもの",
+        "watchOnly": "監視のみ",
+        "scriptAddress": "スクリプトアドレス"
+      },
+      "addressInfo": {
+        "title": "アドレス形式情報",
+        "mainnetP2PKH": "メインネットP2PKH",
+        "mainnetP2PKHExample": "'f'で始まる（例：f1234...）",
+        "mainnetP2SH": "メインネットP2SH",
+        "mainnetP2SHExample": "'F'で始まる（例：F5678...）",
+        "mainnetLength": "メインネット長",
+        "mainnetLengthValue": "25-34文字",
+        "mainnetUsage": "メインネット用途",
+        "mainnetUsageValue": "実際の取引に使用",
+        "testnetP2PKH": "テストネットP2PKH",
+        "testnetP2PKHValue": "'m'または'n'で始まる",
+        "testnetP2SH": "テストネットP2SH",
+        "testnetP2SHValue": "'2'で始まる",
+        "testnetLength": "テストネット長",
+        "testnetLengthValue": "25-34文字",
+        "testnetUsage": "テストネット用途",
+        "testnetUsageValue": "テストにのみ使用"
+      }
     },
     "feeCalculator": {
       "title": "手数料計算機",

@@ -54,7 +54,9 @@
     "navigation": "탐색",
     "view_recent_blocks": "최근 블록 보기",
     "network_statistics": "네트워크 통계",
-    "back_to_home": "홈으로 돌아가기"
+    "back_to_home": "홈으로 돌아가기",
+    "yes": "예",
+    "no": "아니오"
   },
   "home": {
     "title": "FairCoin 탐색기",
@@ -371,15 +373,74 @@
     "addressValidator": {
       "title": "주소 검증기",
       "subtitle": "FairCoin 주소 검증",
-      "description": "FairCoin 주소가 유효한지 확인하고 상세 정보를 가져옵니다",
-      "placeholder": "FairCoin 주소 입력...",
-      "validate": "검증",
-      "validAddress": "유효한 주소",
-      "invalidAddress": "유효하지 않은 주소",
-      "addressInfo": "주소 정보",
-      "isValid": "유효함",
-      "isScript": "스크립트 주소",
-      "isPubkey": "공개 키 주소"
+      "description": "FairCoin 주소가 유효한지 확인하고 자세한 정보를 얻습니다",
+      "validateSection": {
+        "title": "FairCoin 주소 검증"
+      },
+      "form": {
+        "label": "FairCoin 주소",
+        "placeholder": "검증할 FairCoin 주소를 입력하세요",
+        "validate": "검증",
+        "validating": "검증 중..."
+      },
+      "results": {
+        "valid": "유효한 주소",
+        "invalid": "무효한 주소",
+        "network": "네트워크",
+        "addressType": "주소 유형"
+      },
+      "errors": {
+        "title": "검증 오류",
+        "empty": "주소는 비어있을 수 없습니다",
+        "invalidLength": "무효한 주소 길이",
+        "invalidCharacters": "주소에 무효한 문자가 있습니다 (Base58이어야 함)",
+        "unknownFormat": "알 수 없는 주소 형식"
+      },
+      "addressTypes": {
+        "p2pkh": "P2PKH (공개 키 해시로 지불)",
+        "p2sh": "P2SH (스크립트 해시로 지불 - 다중 서명)",
+        "p2pkhTestnet": "P2PKH (테스트넷)",
+        "p2shTestnet": "P2SH (테스트넷 - 다중 서명)"
+      },
+      "addressDescriptions": {
+        "p2pkh": "표준 단일 서명 주소",
+        "p2sh": "다중 서명 주소 (addmultisigaddress로 생성)",
+        "p2pkhTestnet": "테스트넷 단일 서명 주소",
+        "p2shTestnet": "테스트넷 다중 서명 주소",
+        "unknown": "알 수 없는 주소 유형"
+      },
+      "warnings": {
+        "networkMismatch": {
+          "title": "네트워크 불일치",
+          "description": "이 주소는 {addressNetwork}용이지만 현재 {currentNetwork}에 있습니다."
+        }
+      },
+      "networkValidation": {
+        "title": "네트워크 검증 결과",
+        "valid": "유효",
+        "isMine": "내 주소",
+        "watchOnly": "감시 전용",
+        "scriptAddress": "스크립트 주소"
+      },
+      "addressInfo": {
+        "title": "주소 형식 정보",
+        "mainnetP2PKH": "메인넷 P2PKH",
+        "mainnetP2PKHExample": "'f'로 시작 (예: f1234...)",
+        "mainnetP2SH": "메인넷 P2SH",
+        "mainnetP2SHExample": "'F'로 시작 (예: F5678...)",
+        "mainnetLength": "메인넷 길이",
+        "mainnetLengthValue": "25-34자",
+        "mainnetUsage": "메인넷 사용법",
+        "mainnetUsageValue": "실제 거래에 사용",
+        "testnetP2PKH": "테스트넷 P2PKH",
+        "testnetP2PKHValue": "'m' 또는 'n'으로 시작",
+        "testnetP2SH": "테스트넷 P2SH",
+        "testnetP2SHValue": "'2'로 시작",
+        "testnetLength": "테스트넷 길이",
+        "testnetLengthValue": "25-34자",
+        "testnetUsage": "테스트넷 사용법",
+        "testnetUsageValue": "테스트용으로만 사용"
+      }
     },
     "feeCalculator": {
       "title": "수수료 계산기",

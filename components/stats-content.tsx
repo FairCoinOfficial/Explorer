@@ -152,7 +152,7 @@ export function StatsContent() {
                         <NetworkStatus />
                         <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
                             <Activity className="w-3 h-3 mr-1" />
-                            {t('phase', {phase: stats.phase || 'PoS'})}
+                            {t('phase', { phase: stats.phase || 'PoS' })}
                         </Badge>
                     </div>
                     <Button onClick={fetchStats} variant="outline" size="sm" className="w-full sm:w-auto">
@@ -174,7 +174,7 @@ export function StatsContent() {
                     icon={Coins}
                     title={t('totalSupply')}
                     value={`${stats.totalSupply.toLocaleString()} FAIR`}
-                    description={t('supplyProgress', {percentage: supplyProgress.toFixed(2)})}
+                    description={t('supplyProgress', { percentage: supplyProgress.toFixed(2) })}
                 />
                 <StatsCard
                     icon={Clock}
@@ -356,7 +356,7 @@ export function StatsContent() {
                                 <div className="space-y-4">
                                     <div className="flex justify-center">
                                         <Badge variant={stats.phase === 'PoS' ? 'default' : 'secondary'} className="text-sm px-3 py-1">
-                                            {t('current', {phase: stats.phase || 'PoS'})}
+                                            {t('current', { phase: stats.phase || 'PoS' })}
                                         </Badge>
                                     </div>
 

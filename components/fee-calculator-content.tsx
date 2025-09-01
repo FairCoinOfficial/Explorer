@@ -171,8 +171,8 @@ export function FeeCalculatorContent() {
                                 </div>
 
                                 <div className="text-xs text-muted-foreground space-y-1">
-                                    <p>• {t('estimatedSize', {bytes: Math.ceil(estimateTransactionSize(parseFloat(amount)) * 1000)})}</p>
-                                    <p>• {t('feeCalculationBased', {priority: priority})}</p>
+                                    <p>• {t('estimatedSize', { bytes: Math.ceil(estimateTransactionSize(parseFloat(amount)) * 1000) })}</p>
+                                    <p>• {t('feeCalculationBased', { priority: priority })}</p>
                                     <p>• {t('actualFeesDisclaimer')}</p>
                                 </div>
                             </>

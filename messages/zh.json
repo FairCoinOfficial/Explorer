@@ -73,7 +73,9 @@
     "navigation": "导航",
     "view_recent_blocks": "查看最近区块",
     "network_statistics": "网络统计",
-    "back_to_home": "返回首页"
+    "back_to_home": "返回首页",
+    "yes": "是",
+    "no": "否"
   },
   "home": {
     "title": "FairCoin 浏览器",
@@ -480,5 +482,79 @@
     "viewMasternodes": "查看主节点",
     "viewMempool": "查看内存池",
     "backToHome": "返回首页"
+  },
+  "tools": {
+    "addressValidator": {
+      "title": "地址验证器",
+      "subtitle": "验证FairCoin地址",
+      "description": "检查FairCoin地址是否有效并获取详细信息",
+      "validateSection": {
+        "title": "验证FairCoin地址"
+      },
+      "form": {
+        "label": "FairCoin地址",
+        "placeholder": "输入要验证的FairCoin地址",
+        "validate": "验证",
+        "validating": "验证中..."
+      },
+      "results": {
+        "valid": "有效地址",
+        "invalid": "无效地址",
+        "network": "网络",
+        "addressType": "地址类型"
+      },
+      "errors": {
+        "title": "验证错误",
+        "empty": "地址不能为空",
+        "invalidLength": "地址长度无效",
+        "invalidCharacters": "地址中包含无效字符（必须是Base58）",
+        "unknownFormat": "未知地址格式"
+      },
+      "addressTypes": {
+        "p2pkh": "P2PKH（支付到公钥哈希）",
+        "p2sh": "P2SH（支付到脚本哈希 - 多重签名）",
+        "p2pkhTestnet": "P2PKH（测试网）",
+        "p2shTestnet": "P2SH（测试网 - 多重签名）"
+      },
+      "addressDescriptions": {
+        "p2pkh": "标准单签名地址",
+        "p2sh": "多重签名地址（使用addmultisigaddress创建）",
+        "p2pkhTestnet": "测试网单签名地址",
+        "p2shTestnet": "测试网多重签名地址",
+        "unknown": "未知地址类型"
+      },
+      "warnings": {
+        "networkMismatch": {
+          "title": "网络不匹配",
+          "description": "此地址属于{addressNetwork}，但您当前在{currentNetwork}上。"
+        }
+      },
+      "networkValidation": {
+        "title": "网络验证结果",
+        "valid": "有效",
+        "isMine": "是我的",
+        "watchOnly": "仅观察",
+        "scriptAddress": "脚本地址"
+      },
+      "addressInfo": {
+        "title": "地址格式信息",
+        "mainnetP2PKH": "主网P2PKH",
+        "mainnetP2PKHExample": "以'f'开头（例如，f1234...）",
+        "mainnetP2SH": "主网P2SH",
+        "mainnetP2SHExample": "以'F'开头（例如，F5678...）",
+        "mainnetLength": "主网长度",
+        "mainnetLengthValue": "25-34个字符",
+        "mainnetUsage": "主网用途",
+        "mainnetUsageValue": "用于真实交易",
+        "testnetP2PKH": "测试网P2PKH",
+        "testnetP2PKHValue": "以'm'或'n'开头",
+        "testnetP2SH": "测试网P2SH",
+        "testnetP2SHValue": "以'2'开头",
+        "testnetLength": "测试网长度",
+        "testnetLengthValue": "25-34个字符",
+        "testnetUsage": "测试网用途",
+        "testnetUsageValue": "仅用于测试"
+      }
+    }
   }
 }
