@@ -90,14 +90,51 @@
     "view": "보기"
   },
   "blocks": {
-    "title": "블록",
-    "subtitle": "FairCoin 블록 탐색",
+    "title": "최근 블록",
+    "subtitle": "FairCoin 블록체인의 최신 블록",
+    "loading": "블록 로딩 중...",
+    "error": {
+      "title": "블록 로딩 오류",
+      "tryAgain": "다시 시도"
+    },
+    "currentHeight": {
+      "label": "현재"
+    },
+    "search": {
+      "placeholder": "블록 높이나 해시로 검색..."
+    },
+    "filters": {
+      "label": "필터",
+      "all": "전체",
+      "oneHour": "1시간",
+      "twentyFourHours": "24시간",
+      "sevenDays": "7일",
+      "allTime": "전체 시간",
+      "lastHour": "지난 1시간",
+      "lastTwentyFourHours": "지난 24시간",
+      "lastSevenDays": "지난 7일"
+    },
+    "stats": {
+      "currentHeight": "현재 높이",
+      "currentHeightDesc": "최신 블록 번호",
+      "blocksShown": "표시된 블록",
+      "blocksShownDesc": "{currentPage}/{totalPages} 페이지 (총 {totalBlocks}개)",
+      "network": "네트워크",
+      "networkDesc": "활성 네트워크",
+      "timeFilter": "시간 필터",
+      "timeFilterDesc": "현재 필터"
+    },
+    "recentBlocks": {
+      "title": "최근 블록",
+      "badge": "{count}개 블록"
+    },
+    "backToHome": "홈으로 돌아가기",
     "latest": "최신 블록",
     "block": "블록",
-    "details": "블록 상세정보 및 거래",
+    "details": "블록 세부정보 및 거래",
     "summary": "블록 요약",
     "transactionsList": "블록 거래",
-    "noTransactions": "이 블록에 거래가 없습니다",
+    "noTransactions": "이 블록에는 거래가 없습니다",
     "minedBy": "채굴자",
     "reward": "블록 보상",
     "totalFees": "총 수수료",
@@ -107,7 +144,7 @@
     "blockNumber": "블록 번호",
     "totalTransactions": "총 거래 수",
     "bytes": "바이트",
-    "networkConfirmations": "네트워크 확인 수",
+    "networkConfirmations": "네트워크 확인",
     "blockInformation": "블록 정보",
     "timestamp": "타임스탬프",
     "difficulty": "난이도",
@@ -118,8 +155,7 @@
     "merkleRoot": "머클 루트",
     "previousBlock": "이전 블록",
     "nextBlock": "다음 블록",
-    "backToHome": "홈으로 돌아가기",
-    "refresh": "새로 고침",
+    "refresh": "새로고침",
     "transactionId": "거래 ID",
     "index": "인덱스",
     "chainwork": "체인워크"

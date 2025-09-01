@@ -44,8 +44,45 @@
         "view": "View"
     },
     "blocks": {
-        "title": "Blocks",
-        "subtitle": "Browse FairCoin blocks",
+        "title": "Recent Blocks",
+        "subtitle": "Latest blocks on the FairCoin blockchain",
+        "loading": "Loading blocks...",
+        "error": {
+            "title": "Error loading blocks",
+            "tryAgain": "Try Again"
+        },
+        "currentHeight": {
+            "label": "Current"
+        },
+        "search": {
+            "placeholder": "Search by block height or hash..."
+        },
+        "filters": {
+            "label": "Filter",
+            "all": "All",
+            "oneHour": "1H",
+            "twentyFourHours": "24H",
+            "sevenDays": "7D",
+            "allTime": "All Time",
+            "lastHour": "Last Hour",
+            "lastTwentyFourHours": "Last 24H",
+            "lastSevenDays": "Last 7 Days"
+        },
+        "stats": {
+            "currentHeight": "Current Height",
+            "currentHeightDesc": "Latest block number",
+            "blocksShown": "Blocks Shown",
+            "blocksShownDesc": "Page {currentPage} of {totalPages} ({totalBlocks} total)",
+            "network": "Network",
+            "networkDesc": "Active network",
+            "timeFilter": "Time Filter",
+            "timeFilterDesc": "Current filter"
+        },
+        "recentBlocks": {
+            "title": "Recent Blocks",
+            "badge": "{count} blocks"
+        },
+        "backToHome": "Back to Home",
         "latest": "Latest Blocks",
         "block": "Block",
         "details": "Block details and transactions",
@@ -72,7 +109,6 @@
         "merkleRoot": "Merkle Root",
         "previousBlock": "Previous Block",
         "nextBlock": "Next Block",
-        "backToHome": "Back to Home",
         "refresh": "Refresh",
         "transactionId": "Transaction ID",
         "index": "Index",

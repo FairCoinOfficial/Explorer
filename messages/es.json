@@ -109,8 +109,45 @@
     "view": "Ver"
   },
   "blocks": {
-    "title": "Bloques",
-    "subtitle": "Navegar bloques de FairCoin",
+    "title": "Bloques Recientes",
+    "subtitle": "Últimos bloques en la blockchain de FairCoin",
+    "loading": "Cargando bloques...",
+    "error": {
+      "title": "Error al cargar bloques",
+      "tryAgain": "Intentar de Nuevo"
+    },
+    "currentHeight": {
+      "label": "Actual"
+    },
+    "search": {
+      "placeholder": "Buscar por altura de bloque o hash..."
+    },
+    "filters": {
+      "label": "Filtro",
+      "all": "Todos",
+      "oneHour": "1H",
+      "twentyFourHours": "24H",
+      "sevenDays": "7D",
+      "allTime": "Todo el Tiempo",
+      "lastHour": "Última Hora",
+      "lastTwentyFourHours": "Últimas 24H",
+      "lastSevenDays": "Últimos 7 Días"
+    },
+    "stats": {
+      "currentHeight": "Altura Actual",
+      "currentHeightDesc": "Último número de bloque",
+      "blocksShown": "Bloques Mostrados",
+      "blocksShownDesc": "Página {currentPage} de {totalPages} ({totalBlocks} total)",
+      "network": "Red",
+      "networkDesc": "Red activa",
+      "timeFilter": "Filtro de Tiempo",
+      "timeFilterDesc": "Filtro actual"
+    },
+    "recentBlocks": {
+      "title": "Bloques Recientes",
+      "badge": "{count} bloques"
+    },
+    "backToHome": "Volver al Inicio",
     "latest": "Últimos Bloques",
     "block": "Bloque",
     "details": "Detalles del bloque y transacciones",
@@ -119,14 +156,14 @@
     "noTransactions": "No hay transacciones en este bloque",
     "minedBy": "Minado por",
     "reward": "Recompensa del Bloque",
-    "totalFees": "Comisiones Totales",
+    "totalFees": "Tarifas Totales",
     "blockHeight": "Altura del Bloque",
     "blockHash": "Hash del Bloque",
     "blockSize": "Tamaño del Bloque",
-    "blockNumber": "Número de bloque",
-    "totalTransactions": "Total de transacciones",
+    "blockNumber": "Número del bloque",
+    "totalTransactions": "Transacciones totales",
     "bytes": "bytes",
-    "networkConfirmations": "Confirmaciones de red",
+    "networkConfirmations": "Confirmaciones de la red",
     "blockInformation": "Información del Bloque",
     "timestamp": "Marca de Tiempo",
     "difficulty": "Dificultad",
@@ -136,8 +173,7 @@
     "weight": "Peso",
     "merkleRoot": "Raíz Merkle",
     "previousBlock": "Bloque Anterior",
-    "nextBlock": "Bloque Siguiente",
-    "backToHome": "Volver al Inicio",
+    "nextBlock": "Siguiente Bloque",
     "refresh": "Actualizar",
     "transactionId": "ID de Transacción",
     "index": "Índice",

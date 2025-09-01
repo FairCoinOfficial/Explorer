@@ -109,25 +109,62 @@
     "view": "Anzeigen"
   },
   "blocks": {
-    "title": "Blöcke",
-    "subtitle": "FairCoin-Blöcke durchsuchen",
+    "title": "Aktuelle Blöcke",
+    "subtitle": "Neueste Blöcke auf der FairCoin-Blockchain",
+    "loading": "Lade Blöcke...",
+    "error": {
+      "title": "Fehler beim Laden der Blöcke",
+      "tryAgain": "Erneut Versuchen"
+    },
+    "currentHeight": {
+      "label": "Aktuell"
+    },
+    "search": {
+      "placeholder": "Nach Blockhöhe oder Hash suchen..."
+    },
+    "filters": {
+      "label": "Filter",
+      "all": "Alle",
+      "oneHour": "1S",
+      "twentyFourHours": "24S",
+      "sevenDays": "7T",
+      "allTime": "Alle Zeit",
+      "lastHour": "Letzte Stunde",
+      "lastTwentyFourHours": "Letzte 24S",
+      "lastSevenDays": "Letzte 7 Tage"
+    },
+    "stats": {
+      "currentHeight": "Aktuelle Höhe",
+      "currentHeightDesc": "Neueste Blocknummer",
+      "blocksShown": "Angezeigte Blöcke",
+      "blocksShownDesc": "Seite {currentPage} von {totalPages} ({totalBlocks} gesamt)",
+      "network": "Netzwerk",
+      "networkDesc": "Aktives Netzwerk",
+      "timeFilter": "Zeitfilter",
+      "timeFilterDesc": "Aktueller Filter"
+    },
+    "recentBlocks": {
+      "title": "Aktuelle Blöcke",
+      "badge": "{count} Blöcke"
+    },
+    "backToHome": "Zurück zur Startseite",
     "latest": "Neueste Blöcke",
     "block": "Block",
     "details": "Blockdetails und Transaktionen",
-    "summary": "Blockzusammenfassung",
+    "summary": "Block-Zusammenfassung",
     "transactionsList": "Block-Transaktionen",
     "noTransactions": "Keine Transaktionen in diesem Block",
     "minedBy": "Gemint von",
-    "reward": "Blockbelohnung",
+    "reward": "Block-Belohnung",
     "totalFees": "Gesamtgebühren",
     "blockHeight": "Blockhöhe",
     "blockHash": "Block-Hash",
     "blockSize": "Blockgröße",
     "blockNumber": "Blocknummer",
-    "totalTransactions": "Transaktionen insgesamt",
+    "totalTransactions": "Gesamttransaktionen",
     "bytes": "Bytes",
     "networkConfirmations": "Netzwerkbestätigungen",
-    "blockInformation": "Blockinformationen",
+    "blockInformation": "Block-Informationen",
     "timestamp": "Zeitstempel",
     "difficulty": "Schwierigkeit",
     "nonce": "Nonce",
@@ -137,7 +174,6 @@
     "merkleRoot": "Merkle-Wurzel",
     "previousBlock": "Vorheriger Block",
     "nextBlock": "Nächster Block",
-    "backToHome": "Zurück zur Startseite",
     "refresh": "Aktualisieren",
     "transactionId": "Transaktions-ID",
     "index": "Index",

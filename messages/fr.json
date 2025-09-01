@@ -109,8 +109,45 @@
     "view": "Voir"
   },
   "blocks": {
-    "title": "Blocs",
-    "subtitle": "Parcourir les blocs FairCoin",
+    "title": "Blocs Récents",
+    "subtitle": "Derniers blocs sur la blockchain FairCoin",
+    "loading": "Chargement des blocs...",
+    "error": {
+      "title": "Erreur lors du chargement des blocs",
+      "tryAgain": "Réessayer"
+    },
+    "currentHeight": {
+      "label": "Actuel"
+    },
+    "search": {
+      "placeholder": "Rechercher par hauteur de bloc ou hash..."
+    },
+    "filters": {
+      "label": "Filtre",
+      "all": "Tous",
+      "oneHour": "1H",
+      "twentyFourHours": "24H",
+      "sevenDays": "7J",
+      "allTime": "Tout le Temps",
+      "lastHour": "Dernière Heure",
+      "lastTwentyFourHours": "Dernières 24H",
+      "lastSevenDays": "Derniers 7 Jours"
+    },
+    "stats": {
+      "currentHeight": "Hauteur Actuelle",
+      "currentHeightDesc": "Dernier numéro de bloc",
+      "blocksShown": "Blocs Affichés",
+      "blocksShownDesc": "Page {currentPage} sur {totalPages} ({totalBlocks} total)",
+      "network": "Réseau",
+      "networkDesc": "Réseau actif",
+      "timeFilter": "Filtre Temporel",
+      "timeFilterDesc": "Filtre actuel"
+    },
+    "recentBlocks": {
+      "title": "Blocs Récents",
+      "badge": "{count} blocs"
+    },
+    "backToHome": "Retour à l'Accueil",
     "latest": "Derniers Blocs",
     "block": "Bloc",
     "details": "Détails du bloc et transactions",
@@ -123,10 +160,10 @@
     "blockHeight": "Hauteur du Bloc",
     "blockHash": "Hash du Bloc",
     "blockSize": "Taille du Bloc",
-    "blockNumber": "Numéro de bloc",
-    "totalTransactions": "Total des transactions",
+    "blockNumber": "Numéro du bloc",
+    "totalTransactions": "Transactions totales",
     "bytes": "octets",
-    "networkConfirmations": "Confirmations réseau",
+    "networkConfirmations": "Confirmations du réseau",
     "blockInformation": "Informations du Bloc",
     "timestamp": "Horodatage",
     "difficulty": "Difficulté",
@@ -137,7 +174,6 @@
     "merkleRoot": "Racine Merkle",
     "previousBlock": "Bloc Précédent",
     "nextBlock": "Bloc Suivant",
-    "backToHome": "Retour à l'Accueil",
     "refresh": "Actualiser",
     "transactionId": "ID de Transaction",
     "index": "Index",

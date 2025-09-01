@@ -109,8 +109,45 @@
     "view": "查看"
   },
   "blocks": {
-    "title": "区块",
-    "subtitle": "浏览 FairCoin 区块",
+    "title": "最近区块",
+    "subtitle": "FairCoin区块链上的最新区块",
+    "loading": "加载区块中...",
+    "error": {
+      "title": "加载区块时出错",
+      "tryAgain": "重试"
+    },
+    "currentHeight": {
+      "label": "当前"
+    },
+    "search": {
+      "placeholder": "按区块高度或哈希搜索..."
+    },
+    "filters": {
+      "label": "筛选",
+      "all": "全部",
+      "oneHour": "1小时",
+      "twentyFourHours": "24小时",
+      "sevenDays": "7天",
+      "allTime": "全部时间",
+      "lastHour": "最近1小时",
+      "lastTwentyFourHours": "最近24小时",
+      "lastSevenDays": "最近7天"
+    },
+    "stats": {
+      "currentHeight": "当前高度",
+      "currentHeightDesc": "最新区块号",
+      "blocksShown": "显示区块",
+      "blocksShownDesc": "第{currentPage}页，共{totalPages}页（总计{totalBlocks}个）",
+      "network": "网络",
+      "networkDesc": "活动网络",
+      "timeFilter": "时间筛选",
+      "timeFilterDesc": "当前筛选器"
+    },
+    "recentBlocks": {
+      "title": "最近区块",
+      "badge": "{count}个区块"
+    },
+    "backToHome": "返回首页",
     "latest": "最新区块",
     "block": "区块",
     "details": "区块详情和交易",
@@ -119,25 +156,24 @@
     "noTransactions": "此区块中没有交易",
     "minedBy": "挖矿者",
     "reward": "区块奖励",
-    "totalFees": "总手续费",
+    "totalFees": "总费用",
     "blockHeight": "区块高度",
     "blockHash": "区块哈希",
     "blockSize": "区块大小",
-    "blockNumber": "区块编号",
-    "totalTransactions": "交易总数",
+    "blockNumber": "区块号",
+    "totalTransactions": "总交易数",
     "bytes": "字节",
-    "networkConfirmations": "网络确认数",
+    "networkConfirmations": "网络确认",
     "blockInformation": "区块信息",
     "timestamp": "时间戳",
     "difficulty": "难度",
     "nonce": "随机数",
     "version": "版本",
-    "bits": "位数",
+    "bits": "位",
     "weight": "权重",
     "merkleRoot": "默克尔根",
     "previousBlock": "上一个区块",
     "nextBlock": "下一个区块",
-    "backToHome": "返回首页",
     "refresh": "刷新",
     "transactionId": "交易ID",
     "index": "索引",
