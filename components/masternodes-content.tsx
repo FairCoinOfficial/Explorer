@@ -143,7 +143,7 @@ export function MasternodesContent() {
 
             {/* Stats Cards */}
             <div className="space-y-4">
-                                <SectionHeader
+                <SectionHeader
                     icon={Server}
                     title={t('networkStatistics')}
                 />
