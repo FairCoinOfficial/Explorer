@@ -50,67 +50,8 @@ export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loa
 
     return (
         <div className="space-y-4">
-            {/* Mobile Card View */}
-            <div className="block md:hidden space-y-2">
-                {blocks.map((block) => (
-                    <Card key={block.height} className="hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/30 hover:border-l-primary">
-                        <CardContent className="p-3">
-                            <div className="flex items-start justify-between mb-2">
-                                <div className="flex items-center gap-2 min-w-0 flex-1">
-                                    <Link
-                                        href={`/block/${block.height}`}
-                                        className="font-semibold text-base hover:underline text-primary truncate"
-                                    >
-                                        #{block.height.toLocaleString()}
-                                    </Link>
-                                </div>
-                                <div className="flex items-center gap-1 flex-shrink-0">
-                                    <Badge variant="secondary" className="text-xs font-medium bg-primary/10 text-primary border-primary/20">
-                                        {block.nTx?.toLocaleString() ?? block.tx?.length?.toLocaleString() ?? 0} TX
-                                    </Badge>
-                                    <CopyButton text={block.hash} className="h-5 w-5" />
-                                </div>
-                            </div>
-
-                            <div className="space-y-1 mb-2">
-                                <div className="flex items-start gap-2">
-                                    <span className="text-xs text-muted-foreground font-medium flex-shrink-0 mt-0.5">{t('hash')}:</span>
-                                    <div className="flex items-center gap-1 min-w-0 flex-1">
-                                        <Link
-                                            href={`/block/${block.hash}`}
-                                            className="font-mono text-sm hover:underline text-primary flex-1 min-w-0 truncate"
-                                        >
-                                            {block.hash.slice(0, 16)}...
-                                        </Link>
-                                        <CopyButton text={block.hash} className="h-4 w-4 flex-shrink-0" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-between text-xs">
-                                <div className="flex items-center gap-1 text-muted-foreground min-w-0 flex-1">
-                                    <span className="truncate">
-                                        {new Date(block.time * 1000).toLocaleDateString('en-US', {
-                                            month: 'short',
-                                            day: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })}
-                                    </span>
-                                </div>
-                                {block.size && (
-                                    <div className="flex items-center gap-1 text-muted-foreground ml-2 flex-shrink-0">
-                                        <span className="text-xs">{(block.size / 1024).toFixed(1)} KB</span>
-                                    </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-
-            {/* Desktop Table View */}
-            <div className="hidden md:block">
+            {/* Table View */}
+            <div>
                 <Card className="overflow-hidden shadow-sm">
                     <CardContent className="p-0">
                         <div className="overflow-x-auto custom-scrollbar">
@@ -120,8 +61,8 @@ export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loa
                                         <TableHead className="w-[100px] font-semibold whitespace-nowrap h-8 px-2">{t('height')}</TableHead>
                                         <TableHead className="min-w-[200px] lg:min-w-[280px] font-semibold whitespace-nowrap h-8 px-2">{t('hash')}</TableHead>
                                         <TableHead className="w-[140px] font-semibold whitespace-nowrap h-8 px-2">{t('time')}</TableHead>
-                                        <TableHead className="w-[110px] hidden lg:table-cell font-semibold whitespace-nowrap h-8 px-2">{t('transactions')}</TableHead>
-                                        <TableHead className="w-[90px] hidden lg:table-cell font-semibold whitespace-nowrap h-8 px-2">{t('size')}</TableHead>
+                                        <TableHead className="w-[110px] font-semibold whitespace-nowrap h-8 px-2">{t('transactions')}</TableHead>
+                                        <TableHead className="w-[90px] font-semibold whitespace-nowrap h-8 px-2">{t('size')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -150,19 +91,14 @@ export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loa
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-sm text-muted-foreground whitespace-nowrap py-2 px-2">
-                                                <span className="hidden lg:inline">
-                                                    {new Date(block.time * 1000).toLocaleString()}
-                                                </span>
-                                                <span className="lg:hidden">
-                                                    {new Date(block.time * 1000).toLocaleDateString()}
-                                                </span>
+                                                {new Date(block.time * 1000).toLocaleString()}
                                             </TableCell>
-                                            <TableCell className="hidden lg:table-cell whitespace-nowrap py-2 px-2">
+                                            <TableCell className="whitespace-nowrap py-2 px-2">
                                                 <Badge variant="secondary" className="text-xs font-medium bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors">
                                                     {block.nTx?.toLocaleString() ?? block.tx?.length?.toLocaleString() ?? 0}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="hidden lg:table-cell text-sm text-muted-foreground font-medium whitespace-nowrap py-2 px-2">
+                                            <TableCell className="text-sm text-muted-foreground font-medium whitespace-nowrap py-2 px-2">
                                                 {block.size ? `${(block.size / 1024).toFixed(1)} KB` : 'N/A'}
                                             </TableCell>
                                         </TableRow>

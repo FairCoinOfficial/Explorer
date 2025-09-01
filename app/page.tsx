@@ -164,35 +164,32 @@ export default async function Page() {
                 <h3 className="text-lg sm:text-xl font-semibold">{t('latestTransactions')}</h3>
               </div>
 
-              <div className="space-y-2 sm:space-y-3">
-                {txFeed.slice(0, 5).map((txid: string) => (
-                  <Card key={txid} className="hover:shadow-md transition-shadow border-l-4 border-l-primary/20">
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <Hash className="w-3 h-3 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <Link
-                              href={`/tx/${txid}`}
-                              className="font-mono text-sm hover:underline text-primary font-medium truncate block"
-                            >
-                              <span className="hidden sm:inline">{txid.slice(0, 20)}...</span>
-                              <span className="sm:hidden">{txid.slice(0, 12)}...</span>
-                            </Link>
-                            <p className="text-xs text-muted-foreground">
-                              {t('blockNumber')}{latest?.height ?? '-'}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+              <div className="rounded-md border overflow-auto custom-scrollbar">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-semibold whitespace-nowrap h-8 px-2">{t('transactionId')}</TableHead>
+                      <TableHead className="font-semibold whitespace-nowrap h-8 px-2">{t('block')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {txFeed.slice(0, 5).map((txid: string, index: number) => (
+                      <TableRow key={txid} className={`group hover:bg-muted/50 transition-colors ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}>
+                        <TableCell className="font-mono text-sm py-2 px-2">
+                          <Link
+                            href={`/tx/${txid}`}
+                            className="hover:underline text-primary font-medium"
+                          >
+                            {txid.slice(0, 16)}...
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground py-2 px-2">
+                          #{latest?.height ?? '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           </div>
@@ -223,42 +220,41 @@ export default async function Page() {
                 <p className="text-sm text-muted-foreground">{t('noTransactionsDescription')}</p>
               </div>
             ) : (
-              <div className="space-y-2 sm:space-y-3">
-                {txFeed.map((txid: string, index: number) => (
-                  <Card key={txid} className="hover:shadow-md transition-shadow border-l-4 border-l-primary/20">
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <Hash className="w-3 h-3 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <Link
-                              href={`/tx/${txid}`}
-                              className="font-mono text-sm hover:underline text-primary font-medium truncate block"
-                            >
-                              <span className="hidden lg:inline">{txid.slice(0, 32)}...</span>
-                              <span className="hidden md:inline lg:hidden">{txid.slice(0, 24)}...</span>
-                              <span className="hidden sm:inline md:hidden">{txid.slice(0, 16)}...</span>
-                              <span className="sm:hidden">{txid.slice(0, 12)}...</span>
+              <div className="rounded-md border overflow-auto custom-scrollbar">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-semibold whitespace-nowrap h-8 px-2">{t('transactionId')}</TableHead>
+                      <TableHead className="font-semibold whitespace-nowrap h-8 px-2">{t('block')}</TableHead>
+                      <TableHead className="font-semibold whitespace-nowrap h-8 px-2">{t('viewDetails')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {txFeed.map((txid: string, index: number) => (
+                      <TableRow key={txid} className={`group hover:bg-muted/50 transition-colors ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}>
+                        <TableCell className="font-mono text-sm py-2 px-2">
+                          <Link
+                            href={`/tx/${txid}`}
+                            className="hover:underline text-primary font-medium"
+                          >
+                            {txid.slice(0, 16)}...
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground py-2 px-2">
+                          #{latest?.height ?? '-'}
+                        </TableCell>
+                        <TableCell className="py-2 px-2">
+                          <Button asChild variant="ghost" size="sm" className="hover:bg-primary/10 hover:text-primary transition-colors">
+                            <Link href={`/tx/${txid}`}>
+                              {t('viewDetails')}
+                              <ArrowUpRight className="h-3 w-3 ml-1" />
                             </Link>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Blocks className="h-3 w-3" />
-                              {t('blockNumber')}{latest?.height ?? '-'}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <Button variant="ghost" size="sm" className="hover:bg-primary/10 hover:text-primary transition-colors">
-                            <span className="hidden sm:inline">{t('viewDetails')}</span>
-                            <span className="sm:hidden">{t('view')}</span>
-                            <ArrowUpRight className="h-3 w-3 ml-1" />
                           </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </div>

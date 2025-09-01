@@ -156,7 +156,7 @@ export function BlocksContent() {
                     <Link href="/">
                         <Home className="h-4 w-4 mr-2" />
                         <span className="hidden sm:inline">{t('backToHome')}</span>
-                        <span className="sm:hidden">{tCommon('home')}</span>
+                        <span className="sm:hidden">{tCommon('back_to_home')}</span>
                     </Link>
                 </Button>
             </div>

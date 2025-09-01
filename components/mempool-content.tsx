@@ -30,10 +30,10 @@ interface MempoolInfo {
 }
 
 export default function MempoolContent() {
-  const t = useTranslations('mempool')
-  const tCommon = useTranslations('common')
-  const { currentNetwork } = useNetwork()
-  const [mempoolInfo, setMempoolInfo] = useState<MempoolInfo | null>(null)
+    const t = useTranslations('mempool')
+    const tCommon = useTranslations('common')
+    const { currentNetwork } = useNetwork()
+    const [mempoolInfo, setMempoolInfo] = useState<MempoolInfo | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
@@ -256,9 +256,9 @@ export default function MempoolContent() {
                                             {tx.feeRate.toFixed(1)} sat/vB
                                         </TableCell>
                                         <TableCell>
-                                                                    <TableCell>
-                            {t('time_ago', { minutes: Math.round((Date.now() / 1000 - tx.time) / 60) })}
-                        </TableCell>
+                                            <TableCell>
+                                                {t('time_ago', { minutes: Math.round((Date.now() / 1000 - tx.time) / 60) })}
+                                            </TableCell>
                                         </TableCell>
                                     </TableRow>
                                 ))}

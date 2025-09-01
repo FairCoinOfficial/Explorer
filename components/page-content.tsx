@@ -167,20 +167,31 @@ export function PageContent({ height, blocks, txFeed }: PageContentProps) {
                         </CardHeader>
                         <CardContent>
                             {txFeed.length > 0 ? (
-                                <div className="space-y-2">
-                                    {txFeed.slice(0, 10).map((txid) => (
-                                        <div key={txid} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                                            <div className="flex items-center space-x-3">
-                                                <Hash className="h-4 w-4 text-muted-foreground" />
-                                                <Link href={`/tx/${txid}`} className="font-mono text-sm text-primary hover:text-primary/80 truncate max-w-[200px] sm:max-w-[300px]">
-                                                    {txid}
-                                                </Link>
-                                            </div>
-                                            <Badge variant="secondary" className="text-xs">
-                                                {t('confirmed')}
-                                            </Badge>
-                                        </div>
-                                    ))}
+                                <div className="rounded-md border overflow-auto custom-scrollbar">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="bg-muted/50">
+                                                <TableHead className="font-semibold whitespace-nowrap h-8 px-2">{t('transactionId')}</TableHead>
+                                                <TableHead className="font-semibold whitespace-nowrap h-8 px-2">{t('status')}</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {txFeed.slice(0, 10).map((txid, index) => (
+                                                <TableRow key={txid} className={`group hover:bg-muted/50 transition-colors ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}>
+                                                    <TableCell className="font-mono text-sm py-2 px-2">
+                                                        <Link href={`/tx/${txid}`} className="hover:underline text-primary font-medium">
+                                                            {txid.slice(0, 16)}...
+                                                        </Link>
+                                                    </TableCell>
+                                                    <TableCell className="py-2 px-2">
+                                                        <Badge variant="secondary" className="text-xs">
+                                                            {t('confirmed')}
+                                                        </Badge>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
                                 </div>
                             ) : (
                                 <p className="text-center text-muted-foreground py-8">
