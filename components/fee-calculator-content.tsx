@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import { useTranslations } from "next-intl"
 import { useNetwork } from "@/contexts/network-context"
 import { Calculator, Info, Coins, AlertTriangle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,6 +11,8 @@ import { Separator } from "@/components/ui/separator"
 import { SectionHeader, EmptyState, InfoGrid } from "@/components/ui"
 
 export function FeeCalculatorContent() {
+    const t = useTranslations('feeCalculator')
+    const common = useTranslations('common')
     const { currentNetwork } = useNetwork()
     const [amount, setAmount] = useState("")
     const [priority, setPriority] = useState("standard")
@@ -52,13 +55,13 @@ export function FeeCalculatorContent() {
     const getPriorityDescription = (priority: string) => {
         switch (priority) {
             case "low":
-                return "~10-20 minutes confirmation (Standard fee)"
+                return t('lowPriorityDescription')
             case "standard":
-                return "~5-10 minutes confirmation (Recommended)"
+                return t('standardPriorityDescription')
             case "high":
-                return "~2-5 minutes confirmation (Higher fee)"
+                return t('highPriorityDescription')
             case "priority":
-                return "InstantX enabled - Near instant confirmation"
+                return t('instantXDescription')
             default:
                 return ""
         }
@@ -83,7 +86,7 @@ export function FeeCalculatorContent() {
         <div className="space-y-6">
             <div className="flex items-center gap-2">
                 <Calculator className="h-5 w-5" />
-                <h1 className="text-2xl font-bold">Fee Calculator</h1>
+                <h1 className="text-2xl font-bold">{t('title')}</h1>
                 <Badge variant="outline">{currentNetwork.toUpperCase()}</Badge>
             </div>
 
@@ -92,16 +95,16 @@ export function FeeCalculatorContent() {
                     <CardHeader>
                         <SectionHeader
                             icon={Coins}
-                            title="Transaction Details"
+                            title={t('transactionDetails')}
                         />
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <label htmlFor="amount" className="block text-sm font-medium">Amount (FAIR)</label>
+                            <label htmlFor="amount" className="block text-sm font-medium">{t('amount')} (FAIR)</label>
                             <Input
                                 id="amount"
                                 type="number"
-                                placeholder="Enter amount to send"
+                                placeholder={t('amountPlaceholder')}
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
                                 min="0"
@@ -110,16 +113,16 @@ export function FeeCalculatorContent() {
                         </div>
 
                         <div className="space-y-2">
-                            <label htmlFor="priority" className="block text-sm font-medium">Fee Priority</label>
+                            <label htmlFor="priority" className="block text-sm font-medium">{t('feePriority')}</label>
                             <select
                                 value={priority}
                                 onChange={(e) => setPriority(e.target.value)}
                                 className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
                             >
-                                <option value="low">Low Priority (Standard)</option>
-                                <option value="standard">Standard (Recommended)</option>
-                                <option value="high">High Priority</option>
-                                <option value="priority">InstantX (FastSend)</option>
+                                <option value="low">{t('lowPriority')}</option>
+                                <option value="standard">{t('standardPriority')}</option>
+                                <option value="high">{t('highPriority')}</option>
+                                <option value="priority">{t('instantX')}</option>
                             </select>
                             <p className="text-sm text-muted-foreground">
                                 {getPriorityDescription(priority)}
@@ -127,7 +130,7 @@ export function FeeCalculatorContent() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="block text-sm font-medium">Fee Rate</label>
+                            <label className="block text-sm font-medium">{t('feeRate')}</label>
                             <div className="flex items-center gap-2">
                                 <Badge className={getPriorityColor(priority)}>
                                     {feeRates[priority as keyof typeof feeRates]} FAIR/KB
@@ -141,7 +144,7 @@ export function FeeCalculatorContent() {
                     <CardHeader>
                         <SectionHeader
                             icon={Info}
-                            title="Fee Estimate"
+                            title={t('feeEstimate')}
                         />
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -149,18 +152,18 @@ export function FeeCalculatorContent() {
                             <>
                                 <div className="space-y-2">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sm text-muted-foreground">Amount:</span>
+                                        <span className="text-sm text-muted-foreground">{t('amount')}:</span>
                                         <span className="font-mono">{parseFloat(amount).toFixed(8)} FAIR</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sm text-muted-foreground">Estimated Fee:</span>
+                                        <span className="text-sm text-muted-foreground">{t('estimatedFee')}:</span>
                                         <span className="font-mono text-orange-600 dark:text-orange-400">
                                             {estimatedFee.toFixed(8)} FAIR
                                         </span>
                                     </div>
                                     <Separator />
                                     <div className="flex justify-between items-center font-semibold">
-                                        <span>Total Cost:</span>
+                                        <span>{t('totalCost')}:</span>
                                         <span className="font-mono">
                                             {totalCost.toFixed(8)} FAIR
                                         </span>
@@ -168,16 +171,16 @@ export function FeeCalculatorContent() {
                                 </div>
 
                                 <div className="text-xs text-muted-foreground space-y-1">
-                                    <p>• Estimated transaction size: ~{Math.ceil(estimateTransactionSize(parseFloat(amount)) * 1000)} bytes</p>
-                                    <p>• Fee calculation based on {priority} priority</p>
-                                    <p>• Actual fees may vary based on network conditions</p>
+                                    <p>• {t('estimatedSize', {bytes: Math.ceil(estimateTransactionSize(parseFloat(amount)) * 1000)})}</p>
+                                    <p>• {t('feeCalculationBased', {priority: priority})}</p>
+                                    <p>• {t('actualFeesDisclaimer')}</p>
                                 </div>
                             </>
                         ) : (
                             <EmptyState
                                 icon={Calculator}
-                                title="Enter Amount to Calculate"
-                                description="Enter an amount to see fee estimates"
+                                title={t('enterAmountTitle')}
+                                description={t('enterAmountDescription')}
                             />
                         )}
                     </CardContent>
@@ -188,20 +191,20 @@ export function FeeCalculatorContent() {
                 <CardHeader>
                     <SectionHeader
                         icon={Info}
-                        title="Fee Information"
+                        title={t('feeInformation')}
                     />
                 </CardHeader>
                 <CardContent>
                     <InfoGrid
                         items={[
-                            { label: "Standard transactions", value: "0.0001 FAIR minimum" },
-                            { label: "InstantX (sendtoaddressix)", value: "Near instant confirmation" },
-                            { label: "PrivateSend (obfuscation)", value: "Enhanced privacy" },
-                            { label: "Multi-signature support", value: "Available" },
-                            { label: "Block time", value: "~120 seconds" },
-                            { label: "Current network", value: currentNetwork },
-                            { label: "Confirmation time", value: "Varies by priority" },
-                            { label: "Recommended confirmations", value: "6 confirmations" }
+                            { label: t('standardTransactions'), value: t('standardMinimum') },
+                            { label: t('instantXLabel'), value: t('nearInstantConfirmation') },
+                            { label: t('privateSendLabel'), value: t('enhancedPrivacy') },
+                            { label: t('multiSigSupport'), value: t('available') },
+                            { label: t('blockTime'), value: t('blockTimeValue') },
+                            { label: t('currentNetwork'), value: currentNetwork },
+                            { label: t('confirmationTime'), value: t('variesByPriority') },
+                            { label: t('recommendedConfirmations'), value: t('sixConfirmations') }
                         ]}
                     />
                 </CardContent>
