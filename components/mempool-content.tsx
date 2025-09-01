@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from 'next-intl'
 import { useNetwork } from '@/contexts/network-context'
 import { NetworkStatus } from '@/components/network-status'
 import { Button } from '@/components/ui/button'
@@ -28,9 +29,11 @@ interface MempoolInfo {
     transactions: MempoolTransaction[]
 }
 
-export function MempoolContent() {
-    const { currentNetwork } = useNetwork()
-    const [mempoolInfo, setMempoolInfo] = useState<MempoolInfo | null>(null)
+export default function MempoolContent() {
+  const t = useTranslations('mempool')
+  const tCommon = useTranslations('common')
+  const { currentNetwork } = useNetwork()
+  const [mempoolInfo, setMempoolInfo] = useState<MempoolInfo | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
@@ -65,7 +68,7 @@ export function MempoolContent() {
     if (loading) {
         return (
             <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-                <LoadingState message="Loading mempool..." />
+                <LoadingState message={t('loading')} />
             </div>
         )
     }
@@ -75,10 +78,10 @@ export function MempoolContent() {
             <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <EmptyState
                     icon={Database}
-                    title="Error loading mempool"
+                    title={t('error_loading')}
                     description={error}
                     action={{
-                        label: "Try Again",
+                        label: tCommon('try_again'),
                         onClick: fetchMempool
                     }}
                 />
@@ -90,7 +93,7 @@ export function MempoolContent() {
         return (
             <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
                 <div className="flex items-center justify-center h-64">
-                    <p className="text-lg text-muted-foreground">No mempool information available</p>
+                    <p className="text-lg text-muted-foreground">{t('no_mempool_info')}</p>
                 </div>
             </div>
         )
@@ -105,9 +108,9 @@ export function MempoolContent() {
             {/* Header */}
             <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Memory Pool</h2>
+                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{t('title')}</h2>
                     <p className="text-sm text-muted-foreground sm:text-base">
-                        Unconfirmed transactions waiting to be included in blocks
+                        {t('description')}
                     </p>
                 </div>
                 <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
@@ -115,7 +118,7 @@ export function MempoolContent() {
                         <NetworkStatus />
                         <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
                             <Clock className="w-3 h-3 mr-1" />
-                            Auto-refresh: 10s
+                            {t('auto_refresh', { seconds: '10' })}
                         </Badge>
                     </div>
                     <Button onClick={fetchMempool} variant="outline" size="sm" className="w-full sm:w-auto">
@@ -129,51 +132,51 @@ export function MempoolContent() {
             <div className="space-y-4">
                 <SectionHeader
                     icon={Database}
-                    title="Mempool Statistics"
+                    title={t('statistics')}
                 />
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <div className="border rounded-lg p-4">
                         <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <h4 className="text-sm font-medium">Pending Transactions</h4>
+                            <h4 className="text-sm font-medium">{t('pending_transactions')}</h4>
                             <Hash className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="text-2xl font-bold">{mempoolInfo.size.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">Unconfirmed transactions</p>
+                        <p className="text-xs text-muted-foreground">{t('unconfirmed_transactions')}</p>
                     </div>
 
                     <div className="border rounded-lg p-4">
                         <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <h4 className="text-sm font-medium">Memory Usage</h4>
+                            <h4 className="text-sm font-medium">{t('memory_usage')}</h4>
                             <Database className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="text-2xl font-bold">
                             {(mempoolInfo.bytes / 1024 / 1024).toFixed(1)} MB
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            {utilizationPercent.toFixed(1)}% of max capacity
+                            {t('capacity_usage', { percentage: utilizationPercent.toFixed(1) })}
                         </p>
                     </div>
 
                     <div className="border rounded-lg p-4">
                         <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <h4 className="text-sm font-medium">Min Fee Rate</h4>
+                            <h4 className="text-sm font-medium">{t('min_fee_rate')}</h4>
                             <Zap className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="text-2xl font-bold">
                             {(mempoolInfo.mempoolminfee * 100000000).toFixed(0)}
                         </div>
-                        <p className="text-xs text-muted-foreground">sat/vB minimum</p>
+                        <p className="text-xs text-muted-foreground">{t('sat_vb_minimum')}</p>
                     </div>
 
                     <div className="border rounded-lg p-4">
                         <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <h4 className="text-sm font-medium">Avg TX Size</h4>
+                            <h4 className="text-sm font-medium">{t('avg_tx_size')}</h4>
                             <Database className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="text-2xl font-bold">
                             {mempoolInfo.size > 0 ? Math.round(mempoolInfo.bytes / mempoolInfo.size) : 0}
                         </div>
-                        <p className="text-xs text-muted-foreground">bytes per transaction</p>
+                        <p className="text-xs text-muted-foreground">{t('bytes_per_transaction')}</p>
                     </div>
                 </div>
             </div>
@@ -182,11 +185,11 @@ export function MempoolContent() {
             <div className="space-y-4">
                 <SectionHeader
                     icon={Database}
-                    title="Mempool Utilization"
+                    title={t('utilization')}
                 />
                 <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Memory Used</span>
+                        <span className="text-sm font-medium">{t('memory_used')}</span>
                         <span className="text-sm text-muted-foreground">
                             {(mempoolInfo.bytes / 1024 / 1024).toFixed(2)} MB / {(mempoolInfo.maxmempool / 1024 / 1024).toFixed(0)} MB
                         </span>
@@ -211,9 +214,9 @@ export function MempoolContent() {
             <div className="space-y-4">
                 <SectionHeader
                     icon={Clock}
-                    title="Recent Unconfirmed Transactions"
+                    title={t('recent_transactions')}
                     badge={{
-                        text: `${mempoolInfo.transactions.length} pending`,
+                        text: t('pending_count', { count: mempoolInfo.transactions.length }),
                         variant: 'secondary'
                     }}
                 />
@@ -223,11 +226,11 @@ export function MempoolContent() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Transaction ID</TableHead>
-                                    <TableHead>Size</TableHead>
-                                    <TableHead>Fee</TableHead>
-                                    <TableHead>Fee Rate</TableHead>
-                                    <TableHead>Time in Pool</TableHead>
+                                    <TableHead>{t('transaction_id')}</TableHead>
+                                    <TableHead>{tCommon('size')}</TableHead>
+                                    <TableHead>{tCommon('fee')}</TableHead>
+                                    <TableHead>{t('fee_rate')}</TableHead>
+                                    <TableHead>{t('time_in_pool')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -253,7 +256,9 @@ export function MempoolContent() {
                                             {tx.feeRate.toFixed(1)} sat/vB
                                         </TableCell>
                                         <TableCell>
-                                            {Math.round((Date.now() / 1000 - tx.time) / 60)} min ago
+                                                                    <TableCell>
+                            {t('time_ago', { minutes: Math.round((Date.now() / 1000 - tx.time) / 60) })}
+                        </TableCell>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -263,9 +268,9 @@ export function MempoolContent() {
                 ) : (
                     <div className="text-center py-8">
                         <Clock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-medium">Mempool is Empty</h3>
+                        <h3 className="text-lg font-medium">{t('mempool_empty')}</h3>
                         <p className="text-muted-foreground">
-                            No unconfirmed transactions are currently waiting to be processed.
+                            {t('mempool_empty_description')}
                         </p>
                     </div>
                 )}
@@ -275,34 +280,34 @@ export function MempoolContent() {
             <div className="space-y-4">
                 <div className="flex items-center gap-2 pb-2 border-b">
                     <Zap className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Quick Actions</h3>
+                    <h3 className="text-lg font-semibold">{t('quick_actions')}</h3>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                     <div className="border rounded-lg p-4">
-                        <h4 className="text-sm font-medium mb-3">Navigation</h4>
+                        <h4 className="text-sm font-medium mb-3">{tCommon('navigation')}</h4>
                         <div className="space-y-3">
                             <Button asChild variant="outline" className="w-full justify-start">
                                 <Link href="/blocks">
                                     <Database className="h-4 w-4 mr-2" />
-                                    View Recent Blocks
+                                    {tCommon('view_recent_blocks')}
                                 </Link>
                             </Button>
                             <Button asChild variant="outline" className="w-full justify-start">
                                 <Link href="/stats">
                                     <Hash className="h-4 w-4 mr-2" />
-                                    Network Statistics
+                                    {tCommon('network_statistics')}
                                 </Link>
                             </Button>
                         </div>
                     </div>
 
                     <div className="border rounded-lg p-4">
-                        <h4 className="text-sm font-medium mb-3">Mempool Tips</h4>
+                        <h4 className="text-sm font-medium mb-3">{t('mempool_tips')}</h4>
                         <div className="space-y-2 text-sm text-muted-foreground">
-                            <p>• Higher fee rates get confirmed faster</p>
-                            <p>• Minimum fee rate: {(mempoolInfo.mempoolminfee * 100000000).toFixed(0)} sat/vB</p>
-                            <p>• Transactions with dependencies may take longer</p>
-                            <p>• Mempool is cleared when transactions are mined</p>
+                            <p>• {t('tip_1')}</p>
+                            <p>• {t('tip_2', { rate: (mempoolInfo.mempoolminfee * 100000000).toFixed(0) })}</p>
+                            <p>• {t('tip_3')}</p>
+                            <p>• {t('tip_4')}</p>
                         </div>
                     </div>
                 </div>
@@ -313,7 +318,7 @@ export function MempoolContent() {
                 <Button asChild variant="outline">
                     <Link href="/">
                         <Home className="h-4 w-4 mr-2" />
-                        Back to Home
+                        {tCommon('back_to_home')}
                     </Link>
                 </Button>
             </div>
