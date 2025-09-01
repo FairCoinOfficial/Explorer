@@ -141,6 +141,8 @@
         "latestBlockTransactions": "Transacciones del Último Bloque",
         "noTransactionsAvailable": "No hay transacciones disponibles",
         "noTransactionsDescription": "El último bloque aún no contiene transacciones.",
+        "transactionId": "ID de Transacción",
+        "block": "Bloque",
         "blockNumber": "Bloque #",
         "viewDetails": "Ver Detalles",
         "view": "Ver"

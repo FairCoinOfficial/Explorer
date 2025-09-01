@@ -124,6 +124,8 @@
         "latestBlockTransactions": "最新ブロックの取引",
         "noTransactionsAvailable": "利用可能な取引がありません",
         "noTransactionsDescription": "最新ブロックにはまだ取引が含まれていません。",
+        "transactionId": "取引ID",
+        "block": "ブロック",
         "blockNumber": "ブロック #",
         "viewDetails": "詳細を表示",
         "view": "表示"

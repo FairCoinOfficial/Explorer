@@ -39,6 +39,8 @@
         "latestBlockTransactions": "Latest Block Transactions",
         "noTransactionsAvailable": "No transactions available",
         "noTransactionsDescription": "The latest block doesn't contain any transactions yet.",
+        "transactionId": "Transaction ID",
+        "block": "Block",
         "blockNumber": "Block #",
         "viewDetails": "View Details",
         "view": "View"

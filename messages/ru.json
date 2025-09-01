@@ -124,6 +124,8 @@
         "latestBlockTransactions": "Транзакции последнего блока",
         "noTransactionsAvailable": "Нет доступных транзакций",
         "noTransactionsDescription": "Последний блок пока не содержит транзакций.",
+        "transactionId": "ID Транзакции",
+        "block": "Блок",
         "blockNumber": "Блок #",
         "viewDetails": "Посмотреть детали",
         "view": "Посмотреть"

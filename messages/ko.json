@@ -124,6 +124,8 @@
         "latestBlockTransactions": "최신 블록 거래",
         "noTransactionsAvailable": "사용 가능한 거래가 없습니다",
         "noTransactionsDescription": "최신 블록에는 아직 거래가 포함되어 있지 않습니다.",
+        "transactionId": "거래 ID",
+        "block": "블록",
         "blockNumber": "블록 #",
         "viewDetails": "세부정보 보기",
         "view": "보기"

@@ -143,6 +143,8 @@
         "latestBlockTransactions": "最新区块交易",
         "noTransactionsAvailable": "暂无交易",
         "noTransactionsDescription": "最新区块还没有交易。",
+        "transactionId": "交易ID",
+        "block": "区块",
         "blockNumber": "区块 #",
         "viewDetails": "查看详情",
         "view": "查看"
