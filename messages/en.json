@@ -367,7 +367,99 @@
         "currentlyEnabled": "Currently enabled",
         "blockRewardsAndFees": "Block rewards + transaction fees",
         "enablesMixingAndFastSend": "Masternodes enable Coin Mixing and FastSend features",
-        "decentralizedVoting": "Decentralized blockchain voting for network decisions"
+        "decentralizedVoting": "Decentralized blockchain voting for network decisions",
+        "budget": {
+            "title": "Budget API",
+            "description": "FairCoin supports full decentralized budgets paid from blockchain",
+            "stages": {
+                "prepare": {
+                    "title": "Prepare",
+                    "description": "Create special transaction that destroys coins to make proposal",
+                    "details": "Use mnbudget prepare command to create collateral transaction"
+                },
+                "submit": {
+                    "title": "Submit",
+                    "description": "Propagate transaction to peers on network",
+                    "details": "Use mnbudget submit command to broadcast proposal to network"
+                },
+                "voting": {
+                    "title": "Voting",
+                    "description": "Lobby for votes on your proposal",
+                    "details": "Campaign for votes from other masternodes. Need 10% of network"
+                },
+                "finalization": {
+                    "title": "Finalization",
+                    "description": "Proposals sorted and compiled into finalized budget",
+                    "details": "Valid proposals compiled into final budget for voting"
+                },
+                "budgetVoting": {
+                    "title": "Budget Voting",
+                    "description": "Masternodes vote on finalized budget",
+                    "details": "Masternodes vote on complete budget package"
+                },
+                "payment": {
+                    "title": "Payment",
+                    "description": "Winning finalized budget is paid",
+                    "details": "Successful proposals receive monthly payments via superblocks"
+                }
+            },
+            "commands": {
+                "prepare": {
+                    "name": "mnbudget prepare",
+                    "description": "Prepare proposal for network by signing and creating tx",
+                    "example": "mnbudget prepare cool-project http://www.cool-project/one.json 12 100000 y6R9oN12KnB9zydzTLc3LikD9cCjjQzYG7 1200 true",
+                    "output": "464a0eb70ea91c94295214df48c47baa72b3876cfb658744aaf863c7b5bf1ff0",
+                    "copy": "Copy Command"
+                },
+                "submit": {
+                    "name": "mnbudget submit",
+                    "description": "Submit proposal for network",
+                    "example": "mnbudget submit cool-project http://www.cool-project/one.json 12 100000 y6R9oN12KnB9zydzTLc3LikD9cCjjQzYG7 1200 464a0eb70ea91c94295214df48c47baa72b3876cfb658744aaf863c7b5bf1ff0",
+                    "output": "a2b29778ae82e45a973a94309ffa6aa2e2388b8f95b39ab3739f0078835f0491",
+                    "copy": "Copy Command"
+                },
+                "getinfo": {
+                    "name": "mnbudget getinfo",
+                    "description": "Show current masternode budgets",
+                    "example": "mnbudget getinfo cool-project",
+                    "output": "JSON response with proposal details",
+                    "copy": "Copy Command"
+                },
+                "vote": {
+                    "name": "mnbudget vote",
+                    "description": "Vote on a faircoin initiative/budget",
+                    "example": "mnbudget vote a2b29778ae82e45a973a94309ffa6aa2e2388b8f95b39ab3739f0078835f0491 yes",
+                    "output": "Voted successfully - Your vote has been submitted and accepted.",
+                    "copy": "Copy Command"
+                },
+                "projection": {
+                    "name": "mnbudget projection",
+                    "description": "Show projection of proposals paid next cycle",
+                    "example": "mnbudget projection",
+                    "output": "JSON response showing budget projections",
+                    "copy": "Copy Command"
+                },
+                "finalbudget": {
+                    "name": "mnfinalbudget vote",
+                    "description": "Vote on a finalized budget",
+                    "example": "mnfinalbudget vote <budget_hash> yes",
+                    "output": "Vote recorded for finalized budget",
+                    "copy": "Copy Command"
+                }
+            },
+            "sections": {
+                "budgetStages": "Budget Stages",
+                "budgetCommands": "Budget Commands",
+                "example": "Example:",
+                "output": "Output:",
+                "warning": "Warning",
+                "important": "Important"
+            },
+            "alerts": {
+                "votingRequirement": "Proposals must be active at least 1 day and receive 10% of masternode network in yes votes to qualify. For example, if there are 2500 masternodes, you need 250 yes votes.",
+                "collateralWarning": "If you change any fields within the prepare command, the collateral transaction will become invalid. Make sure all details are correct before proceeding."
+            }
+        }
     },
     "network": {
         "title": "Network Status",
