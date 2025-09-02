@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from 'next-intl'
 import { useNetwork } from "@/contexts/network-context"
-import { Search, Hash, Clock, Wallet, FileText, TrendingUp, History, X, ExternalLink, AlertCircle, CheckCircle, Info } from "lucide-react"
+import { Search, Hash, Clock, Wallet, FileText, TrendingUp, History, X, ExternalLink, AlertCircle, CheckCircle, Info, Eye, Copy } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -36,6 +36,11 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
     const [searchHistory, setSearchHistory] = useState<string[]>([])
     const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
     const [showSuggestions, setShowSuggestions] = useState(false)
+    const [searchResults, setSearchResults] = useState<{
+        type: 'block_height' | 'block_hash' | 'transaction' | 'address' | 'partial_hash' | 'not_found'
+        results: any
+        query: string
+    } | null>(null)
 
     // Load search history from localStorage
     useEffect(() => {
@@ -169,6 +174,14 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
         performSearch(suggestion.value)
     }
 
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+        });
+    };
+
     const searchExamples = [
         {
             icon: Hash,
@@ -220,6 +233,263 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
             icon: Wallet
         }
     ]
+
+    const renderSearchResults = () => {
+        if (!searchResults) return null
+
+        const { type, results, query } = searchResults
+
+        switch (type) {
+            case 'block_height':
+            case 'block_hash':
+                return (
+                    <Card className="border-2 border-blue-200 bg-blue-50/30">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-blue-800">
+                                <Hash className="h-5 w-5" />
+                                Block Found
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div>
+                                    <h4 className="font-semibold text-sm text-blue-700">Block Height</h4>
+                                    <p className="text-lg font-mono">{results.height || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-blue-700">Block Hash</h4>
+                                    <p className="text-sm font-mono break-all">{results.hash || query}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-blue-700">Timestamp</h4>
+                                    <p className="text-sm">
+                                        {results.time ? new Date(results.time * 1000).toLocaleString() : 'N/A'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-blue-700">Transactions</h4>
+                                    <p className="text-sm">{results.nTx || results.tx?.length || 0} transactions</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-blue-700">Size</h4>
+                                    <p className="text-sm">{results.size ? `${results.size} bytes` : 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-blue-700">Difficulty</h4>
+                                    <p className="text-sm">{results.difficulty ? results.difficulty.toFixed(2) : 'N/A'}</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button 
+                                    onClick={() => router.push(`/block/${results.hash || query}?network=${currentNetwork}`)}
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Full Block
+                                </Button>
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => copyToClipboard(results.hash || query)}
+                                >
+                                    <Copy className="h-4 w-4 mr-2" />
+                                    Copy Hash
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+
+            case 'transaction':
+                return (
+                    <Card className="border-2 border-purple-200 bg-purple-50/30">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-purple-800">
+                                <FileText className="h-5 w-5" />
+                                Transaction Found
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div>
+                                    <h4 className="font-semibold text-sm text-purple-700">Transaction ID</h4>
+                                    <p className="text-sm font-mono break-all">{results.txid || query}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-purple-700">Block Height</h4>
+                                    <p className="text-sm">{results.height || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-purple-700">Confirmations</h4>
+                                    <p className="text-sm">{results.confirmations || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-purple-700">Size</h4>
+                                    <p className="text-sm">{results.size ? `${results.size} bytes` : 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-purple-700">Inputs</h4>
+                                    <p className="text-sm">{results.vin?.length || 0} inputs</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-purple-700">Outputs</h4>
+                                    <p className="text-sm">{results.vout?.length || 0} outputs</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button 
+                                    onClick={() => router.push(`/tx/${results.txid || query}?network=${currentNetwork}`)}
+                                    className="bg-purple-600 hover:bg-purple-700"
+                                >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Full Transaction
+                                </Button>
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => copyToClipboard(results.txid || query)}
+                                >
+                                    <Copy className="h-4 w-4 mr-2" />
+                                    Copy TXID
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+
+            case 'address':
+                return (
+                    <Card className="border-2 border-orange-200 bg-orange-50/30">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-orange-800">
+                                <Wallet className="h-5 w-5" />
+                                Address Found
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div>
+                                    <h4 className="font-semibold text-sm text-orange-700">Address</h4>
+                                    <p className="text-sm font-mono break-all">{results.address || query}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-orange-700">Balance</h4>
+                                    <p className="text-sm">{results.balance !== undefined ? `${results.balance} FAIR` : 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-orange-700">Total Received</h4>
+                                    <p className="text-sm">{results.totalReceived !== undefined ? `${results.totalReceived} FAIR` : 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-orange-700">Total Sent</h4>
+                                    <p className="text-sm">{results.totalSent !== undefined ? `${results.totalSent} FAIR` : 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-orange-700">Transaction Count</h4>
+                                    <p className="text-sm">{results.txCount || 0} transactions</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-orange-700">Network</h4>
+                                    <p className="text-sm">{results.network?.toUpperCase() || currentNetwork.toUpperCase()}</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button 
+                                    onClick={() => router.push(`/address/${results.address || query}?network=${currentNetwork}`)}
+                                    className="bg-orange-600 hover:bg-orange-700"
+                                >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Full Address
+                                </Button>
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => copyToClipboard(results.address || query)}
+                                >
+                                    <Copy className="h-4 w-4 mr-2" />
+                                    Copy Address
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+
+            case 'partial_hash':
+                return (
+                    <Card className="border-2 border-yellow-200 bg-yellow-50/30">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-yellow-800">
+                                <AlertCircle className="h-5 w-5" />
+                                Partial Hash Detected
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-yellow-700 mb-4">
+                                You&apos;ve entered a partial hash. Please complete the 64-character hash for accurate results.
+                            </p>
+                            <div className="bg-yellow-100 p-3 rounded">
+                                <p className="text-sm font-mono">{query}</p>
+                                <p className="text-xs text-yellow-600 mt-1">
+                                    Length: {results.length || query.length}/64 characters
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+
+            case 'not_found':
+                return (
+                    <Card className="border-2 border-red-200 bg-red-50/30">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-red-800">
+                                <AlertCircle className="h-5 w-5" />
+                                No Results Found
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-red-700 mb-4">
+                                No results found for &quot;{query}&quot;. Please check your search query and try again.
+                            </p>
+                            <div className="text-sm text-red-600">
+                                <p>• Make sure the block height, hash, or address is correct</p>
+                                <p>• Verify you&apos;re searching on the correct network ({currentNetwork.toUpperCase()})</p>
+                                <p>• Try searching for a different term</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+
+            default:
+                return (
+                    <Card className="border-2 border-gray-200 bg-gray-50/30">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-gray-800">
+                                <Info className="h-5 w-5" />
+                                Search Results
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-2">
+                                <p className="text-sm text-gray-600">
+                                    <strong>Query:</strong> {query}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                    <strong>Type:</strong> {type}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                    <strong>Network:</strong> {currentNetwork.toUpperCase()}
+                                </p>
+                            </div>
+                            <details className="mt-4">
+                                <summary className="cursor-pointer text-sm font-medium text-gray-700">
+                                    Raw Results
+                                </summary>
+                                <pre className="text-xs overflow-auto bg-gray-100 p-4 rounded mt-2">
+                                    {JSON.stringify(searchResults, null, 2)}
+                                </pre>
+                            </details>
+                        </CardContent>
+                    </Card>
+                )
+        }
+    }
 
     return (
         <div className="space-y-6">
