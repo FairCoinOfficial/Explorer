@@ -70,7 +70,7 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
 
     const generateSuggestions = (query: string) => {
         const newSuggestions: SearchSuggestion[] = []
-        
+
         // Block height suggestion
         if (/^\d+$/.test(query)) {
             newSuggestions.push({
@@ -82,7 +82,7 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
                 color: 'text-green-600'
             })
         }
-        
+
         // Hash-like suggestions
         if (/^[0-9a-fA-F]{8,64}$/.test(query)) {
             if (query.length === 64) {
@@ -113,7 +113,7 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
                 })
             }
         }
-        
+
         // Address suggestions
         if (/^[fFmn2][123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{8,61}$/.test(query)) {
             newSuggestions.push({
@@ -125,7 +125,7 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
                 color: 'text-orange-600'
             })
         }
-        
+
         setSuggestions(newSuggestions)
     }
 
@@ -280,15 +280,15 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button 
+                                <Button
                                     onClick={() => router.push(`/block/${results.hash || query}?network=${currentNetwork}`)}
                                     className="bg-blue-600 hover:bg-blue-700"
                                 >
                                     <Eye className="h-4 w-4 mr-2" />
                                     View Full Block
                                 </Button>
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     onClick={() => copyToClipboard(results.hash || query)}
                                 >
                                     <Copy className="h-4 w-4 mr-2" />
@@ -336,15 +336,15 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button 
+                                <Button
                                     onClick={() => router.push(`/tx/${results.txid || query}?network=${currentNetwork}`)}
                                     className="bg-purple-600 hover:bg-purple-700"
                                 >
                                     <Eye className="h-4 w-4 mr-2" />
                                     View Full Transaction
                                 </Button>
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     onClick={() => copyToClipboard(results.txid || query)}
                                 >
                                     <Copy className="h-4 w-4 mr-2" />
@@ -392,15 +392,15 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button 
+                                <Button
                                     onClick={() => router.push(`/address/${results.address || query}?network=${currentNetwork}`)}
                                     className="bg-orange-600 hover:bg-orange-700"
                                 >
                                     <Eye className="h-4 w-4 mr-2" />
                                     View Full Address
                                 </Button>
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     onClick={() => copyToClipboard(results.address || query)}
                                 >
                                     <Copy className="h-4 w-4 mr-2" />
@@ -539,7 +539,7 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
                                     </Button>
                                 )}
                             </div>
-                            <Button 
+                            <Button
                                 onClick={() => handleSearch(searchQuery)}
                                 disabled={isSearching || !searchQuery.trim()}
                                 size="lg"
