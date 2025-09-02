@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from 'next-intl'
 import { useNetwork } from "@/contexts/network-context"
@@ -26,6 +26,15 @@ interface SearchSuggestion {
     color: string
 }
 
+interface SearchResult {
+    query: string
+    network: string
+    type: string
+    results: any
+    timestamp: string
+    message?: string
+}
+
 export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mainnet" }: AdvancedSearchContentProps) {
     const t = useTranslations('search')
     const tCommon = useTranslations('common')
@@ -36,11 +45,12 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
     const [searchHistory, setSearchHistory] = useState<string[]>([])
     const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
     const [showSuggestions, setShowSuggestions] = useState(false)
-    const [searchResults, setSearchResults] = useState<{
-        type: 'block_height' | 'block_hash' | 'transaction' | 'address' | 'partial_hash' | 'not_found'
-        results: any
-        query: string
-    } | null>(null)
+    const [searchResults, setSearchResults] = useState<SearchResult | null>(null)
+    const [searchError, setSearchError] = useState<string | null>(null)
+
+    // Use refs to prevent infinite loops
+    const hasSearchedRef = useRef(false)
+    const currentQueryRef = useRef("")
 
     // Load search history from localStorage
     useEffect(() => {
@@ -50,12 +60,46 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
         }
     }, [])
 
-    // Auto-search when component mounts with initial query
+    const addToHistory = useCallback((query: string) => {
+        const newHistory = [query, ...searchHistory.filter(h => h !== query)].slice(0, 10)
+        setSearchHistory(newHistory)
+        localStorage.setItem('searchHistory', JSON.stringify(newHistory))
+    }, [searchHistory])
+
+    const performSearch = useCallback(async (query: string) => {
+        if (!query.trim() || query === currentQueryRef.current) return
+
+        currentQueryRef.current = query
+        setIsSearching(true)
+        setSearchError(null)
+        setSearchResults(null)
+        addToHistory(query.trim())
+
+        try {
+            const response = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}&network=${currentNetwork}`)
+
+            if (response.ok) {
+                const data = await response.json()
+                setSearchResults(data)
+            } else {
+                const errorData = await response.json()
+                setSearchError(errorData.error || 'Search failed')
+            }
+        } catch (error) {
+            console.error("Search failed:", error)
+            setSearchError('Search failed. Please try again.')
+        } finally {
+            setIsSearching(false)
+        }
+    }, [currentNetwork, addToHistory])
+
+    // Auto-search when component mounts with initial query (only once)
     useEffect(() => {
-        if (initialQuery.trim()) {
+        if (initialQuery.trim() && !hasSearchedRef.current) {
+            hasSearchedRef.current = true
             performSearch(initialQuery)
         }
-    }, [initialQuery])
+    }, [initialQuery, performSearch])
 
     // Generate search suggestions based on query
     useEffect(() => {
@@ -84,7 +128,7 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
         }
 
         // Hash-like suggestions
-        if (/^[0-9a-fA-F]{8,64}$/.test(query)) {
+        if (/^[0-9a-fA-F]{8,64}$/i.test(query)) {
             if (query.length === 64) {
                 newSuggestions.push({
                     type: 'block',
@@ -115,7 +159,7 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
         }
 
         // Address suggestions
-        if (/^[fFmn2][123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{8,61}$/.test(query)) {
+        if (/^[fFmn2][123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{8,61}$/i.test(query)) {
             newSuggestions.push({
                 type: 'address',
                 value: query,
@@ -129,58 +173,340 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
         setSuggestions(newSuggestions)
     }
 
-    const addToHistory = (query: string) => {
-        const newHistory = [query, ...searchHistory.filter(h => h !== query)].slice(0, 10)
-        setSearchHistory(newHistory)
-        localStorage.setItem('searchHistory', JSON.stringify(newHistory))
-    }
-
-    const clearHistory = () => {
+    const clearHistory = useCallback(() => {
         setSearchHistory([])
         localStorage.removeItem('searchHistory')
-    }
+    }, [])
 
-    const performSearch = async (query: string) => {
-        if (!query.trim()) return
-
-        setIsSearching(true)
-        addToHistory(query.trim())
-
-        try {
-            // Use the search API which will redirect appropriately
-            const searchUrl = `/search?q=${encodeURIComponent(query.trim())}&network=${currentNetwork}`
-            router.push(searchUrl)
-        } catch (error) {
-            console.error("Search failed:", error)
-        } finally {
-            setIsSearching(false)
-        }
-    }
-
-    const handleSearch = async (query: string) => {
+    const handleSearch = useCallback(async (query: string) => {
         if (!query.trim()) return
         await performSearch(query)
-    }
+    }, [performSearch])
 
-    const handleKeyPress = (e: React.KeyboardEvent) => {
+    const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             handleSearch(searchQuery)
         }
-    }
+    }, [handleSearch, searchQuery])
 
-    const handleSuggestionClick = (suggestion: SearchSuggestion) => {
+    const handleSuggestionClick = useCallback((suggestion: SearchSuggestion) => {
         setSearchQuery(suggestion.value)
         setShowSuggestions(false)
         performSearch(suggestion.value)
-    }
+    }, [performSearch])
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text).then(() => {
-            alert('Copied to clipboard!');
+            console.log('Copied to clipboard:', text)
         }).catch(err => {
-            console.error('Failed to copy text: ', err);
-        });
-    };
+            console.error('Failed to copy text: ', err)
+        })
+    }
+
+    const renderSearchResults = () => {
+        if (!searchResults) return null
+
+        const { type, results, query } = searchResults
+
+        // Handle no results or empty results
+        if (!results || (type === 'not_found') ||
+            (type === 'block_height' && !results.height) ||
+            (type === 'block_hash' && !results.hash) ||
+            (type === 'transaction' && !results.txid) ||
+            (type === 'address' && !results.address)) {
+
+            return (
+                <Card className="border-2 border-muted bg-background">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-foreground">
+                            <AlertCircle className="h-5 w-5 text-foreground" />
+                            No Results Found
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="text-center py-6">
+                            <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
+                                <Search className="h-8 w-8 text-muted-primary" />
+                            </div>
+                            <h3 className="text-lg font-medium text-foreground mb-2">
+                                No results found for &quot;{query}&quot;
+                            </h3>
+                            <p className="text-muted-foreground mb-4">
+                                We couldn&apos;t find any blocks, transactions, or addresses matching your search.
+                            </p>
+                        </div>
+
+                        <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
+                            <h4 className="font-medium text-foreground mb-2">Search Tips:</h4>
+                            <ul className="text-sm text-foreground space-y-1">
+                                <li>• <strong>Block Height:</strong> Enter a number (e.g., 680000)</li>
+                                <li>• <strong>Block Hash:</strong> Enter the full 64-character hash</li>
+                                <li>• <strong>Transaction ID:</strong> Enter the full 64-character hash</li>
+                                <li>• <strong>Address:</strong> Enter a valid FairCoin address</li>
+                                <li>• <strong>Network:</strong> Make sure you&apos;re searching on the correct network ({currentNetwork.toUpperCase()})</li>
+                            </ul>
+                        </div>
+
+                        <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+                            <h4 className="font-medium text-foreground mb-2">Common Issues:</h4>
+                            <ul className="text-sm text-foreground space-y-1">
+                                <li>• The item might not exist on the {currentNetwork.toUpperCase()} network</li>
+                                <li>• You might have a typo in your search query</li>
+                                <li>• The blockchain might still be syncing</li>
+                                <li>• Try searching for a different term</li>
+                            </ul>
+                        </div>
+
+                        <div className="flex gap-2 justify-center">
+                            <Button
+                                variant="outline"
+                                onClick={() => setSearchQuery('')}
+                            >
+                                <Search className="h-4 w-4 mr-2" />
+                                Try Another Search
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => router.push('/blocks')}
+                            >
+                                <Hash className="h-4 w-4 mr-2" />
+                                Browse Recent Blocks
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            )
+        }
+
+        switch (type) {
+            case 'block_height':
+            case 'block_hash':
+                return (
+                    <Card className="border-2 border-primary/30 bg-primary/10">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-primary">
+                                <Hash className="h-5 w-5" />
+                                Block Found
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div>
+                                    <h4 className="font-semibold text-sm text-primary mb-1">Block Height</h4>
+                                    <p className="text-lg font-mono text-foreground">{results.height || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-primary mb-1">Block Hash</h4>
+                                    <p className="text-sm font-mono break-all text-foreground">{results.hash || query}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-primary mb-1">Timestamp</h4>
+                                    <p className="text-sm text-foreground">
+                                        {results.time ? new Date(results.time * 1000).toLocaleString() : 'N/A'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-primary mb-1">Transactions</h4>
+                                    <p className="text-sm text-foreground">{results.nTx || results.tx?.length || 0} transactions</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-primary mb-1">Size</h4>
+                                    <p className="text-sm text-foreground">{results.size ? `${results.size} bytes` : 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-primary mb-1">Difficulty</h4>
+                                    <p className="text-sm text-foreground">{results.difficulty ? results.difficulty.toFixed(2) : 'N/A'}</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={() => router.push(`/block/${results.hash || query}?network=${currentNetwork}`)}
+                                    className="bg-primary hover:bg-primary/90"
+                                >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Full Block
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => copyToClipboard(results.hash || query)}
+                                >
+                                    <Copy className="h-4 w-4 mr-2" />
+                                    Copy Hash
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+
+            case 'transaction':
+                return (
+                    <Card className="border-2 border-accent/30 bg-accent/10">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-accent-foreground">
+                                <FileText className="h-5 w-5" />
+                                Transaction Found
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div>
+                                    <h4 className="font-semibold text-sm text-accent-foreground mb-1">Transaction ID</h4>
+                                    <p className="text-sm font-mono break-all text-foreground">{results.txid || query}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-accent-foreground mb-1">Block Height</h4>
+                                    <p className="text-sm text-foreground">{results.height || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-accent-foreground mb-1">Confirmations</h4>
+                                    <p className="text-sm text-foreground">{results.confirmations || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-accent-foreground mb-1">Size</h4>
+                                    <p className="text-sm text-foreground">{results.size ? `${results.size} bytes` : 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-accent-foreground mb-1">Inputs</h4>
+                                    <p className="text-sm text-foreground">{results.vin?.length || 0} inputs</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-accent-foreground mb-1">Outputs</h4>
+                                    <p className="text-sm text-foreground">{results.vout?.length || 0} outputs</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={() => router.push(`/tx/${results.txid || query}?network=${currentNetwork}`)}
+                                    className="bg-accent hover:bg-accent/90"
+                                >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Full Transaction
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => copyToClipboard(results.txid || query)}
+                                >
+                                    <Copy className="h-4 w-4 mr-2" />
+                                    Copy TXID
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+
+            case 'address':
+                return (
+                    <Card className="border-2 border-primary/30 bg-primary/10">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-primary">
+                                <Wallet className="h-5 w-5" />
+                                Address Found
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div>
+                                    <h4 className="font-semibold text-sm text-primary mb-1">Address</h4>
+                                    <p className="text-sm font-mono break-all text-foreground">{results.address || query}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-primary mb-1">Balance</h4>
+                                    <p className="text-sm text-foreground">{results.balance !== undefined ? `${results.balance} FAIR` : 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-primary mb-1">Total Received</h4>
+                                    <p className="text-sm text-foreground">{results.totalReceived !== undefined ? `${results.totalReceived} FAIR` : 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-primary mb-1">Total Sent</h4>
+                                    <p className="text-sm text-foreground">{results.totalSent !== undefined ? `${results.totalSent} FAIR` : 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-primary mb-1">Transaction Count</h4>
+                                    <p className="text-sm text-foreground">{results.txCount || 0} transactions</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-primary mb-1">Network</h4>
+                                    <p className="text-sm text-foreground">{results.network?.toUpperCase() || currentNetwork.toUpperCase()}</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={() => router.push(`/address/${results.address || query}?network=${currentNetwork}`)}
+                                    className="bg-primary hover:bg-primary/90"
+                                >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Full Address
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => copyToClipboard(results.address || query)}
+                                >
+                                    <Copy className="h-4 w-4 mr-2" />
+                                    Copy Address
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+
+            case 'partial_hash':
+                return (
+                    <Card className="border-2 border-accent/30 bg-accent/10">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-accent-foreground">
+                                <AlertCircle className="h-5 w-5" />
+                                Partial Hash Detected
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-foreground mb-4">
+                                You&apos;ve entered a partial hash. Please complete the 64-character hash for accurate results.
+                            </p>
+                            <div className="bg-accent/20 p-3 rounded">
+                                <p className="text-sm font-mono text-foreground">{query}</p>
+                                <p className="text-xs text-accent-foreground mt-1">
+                                    Length: {results.length || query.length}/64 characters
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+
+            default:
+                return (
+                    <Card className="border-2 border-muted bg-background">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-foreground">
+                                <Info className="h-5 w-5" />
+                                Search Results
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-2">
+                                <p className="text-sm text-foreground">
+                                    <strong>Query:</strong> {query}
+                                </p>
+                                <p className="text-sm text-foreground">
+                                    <strong>Type:</strong> {type}
+                                </p>
+                                <p className="text-sm text-foreground">
+                                    <strong>Network:</strong> {currentNetwork.toUpperCase()}
+                                </p>
+                            </div>
+                            <details className="mt-4">
+                                <summary className="cursor-pointer text-sm font-medium text-foreground">
+                                    Raw Results
+                                </summary>
+                                <pre className="text-xs overflow-auto bg-muted p-4 rounded mt-2 text-foreground">
+                                    {JSON.stringify(searchResults, null, 2)}
+                                </pre>
+                            </details>
+                        </CardContent>
+                    </Card>
+                )
+        }
+    }
 
     const searchExamples = [
         {
@@ -188,28 +514,28 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
             title: t('blockHash'),
             description: t('blockHashDescription'),
             example: "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
-            color: "text-blue-600"
+            color: "text-primary"
         },
         {
             icon: Clock,
             title: t('blockHeight'),
             description: t('blockHeightDescription'),
             example: "680000",
-            color: "text-green-600"
+            color: "text-primary"
         },
         {
             icon: FileText,
             title: t('transactionId'),
             description: t('transactionIdDescription'),
             example: "f4184fc596403b9d638783cf57adfe4c75c605f6356fbc91338530e9831e9e16",
-            color: "text-purple-600"
+            color: "text-primary"
         },
         {
             icon: Wallet,
             title: t('address'),
             description: t('addressDescription'),
             example: "f1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0",
-            color: "text-orange-600"
+            color: "text-primary"
         }
     ]
 
@@ -233,263 +559,6 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
             icon: Wallet
         }
     ]
-
-    const renderSearchResults = () => {
-        if (!searchResults) return null
-
-        const { type, results, query } = searchResults
-
-        switch (type) {
-            case 'block_height':
-            case 'block_hash':
-                return (
-                    <Card className="border-2 border-blue-200 bg-blue-50/30">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-blue-800">
-                                <Hash className="h-5 w-5" />
-                                Block Found
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div>
-                                    <h4 className="font-semibold text-sm text-blue-700">Block Height</h4>
-                                    <p className="text-lg font-mono">{results.height || 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm text-blue-700">Block Hash</h4>
-                                    <p className="text-sm font-mono break-all">{results.hash || query}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm text-blue-700">Timestamp</h4>
-                                    <p className="text-sm">
-                                        {results.time ? new Date(results.time * 1000).toLocaleString() : 'N/A'}
-                                    </p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm text-blue-700">Transactions</h4>
-                                    <p className="text-sm">{results.nTx || results.tx?.length || 0} transactions</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm text-blue-700">Size</h4>
-                                    <p className="text-sm">{results.size ? `${results.size} bytes` : 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm text-blue-700">Difficulty</h4>
-                                    <p className="text-sm">{results.difficulty ? results.difficulty.toFixed(2) : 'N/A'}</p>
-                                </div>
-                            </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    onClick={() => router.push(`/block/${results.hash || query}?network=${currentNetwork}`)}
-                                    className="bg-blue-600 hover:bg-blue-700"
-                                >
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    View Full Block
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => copyToClipboard(results.hash || query)}
-                                >
-                                    <Copy className="h-4 w-4 mr-2" />
-                                    Copy Hash
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )
-
-            case 'transaction':
-                return (
-                    <Card className="border-2 border-purple-200 bg-purple-50/30">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-purple-800">
-                                <FileText className="h-5 w-5" />
-                                Transaction Found
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div>
-                                    <h4 className="font-semibold text-sm text-purple-700">Transaction ID</h4>
-                                    <p className="text-sm font-mono break-all">{results.txid || query}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm text-purple-700">Block Height</h4>
-                                    <p className="text-sm">{results.height || 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm text-purple-700">Confirmations</h4>
-                                    <p className="text-sm">{results.confirmations || 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm text-purple-700">Size</h4>
-                                    <p className="text-sm">{results.size ? `${results.size} bytes` : 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm text-purple-700">Inputs</h4>
-                                    <p className="text-sm">{results.vin?.length || 0} inputs</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm text-purple-700">Outputs</h4>
-                                    <p className="text-sm">{results.vout?.length || 0} outputs</p>
-                                </div>
-                            </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    onClick={() => router.push(`/tx/${results.txid || query}?network=${currentNetwork}`)}
-                                    className="bg-purple-600 hover:bg-purple-700"
-                                >
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    View Full Transaction
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => copyToClipboard(results.txid || query)}
-                                >
-                                    <Copy className="h-4 w-4 mr-2" />
-                                    Copy TXID
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )
-
-            case 'address':
-                return (
-                    <Card className="border-2 border-orange-200 bg-orange-50/30">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-orange-800">
-                                <Wallet className="h-5 w-5" />
-                                Address Found
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div>
-                                    <h4 className="font-semibold text-sm text-orange-700">Address</h4>
-                                    <p className="text-sm font-mono break-all">{results.address || query}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm text-orange-700">Balance</h4>
-                                    <p className="text-sm">{results.balance !== undefined ? `${results.balance} FAIR` : 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm text-orange-700">Total Received</h4>
-                                    <p className="text-sm">{results.totalReceived !== undefined ? `${results.totalReceived} FAIR` : 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm text-orange-700">Total Sent</h4>
-                                    <p className="text-sm">{results.totalSent !== undefined ? `${results.totalSent} FAIR` : 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm text-orange-700">Transaction Count</h4>
-                                    <p className="text-sm">{results.txCount || 0} transactions</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm text-orange-700">Network</h4>
-                                    <p className="text-sm">{results.network?.toUpperCase() || currentNetwork.toUpperCase()}</p>
-                                </div>
-                            </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    onClick={() => router.push(`/address/${results.address || query}?network=${currentNetwork}`)}
-                                    className="bg-orange-600 hover:bg-orange-700"
-                                >
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    View Full Address
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => copyToClipboard(results.address || query)}
-                                >
-                                    <Copy className="h-4 w-4 mr-2" />
-                                    Copy Address
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )
-
-            case 'partial_hash':
-                return (
-                    <Card className="border-2 border-yellow-200 bg-yellow-50/30">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-yellow-800">
-                                <AlertCircle className="h-5 w-5" />
-                                Partial Hash Detected
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-yellow-700 mb-4">
-                                You&apos;ve entered a partial hash. Please complete the 64-character hash for accurate results.
-                            </p>
-                            <div className="bg-yellow-100 p-3 rounded">
-                                <p className="text-sm font-mono">{query}</p>
-                                <p className="text-xs text-yellow-600 mt-1">
-                                    Length: {results.length || query.length}/64 characters
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )
-
-            case 'not_found':
-                return (
-                    <Card className="border-2 border-red-200 bg-red-50/30">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-red-800">
-                                <AlertCircle className="h-5 w-5" />
-                                No Results Found
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-red-700 mb-4">
-                                No results found for &quot;{query}&quot;. Please check your search query and try again.
-                            </p>
-                            <div className="text-sm text-red-600">
-                                <p>• Make sure the block height, hash, or address is correct</p>
-                                <p>• Verify you&apos;re searching on the correct network ({currentNetwork.toUpperCase()})</p>
-                                <p>• Try searching for a different term</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )
-
-            default:
-                return (
-                    <Card className="border-2 border-gray-200 bg-gray-50/30">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-gray-800">
-                                <Info className="h-5 w-5" />
-                                Search Results
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-2">
-                                <p className="text-sm text-gray-600">
-                                    <strong>Query:</strong> {query}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                    <strong>Type:</strong> {type}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                    <strong>Network:</strong> {currentNetwork.toUpperCase()}
-                                </p>
-                            </div>
-                            <details className="mt-4">
-                                <summary className="cursor-pointer text-sm font-medium text-gray-700">
-                                    Raw Results
-                                </summary>
-                                <pre className="text-xs overflow-auto bg-gray-100 p-4 rounded mt-2">
-                                    {JSON.stringify(searchResults, null, 2)}
-                                </pre>
-                            </details>
-                        </CardContent>
-                    </Card>
-                )
-        }
-    }
 
     return (
         <div className="space-y-6">
@@ -582,6 +651,34 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
                 </CardContent>
             </Card>
 
+            {/* Search Results */}
+            {isSearching && (
+                <Card className="border-2 border-primary/20">
+                    <CardContent className="pt-6">
+                        <div className="flex items-center justify-center gap-3 py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                            <span className="text-lg font-medium">Searching...</span>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {searchError && (
+                <Card className="border-2 border-destructive/20 bg-destructive/5">
+                    <CardContent className="pt-6">
+                        <div className="flex items-center gap-3 text-destructive">
+                            <AlertCircle className="h-5 w-5" />
+                            <div>
+                                <p className="font-medium">Search Error</p>
+                                <p className="text-sm">{searchError}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {searchResults && renderSearchResults()}
+
             {/* Tabs for different sections */}
             <Tabs defaultValue="examples" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
@@ -596,8 +693,8 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
                             <Card key={index} className="hover:shadow-md transition-all duration-200 cursor-pointer group border-2 border-transparent hover:border-primary/20" onClick={() => setSearchQuery(example.example)}>
                                 <CardContent className="pt-6">
                                     <div className="flex items-start gap-3">
-                                        <div className={`p-2 rounded-lg ${example.color.replace('text-', 'bg-')}/10`}>
-                                            <example.icon className={`h-5 w-5 ${example.color}`} />
+                                        <div className="p-2 rounded-lg bg-primary/10">
+                                            <example.icon className="h-5 w-5 text-primary" />
                                         </div>
                                         <div className="flex-1">
                                             <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">{example.title}</h3>
