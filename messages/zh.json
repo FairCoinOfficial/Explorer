@@ -325,7 +325,179 @@
         "currentlyEnabled": "当前已启用",
         "blockRewardsAndFees": "区块奖励 + 交易费用",
         "enablesMixingAndFastSend": "主节点启用混币和快速发送功能",
-        "decentralizedVoting": "去中心化区块链投票用于网络决策"
+                "decentralizedVoting": "用于网络决策的去中心化区块链投票",
+        "tabs": {
+            "overview": "概述",
+            "guide": "Windows 指南",
+            "budget": "预算 API",
+            "requirements": "要求",
+            "troubleshooting": "故障排除"
+        },
+        "header": {
+            "title": "主节点",
+            "subtitle": "运行 FairCoin 主节点，保护网络并获得奖励"
+        },
+        "stats": {
+            "requiredCollateral": "所需抵押",
+            "network": "网络",
+            "confirmationBlocks": "确认区块",
+            "activeMasternodes": "活跃主节点"
+        },
+        "overview": {
+            "whatAreMasternodes": {
+                "title": "什么是主节点？",
+                "description": "主节点是 FairCoin 网络中的特殊节点，除了简单的交易验证之外，还提供额外的服务。",
+                "features": {
+                    "security": "增强网络安全性和稳定性",
+                    "instantTx": "即时交易处理",
+                    "governance": "参与去中心化治理",
+                    "rewards": "定期奖励分配"
+                }
+            },
+            "benefits": {
+                "title": "好处",
+                "earnRewards": "获得定期的 FAIR 币奖励",
+                "secureNetwork": "为网络安全做出贡献",
+                "governance": "参与网络治理",
+                "ecosystem": "支持 FairCoin 生态系统增长"
+            },
+            "important": {
+                "title": "重要：",
+                "description": "运行主节点需要确切的 25,000 FAIR 币作为抵押。这些币将留在您的钱包中，不会花费，但必须在那里才能保持主节点活跃状态。"
+            }
+        },
+        "guide": {
+            "title": "WINDOWS 主节点指南",
+            "subtitle": "按照步骤在 Windows 中设置 FairCoin 主节点",
+            "steps": [
+                {
+                    "title": "打开 FairCoin 钱包",
+                    "description": "首次运行 faircoin-qt.exe",
+                    "details": "运行 FairCoin 钱包应用程序。防火墙和杀毒软件可能会弹出允许连接的窗口 - 选中适当的复选框以允许。"
+                },
+                {
+                    "title": "等待同步",
+                    "description": "确保钱包与网络完全同步",
+                    "details": "在左下角，您会看到 'Synchronizing with network' 和其他同步消息。如果显示 'No Block Source Available'，请关闭并重新打开钱包直到同步完成。"
+                },
+                {
+                    "title": "访问调试控制台",
+                    "description": "转到 Help → Debug Console",
+                    "details": "在 Help 菜单中打开调试控制台以访问钱包命令。"
+                },
+                {
+                    "title": "获取存款地址",
+                    "description": "生成主节点存款地址",
+                    "details": "在控制台中输入：getaccountaddress 0。复制结果 - 这是用于确切存款 25,000 FAIR 币的 MASTERNODE DEPOSIT ADDRESS。"
+                },
+                {
+                    "title": "存款币",
+                    "description": "向存款地址发送确切的 25,000 FAIR",
+                    "details": "向主节点存款地址发送确切的 25,000 FAIR 币（不多不少）。等待交易的 15 个确认。"
+                },
+                {
+                    "title": "生成私钥",
+                    "description": "生成主节点私钥",
+                    "details": "在调试控制台中输入：masternode genkey。复制结果 - 这是 MASTERNODE PRIVKEY。"
+                },
+                {
+                    "title": "配置 faircoin.conf",
+                    "description": "设置钱包配置文件",
+                    "details": "在记事本中打开 C:/users/[username]/appdata/roaming/faircoin/faircoin.conf 并添加必要的配置参数。"
+                },
+                {
+                    "title": "配置 masternode.conf",
+                    "description": "设置主节点配置文件",
+                    "details": "打开 C:/users/[username]/appdata/roaming/faircoin/masternode.conf 并使用正确参数添加主节点条目。"
+                },
+                {
+                    "title": "重启钱包",
+                    "description": "关闭并重新打开钱包以应用更改",
+                    "details": "关闭钱包（File → Exit）并运行 faircoin-qt.exe 重新打开。从现在开始，您将始终以这种方式启动钱包。"
+                },
+                {
+                    "title": "启动主节点",
+                    "description": "在钱包中激活主节点",
+                    "details": "等待 15 个确认后，转到 Masternode 选项卡并点击 'Start All' 或 'Start Alias'。应该显示 'Masternode started successfully'。"
+                }
+            ],
+            "configuration": {
+                "title": "配置文件",
+                "faircoinConf": {
+                    "title": "faircoin.conf",
+                    "copy": "复制配置"
+                },
+                "masternodeConf": {
+                    "title": "masternode.conf",
+                    "copy": "复制配置"
+                },
+                "notes": {
+                    "title": "重要备注：",
+                    "note1": "将 YOURIP 替换为您的实际外部 IP 地址",
+                    "note2": "将 PRIVATEKEYREPLACETHIS 替换为生成的主节点私钥",
+                    "note3": "将 INSERTYOURTXID 替换为 25,000 FAIR 存款的交易 ID",
+                    "note4": "所有主节点必须在被网络识别并有资格获得奖励之前保持活跃状态一定数量的区块"
+                }
+            }
+        },
+        "requirements": {
+            "title": "主节点要求",
+            "subtitle": "在设置主节点之前，请确保满足所有要求",
+            "hardware": {
+                "title": "硬件要求",
+                "items": [
+                    "专用 VPS 或服务器（24/7 运行）",
+                    "至少 1GB RAM",
+                    "至少 10GB 存储",
+                    "稳定的互联网连接"
+                ]
+            },
+            "software": {
+                "title": "软件要求",
+                "items": [
+                    "FairCoin 钱包 (faircoin-qt.exe)",
+                    "Windows 操作系统",
+                    "防火墙访问端口 53472",
+                    "管理员权限"
+                ]
+            },
+            "network": {
+                "title": "网络要求",
+                "items": [
+                    "25,000 FAIR 币（确切金额）",
+                    "激活需要 15 个确认",
+                    "稳定的网络连接",
+                    "端口 53472 开放且可访问"
+                ]
+            },
+            "note": "这些要求确保主节点稳定运行并有效贡献给 FairCoin 网络。满足所有要求对于成功的主节点操作至关重要。"
+        },
+        "troubleshooting": {
+            "title": "故障排除指南",
+            "subtitle": "设置主节点时的常见问题及其解决方案",
+            "issues": [
+                {
+                    "issue": "钱包未同步",
+                    "solution": "关闭并重新打开钱包。如果问题持续，请检查互联网连接和防火墙设置。"
+                },
+                {
+                    "issue": "主节点无法启动",
+                    "solution": "确保所有配置文件正确，收到 15 个确认，且端口 53472 可访问。"
+                },
+                {
+                    "issue": "找不到配置文件",
+                    "solution": "faircoin.conf 文件位于隐藏的 AppData 文件夹中。在 Windows 资源管理器中启用 '显示隐藏文件'。"
+                },
+                {
+                    "issue": "主节点状态未更新",
+                    "solution": "等待网络传播。主节点必须保持活跃状态一定数量的区块，然后才能被网络识别。"
+                }
+            ],
+            "help": {
+                "title": "需要帮助？",
+                "description": "如果尝试这些解决方案后问题仍然存在，请在 FairCoin 社区论坛或 Discord 上寻求额外支持。"
+            }
+        }
     },
     "search": {
         "title": "高级搜索",

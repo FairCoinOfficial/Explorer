@@ -50,73 +50,73 @@ export function MasternodesContent() {
     const masternodeSteps = [
         {
             step: 1,
-            title: "Open FairCoin Wallet",
-            description: "Launch faircoin-qt.exe for the first time",
+            title: t('guide.steps.0.title'),
+            description: t('guide.steps.0.description'),
             icon: Wallet,
-            details: "Run the FairCoin wallet application. Your firewall and antivirus might pop up to allow connections - please allow them by making appropriate tick marks."
+            details: t('guide.steps.0.details')
         },
         {
             step: 2,
-            title: "Wait for Synchronization",
-            description: "Ensure wallet is fully synced with network",
+            title: t('guide.steps.1.title'),
+            description: t('guide.steps.1.description'),
             icon: Network,
-            details: "In the lower left corner, you'll see 'Synchronizing with network' and other sync messages. If you see 'No Block Source Available', close and re-open the wallet until it synchronizes."
+            details: t('guide.steps.1.details')
         },
         {
             step: 3,
-            title: "Access Debug Console",
-            description: "Go to Help → Debug Console",
+            title: t('guide.steps.2.title'),
+            description: t('guide.steps.2.description'),
             icon: Terminal,
-            details: "Open the debug console from the Help menu to access wallet commands."
+            details: t('guide.steps.2.details')
         },
         {
             step: 4,
-            title: "Get Deposit Address",
-            description: "Generate your masternode deposit address",
+            title: t('guide.steps.3.title'),
+            description: t('guide.steps.3.description'),
             icon: Key,
-            details: "In the console, enter: getaccountaddress 0. Copy the result - this is your MASTERNODE DEPOSIT ADDRESS where you'll deposit exactly 25,000 FAIR coins."
+            details: t('guide.steps.3.details')
         },
         {
             step: 5,
-            title: "Deposit Coins",
-            description: "Send exactly 25,000 FAIR to deposit address",
+            title: t('guide.steps.4.title'),
+            description: t('guide.steps.4.description'),
             icon: Database,
-            details: "Pay exactly 25,000 FAIR coins (no more, no less) to your masternode deposit address. Wait for 15 confirmations of the transaction."
+            details: t('guide.steps.4.details')
         },
         {
             step: 6,
-            title: "Generate Private Key",
-            description: "Create your masternode private key",
+            title: t('guide.steps.5.title'),
+            description: t('guide.steps.5.description'),
             icon: Shield,
-            details: "In the debug console, enter: masternode genkey. Copy the result - this is your MASTERNODE PRIVKEY."
+            details: t('guide.steps.5.details')
         },
         {
             step: 7,
-            title: "Configure faircoin.conf",
-            description: "Set up wallet configuration file",
+            title: t('guide.steps.6.title'),
+            description: t('guide.steps.6.description'),
             icon: Settings,
-            details: "Open C:/users/[username]/appdata/roaming/faircoin/faircoin.conf in Notepad and add the required configuration parameters."
+            details: t('guide.steps.6.details')
         },
         {
             step: 8,
-            title: "Configure masternode.conf",
-            description: "Set up masternode configuration file",
+            title: t('guide.steps.7.title'),
+            description: t('guide.steps.7.description'),
             icon: FileText,
-            details: "Open C:/users/[username]/appdata/roaming/faircoin/masternode.conf and add your masternode entry with the correct parameters."
+            details: t('guide.steps.7.details')
         },
         {
             step: 9,
-            title: "Restart Wallet",
-            description: "Close and reopen wallet to apply changes",
+            title: t('guide.steps.8.title'),
+            description: t('guide.steps.8.description'),
             icon: Monitor,
-            details: "Close the wallet (File → Exit) and reopen it by running faircoin-qt.exe. This is how you'll always start the wallet going forward."
+            details: t('guide.steps.8.details')
         },
         {
             step: 10,
-            title: "Start Masternode",
-            description: "Activate your masternode from the wallet",
+            title: t('guide.steps.9.title'),
+            description: t('guide.steps.9.description'),
             icon: Zap,
-            details: "Wait for 15 confirmations, then go to the Masternodes tab and click 'Start all' or 'Start alias'. You should see 'Masternode started successfully'."
+            details: t('guide.steps.9.details')
         }
     ]
 
@@ -136,32 +136,32 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
 
     const requirements = [
         {
-            title: "Hardware Requirements",
+            title: t('requirements.hardware.title'),
             items: [
-                "Dedicated VPS or server (24/7 uptime)",
-                "Minimum 1GB RAM",
-                "Minimum 10GB storage",
-                "Stable internet connection"
+                t('requirements.hardware.items.0'),
+                t('requirements.hardware.items.1'),
+                t('requirements.hardware.items.2'),
+                t('requirements.hardware.items.3')
             ],
             icon: Server
         },
         {
-            title: "Software Requirements",
+            title: t('requirements.software.title'),
             items: [
-                "FairCoin wallet (faircoin-qt.exe)",
-                "Windows operating system",
-                "Firewall access for port 53472",
-                "Administrator privileges"
+                t('requirements.software.items.0'),
+                t('requirements.software.items.1'),
+                t('requirements.software.items.2'),
+                t('requirements.software.items.3')
             ],
             icon: Monitor
         },
         {
-            title: "Network Requirements",
+            title: t('requirements.network.title'),
             items: [
-                "25,000 FAIR coins (exact amount)",
-                "15 confirmations for activation",
-                "Stable network connection",
-                "Port 53472 open and accessible"
+                t('requirements.network.items.0'),
+                t('requirements.network.items.1'),
+                t('requirements.network.items.2'),
+                t('requirements.network.items.3')
             ],
             icon: Network
         }
@@ -169,23 +169,23 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
 
     const troubleshooting = [
         {
-            issue: "Wallet won't synchronize",
-            solution: "Close and reopen the wallet. If the problem persists, check your internet connection and firewall settings.",
+            issue: t('troubleshooting.issues.0.issue'),
+            solution: t('troubleshooting.issues.0.solution'),
             icon: AlertCircle
         },
         {
-            issue: "Masternode not starting",
-            solution: "Verify all configuration files are correct, ensure 15 confirmations are received, and check that port 53472 is accessible.",
+            issue: t('troubleshooting.issues.1.issue'),
+            solution: t('troubleshooting.issues.1.solution'),
             icon: AlertCircle
         },
         {
-            issue: "Configuration file not found",
-            solution: "The faircoin.conf file is located in the hidden AppData folder. Enable 'Show hidden files' in Windows Explorer.",
+            issue: t('troubleshooting.issues.2.issue'),
+            solution: t('troubleshooting.issues.2.solution'),
             icon: AlertCircle
         },
         {
-            issue: "Masternode status not updating",
-            solution: "Wait for network propagation. Masternodes need to be active for a certain number of blocks before being recognized by the network.",
+            issue: t('troubleshooting.issues.3.issue'),
+            solution: t('troubleshooting.issues.3.solution'),
             icon: AlertCircle
         }
     ]
@@ -275,10 +275,10 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
     ]
 
     const stats = [
-        { label: "Required Collateral", value: "25,000 FAIR", icon: Shield },
-        { label: "Network", value: currentNetwork.toUpperCase(), icon: Globe },
-        { label: "Confirmation Blocks", value: "15", icon: Clock },
-        { label: "Active Masternodes", value: "1,000+", icon: Users }
+        { label: "requiredCollateral", value: "25,000 FAIR", icon: Shield },
+        { label: "network", value: currentNetwork.toUpperCase(), icon: Globe },
+        { label: "confirmationBlocks", value: "15", icon: Clock },
+        { label: "activeMasternodes", value: "1,000+", icon: Users }
     ]
 
     return (
@@ -286,9 +286,9 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
             {/* Header */}
             <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
                 <div>
-                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">Masternodes</h1>
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">{t('header.title')}</h1>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Run a FairCoin masternode and earn rewards while securing the network
+                        {t('header.subtitle')}
                     </p>
                 </div>
                 <Badge variant="outline" className="text-sm">
@@ -301,7 +301,7 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                 {stats.map((stat, index) => (
                     <Card key={index}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t(`stats.${stat.label}`)}</CardTitle>
                             <stat.icon className="h-4 w-4 text-primary" />
                         </CardHeader>
                         <CardContent>
@@ -314,11 +314,11 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
             {/* Main Content Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-5">
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="guide">Windows Guide</TabsTrigger>
-                    <TabsTrigger value="budget">Budget API</TabsTrigger>
-                    <TabsTrigger value="requirements">Requirements</TabsTrigger>
-                    <TabsTrigger value="troubleshooting">Troubleshooting</TabsTrigger>
+                    <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
+                    <TabsTrigger value="guide">{t('tabs.guide')}</TabsTrigger>
+                    <TabsTrigger value="budget">{t('tabs.budget')}</TabsTrigger>
+                    <TabsTrigger value="requirements">{t('tabs.requirements')}</TabsTrigger>
+                    <TabsTrigger value="troubleshooting">{t('tabs.troubleshooting')}</TabsTrigger>
                 </TabsList>
 
                 {/* Overview Tab */}
@@ -328,18 +328,18 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Shield className="h-4 w-4 text-primary" />
-                                    What are Masternodes?
+                                    {t('overview.whatAreMasternodes.title')}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <p className="text-muted-foreground">
-                                    Masternodes are special nodes in the FairCoin network that provide additional services beyond simple transaction validation.
+                                    {t('overview.whatAreMasternodes.description')}
                                 </p>
                                 <ul className="text-sm text-muted-foreground space-y-1">
-                                    <li>• Enhanced network security and stability</li>
-                                    <li>• Instant transaction processing</li>
-                                    <li>• Decentralized governance participation</li>
-                                    <li>• Regular reward distribution</li>
+                                    <li>• {t('overview.whatAreMasternodes.features.security')}</li>
+                                    <li>• {t('overview.whatAreMasternodes.features.instantTx')}</li>
+                                    <li>• {t('overview.whatAreMasternodes.features.governance')}</li>
+                                    <li>• {t('overview.whatAreMasternodes.features.rewards')}</li>
                                 </ul>
                             </CardContent>
                         </Card>
@@ -348,15 +348,15 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Award className="h-4 w-4 text-primary" />
-                                    Benefits
+                                    {t('overview.benefits.title')}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <ul className="text-sm text-muted-foreground space-y-1">
-                                    <li>• Earn regular FAIR coin rewards</li>
-                                    <li>• Contribute to network security</li>
-                                    <li>• Participate in network governance</li>
-                                    <li>• Support FairCoin ecosystem growth</li>
+                                    <li>• {t('overview.benefits.earnRewards')}</li>
+                                    <li>• {t('overview.benefits.secureNetwork')}</li>
+                                    <li>• {t('overview.benefits.governance')}</li>
+                                    <li>• {t('overview.benefits.ecosystem')}</li>
                                 </ul>
                             </CardContent>
                         </Card>
@@ -365,8 +365,7 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                     <Alert>
                         <Info className="h-4 w-4 text-primary" />
                         <AlertDescription>
-                            <strong>Important:</strong> Running a masternode requires exactly 25,000 FAIR coins as collateral.
-                            These coins remain in your wallet and are not spent, but they must stay there for the masternode to remain active.
+                            <strong>{t('overview.important.title')}</strong> {t('overview.important.description')}
                         </AlertDescription>
                     </Alert>
                 </TabsContent>
@@ -374,9 +373,9 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                 {/* Windows Guide Tab */}
                 <TabsContent value="guide" className="space-y-4">
                     <div className="text-center space-y-2">
-                        <h2 className="text-2xl font-bold tracking-tight">MASTERNODE GUIDE FOR WINDOWS</h2>
+                        <h2 className="text-2xl font-bold tracking-tight">{t('guide.title')}</h2>
                         <p className="text-muted-foreground">
-                            Follow these step-by-step instructions to set up your FairCoin masternode on Windows
+                            {t('guide.subtitle')}
                         </p>
                     </div>
 
@@ -407,13 +406,13 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
 
                     {/* Configuration Files */}
                     <div className="space-y-4">
-                        <h3 className="text-xl font-bold tracking-tight text-center">Configuration Files</h3>
+                        <h3 className="text-xl font-bold tracking-tight text-center">{t('guide.configuration.title')}</h3>
                         <div className="grid gap-4 md:grid-cols-2">
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
                                         <FileText className="h-4 w-4 text-primary" />
-                                        faircoin.conf
+                                        {t('guide.configuration.faircoinConf.title')}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
@@ -427,7 +426,7 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                                         onClick={() => copyToClipboard(configExamples.faircoinConf)}
                                     >
                                         <Copy className="h-4 w-4 mr-2 text-primary" />
-                                        Copy Configuration
+                                        {t('guide.configuration.faircoinConf.copy')}
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -436,7 +435,7 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
                                         <FileText className="h-4 w-4 text-primary" />
-                                        masternode.conf
+                                        {t('guide.configuration.masternodeConf.title')}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
@@ -450,7 +449,7 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                                         onClick={() => copyToClipboard(configExamples.masternodeConf)}
                                     >
                                         <Copy className="h-4 w-4 mr-2 text-primary" />
-                                        Copy Configuration
+                                        {t('guide.configuration.masternodeConf.copy')}
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -461,12 +460,12 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                     <Alert>
                         <AlertCircle className="h-4 w-4 text-primary" />
                         <AlertDescription>
-                            <strong>Important Notes:</strong>
+                            <strong>{t('guide.configuration.notes.title')}</strong>
                             <ul className="mt-2 space-y-1 text-sm">
-                                <li>• Replace YOURIP with your actual external IP address</li>
-                                <li>• Replace PRIVATEKEYREPLACETHIS with your generated masternode private key</li>
-                                <li>• Replace INSERTYOURTXID with the transaction ID of your 25,000 FAIR deposit</li>
-                                <li>• All masternodes need to be active for a certain amount of blocks before they are recognized by the network and eligible for rewards</li>
+                                <li>• {t('guide.configuration.notes.note1')}</li>
+                                <li>• {t('guide.configuration.notes.note2')}</li>
+                                <li>• {t('guide.configuration.notes.note3')}</li>
+                                <li>• {t('guide.configuration.notes.note4')}</li>
                             </ul>
                         </AlertDescription>
                     </Alert>
@@ -564,9 +563,9 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                 {/* Requirements Tab */}
                 <TabsContent value="requirements" className="space-y-4">
                     <div className="text-center space-y-2">
-                        <h2 className="text-2xl font-bold tracking-tight">Masternode Requirements</h2>
+                        <h2 className="text-2xl font-bold tracking-tight">{t('requirements.title')}</h2>
                         <p className="text-muted-foreground">
-                            Ensure you meet all requirements before setting up your masternode
+                            {t('requirements.subtitle')}
                         </p>
                     </div>
 
@@ -596,8 +595,7 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                     <Alert>
                         <Info className="h-4 w-4 text-primary" />
                         <AlertDescription>
-                            <strong>Note:</strong> These requirements ensure your masternode runs reliably and contributes effectively to the FairCoin network.
-                            Meeting all requirements is essential for successful masternode operation.
+                            {t('requirements.note')}
                         </AlertDescription>
                     </Alert>
                 </TabsContent>
@@ -605,9 +603,9 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                 {/* Troubleshooting Tab */}
                 <TabsContent value="troubleshooting" className="space-y-4">
                     <div className="text-center space-y-2">
-                        <h2 className="text-2xl font-bold tracking-tight">Troubleshooting Guide</h2>
+                        <h2 className="text-2xl font-bold tracking-tight">{t('troubleshooting.title')}</h2>
                         <p className="text-muted-foreground">
-                            Common issues and their solutions when setting up your masternode
+                            {t('troubleshooting.subtitle')}
                         </p>
                     </div>
 
@@ -630,8 +628,7 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                     <Alert>
                         <AlertCircle className="h-4 w-4 text-primary" />
                         <AlertDescription>
-                            <strong>Need Help?</strong> If you&apos;re still experiencing issues after trying these solutions,
-                            please check the FairCoin community forums or Discord for additional support.
+                            <strong>{t('troubleshooting.help.title')}</strong> {t('troubleshooting.help.description')}
                         </AlertDescription>
                     </Alert>
                 </TabsContent>

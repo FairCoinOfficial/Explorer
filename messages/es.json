@@ -366,6 +366,178 @@
         "blockRewardsAndFees": "Recompensas de bloque + comisiones de transacción",
         "enablesMixingAndFastSend": "Los masternodos habilitan funciones de Mezcla de Monedas y Envío Rápido",
         "decentralizedVoting": "Votación descentralizada de blockchain para decisiones de red",
+        "tabs": {
+            "overview": "Resumen",
+            "guide": "Guía de Windows",
+            "budget": "API de Presupuesto",
+            "requirements": "Requisitos",
+            "troubleshooting": "Solución de Problemas"
+        },
+        "header": {
+            "title": "Masternodos",
+            "subtitle": "Ejecuta un masternodo FairCoin y gana recompensas mientras aseguras la red"
+        },
+        "stats": {
+            "requiredCollateral": "Colateral Requerido",
+            "network": "Red",
+            "confirmationBlocks": "Bloques de Confirmación",
+            "activeMasternodes": "Masternodos Activos"
+        },
+        "overview": {
+            "whatAreMasternodes": {
+                "title": "¿Qué son los Masternodos?",
+                "description": "Los masternodos son nodos especiales en la red FairCoin que proporcionan servicios adicionales más allá de la simple validación de transacciones.",
+                "features": {
+                    "security": "Seguridad y estabilidad de red mejoradas",
+                    "instantTx": "Procesamiento instantáneo de transacciones",
+                    "governance": "Participación en gobernanza descentralizada",
+                    "rewards": "Distribución regular de recompensas"
+                }
+            },
+            "benefits": {
+                "title": "Beneficios",
+                "earnRewards": "Gana recompensas regulares de monedas FAIR",
+                "secureNetwork": "Contribuye a la seguridad de la red",
+                "governance": "Participa en la gobernanza de la red",
+                "ecosystem": "Apoya el crecimiento del ecosistema FairCoin"
+            },
+            "important": {
+                "title": "Importante:",
+                "description": "Ejecutar un masternodo requiere exactamente 25,000 monedas FAIR como colateral. Estas monedas permanecen en tu billetera y no se gastan, pero deben permanecer allí para que el masternodo siga activo."
+            }
+        },
+        "guide": {
+            "title": "GUÍA DE MASTERNODO PARA WINDOWS",
+            "subtitle": "Sigue estas instrucciones paso a paso para configurar tu masternodo FairCoin en Windows",
+            "steps": [
+                {
+                    "title": "Abrir Billetera FairCoin",
+                    "description": "Inicia faircoin-qt.exe por primera vez",
+                    "details": "Ejecuta la aplicación de billetera FairCoin. Tu firewall y antivirus pueden aparecer para permitir conexiones - por favor permítelas marcando las casillas apropiadas."
+                },
+                {
+                    "title": "Esperar Sincronización",
+                    "description": "Asegúrate de que la billetera esté completamente sincronizada con la red",
+                    "details": "En la esquina inferior izquierda, verás 'Synchronizing with network' y otros mensajes de sincronización. Si ves 'No Block Source Available', cierra y vuelve a abrir la billetera hasta que se sincronice."
+                },
+                {
+                    "title": "Acceder a Consola de Depuración",
+                    "description": "Ve a Ayuda → Consola de Depuración",
+                    "details": "Abre la consola de depuración desde el menú Ayuda para acceder a comandos de billetera."
+                },
+                {
+                    "title": "Obtener Dirección de Depósito",
+                    "description": "Genera tu dirección de depósito de masternodo",
+                    "details": "En la consola, ingresa: getaccountaddress 0. Copia el resultado - esta es tu DIRECCIÓN DE DEPÓSITO DE MASTERNODO donde depositarás exactamente 25,000 monedas FAIR."
+                },
+                {
+                    "title": "Depositar Monedas",
+                    "description": "Envía exactamente 25,000 FAIR a la dirección de depósito",
+                    "details": "Paga exactamente 25,000 monedas FAIR (ni más ni menos) a tu dirección de depósito de masternodo. Espera 15 confirmaciones de la transacción."
+                },
+                {
+                    "title": "Generar Clave Privada",
+                    "description": "Crea tu clave privada de masternodo",
+                    "details": "En la consola de depuración, ingresa: masternode genkey. Copia el resultado - esta es tu CLAVE PRIVADA DE MASTERNODO."
+                },
+                {
+                    "title": "Configurar faircoin.conf",
+                    "description": "Configura el archivo de configuración de billetera",
+                    "details": "Abre C:/users/[username]/appdata/roaming/faircoin/faircoin.conf en el Bloc de notas y agrega los parámetros de configuración requeridos."
+                },
+                {
+                    "title": "Configurar masternode.conf",
+                    "description": "Configura el archivo de configuración de masternodo",
+                    "details": "Abre C:/users/[username]/appdata/roaming/faircoin/masternode.conf y agrega tu entrada de masternodo con los parámetros correctos."
+                },
+                {
+                    "title": "Reiniciar Billetera",
+                    "description": "Cierra y vuelve a abrir la billetera para aplicar cambios",
+                    "details": "Cierra la billetera (Archivo → Salir) y vuelve a abrirla ejecutando faircoin-qt.exe. Así es como siempre iniciarás la billetera en adelante."
+                },
+                {
+                    "title": "Iniciar Masternodo",
+                    "description": "Activa tu masternodo desde la billetera",
+                    "details": "Espera 15 confirmaciones, luego ve a la pestaña Masternodos y haz clic en 'Iniciar todo' o 'Iniciar alias'. Deberías ver 'Masternode started successfully'."
+                }
+            ],
+            "configuration": {
+                "title": "Archivos de Configuración",
+                "faircoinConf": {
+                    "title": "faircoin.conf",
+                    "copy": "Copiar Configuración"
+                },
+                "masternodeConf": {
+                    "title": "masternode.conf",
+                    "copy": "Copiar Configuración"
+                },
+                "notes": {
+                    "title": "Notas Importantes:",
+                    "note1": "Reemplaza YOURIP con tu dirección IP externa real",
+                    "note2": "Reemplaza PRIVATEKEYREPLACETHIS con tu clave privada de masternodo generada",
+                    "note3": "Reemplaza INSERTYOURTXID con el ID de transacción de tu depósito de 25,000 FAIR",
+                    "note4": "Todos los masternodos necesitan estar activos durante una cierta cantidad de bloques antes de ser reconocidos por la red y elegibles para recompensas"
+                }
+            }
+        },
+        "requirements": {
+            "title": "Requisitos de Masternodo",
+            "subtitle": "Asegúrate de cumplir con todos los requisitos antes de configurar tu masternodo",
+            "hardware": {
+                "title": "Requisitos de Hardware",
+                "items": [
+                    "VPS o servidor dedicado (tiempo de actividad 24/7)",
+                    "Mínimo 1 GB de RAM",
+                    "Mínimo 10 GB de almacenamiento",
+                    "Conexión a internet estable"
+                ]
+            },
+            "software": {
+                "title": "Requisitos de Software",
+                "items": [
+                    "Billetera FairCoin (faircoin-qt.exe)",
+                    "Sistema operativo Windows",
+                    "Acceso al firewall para el puerto 53472",
+                    "Privilegios de administrador"
+                ]
+            },
+            "network": {
+                "title": "Requisitos de Red",
+                "items": [
+                    "25,000 monedas FAIR (cantidad exacta)",
+                    "15 confirmaciones para activación",
+                    "Conexión de red estable",
+                    "Puerto 53472 abierto y accesible"
+                ]
+            },
+            "note": "Estos requisitos aseguran que tu masternodo funcione de manera confiable y contribuya efectivamente a la red FairCoin. Cumplir con todos los requisitos es esencial para una operación exitosa del masternodo."
+        },
+        "troubleshooting": {
+            "title": "Guía de Solución de Problemas",
+            "subtitle": "Problemas comunes y sus soluciones al configurar tu masternodo",
+            "issues": [
+                {
+                    "issue": "La billetera no se sincroniza",
+                    "solution": "Cierra y vuelve a abrir la billetera. Si el problema persiste, verifica tu conexión a internet y configuraciones de firewall."
+                },
+                {
+                    "issue": "El masternodo no inicia",
+                    "solution": "Verifica que todos los archivos de configuración sean correctos, asegúrate de que se reciban 15 confirmaciones, y verifica que el puerto 53472 sea accesible."
+                },
+                {
+                    "issue": "Archivo de configuración no encontrado",
+                    "solution": "El archivo faircoin.conf está ubicado en la carpeta AppData oculta. Habilita 'Mostrar archivos ocultos' en el Explorador de Windows."
+                },
+                {
+                    "issue": "El estado del masternodo no se actualiza",
+                    "solution": "Espera la propagación de red. Los masternodos necesitan estar activos durante una cierta cantidad de bloques antes de ser reconocidos por la red."
+                }
+            ],
+            "help": {
+                "title": "¿Necesitas Ayuda?",
+                "description": "Si aún tienes problemas después de intentar estas soluciones, por favor consulta los foros de la comunidad FairCoin o Discord para soporte adicional."
+            }
+        },
         "budget": {
             "title": "API de Presupuesto",
             "description": "FairCoin soporta presupuestos completamente descentralizados pagados desde la blockchain",

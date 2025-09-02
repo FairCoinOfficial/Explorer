@@ -367,7 +367,179 @@
         "currentlyEnabled": "Currently enabled",
         "blockRewardsAndFees": "Block rewards + transaction fees",
         "enablesMixingAndFastSend": "Masternodes enable Coin Mixing and FastSend features",
-        "decentralizedVoting": "Decentralized blockchain voting for network decisions",
+                "decentralizedVoting": "Decentralized blockchain voting for network decisions",
+        "tabs": {
+            "overview": "Overview",
+            "guide": "Windows Guide",
+            "budget": "Budget API",
+            "requirements": "Requirements",
+            "troubleshooting": "Troubleshooting"
+        },
+        "header": {
+            "title": "Masternodes",
+            "subtitle": "Run a FairCoin masternode and earn rewards while securing the network"
+        },
+        "stats": {
+            "requiredCollateral": "Required Collateral",
+            "network": "Network",
+            "confirmationBlocks": "Confirmation Blocks",
+            "activeMasternodes": "Active Masternodes"
+        },
+        "overview": {
+            "whatAreMasternodes": {
+                "title": "What are Masternodes?",
+                "description": "Masternodes are special nodes in the FairCoin network that provide additional services beyond simple transaction validation.",
+                "features": {
+                    "security": "Enhanced network security and stability",
+                    "instantTx": "Instant transaction processing",
+                    "governance": "Decentralized governance participation",
+                    "rewards": "Regular reward distribution"
+                }
+            },
+            "benefits": {
+                "title": "Benefits",
+                "earnRewards": "Earn regular FAIR coin rewards",
+                "secureNetwork": "Contribute to network security",
+                "governance": "Participate in network governance",
+                "ecosystem": "Support FairCoin ecosystem growth"
+            },
+            "important": {
+                "title": "Important:",
+                "description": "Running a masternode requires exactly 25,000 FAIR coins as collateral. These coins remain in your wallet and are not spent, but they must stay there for the masternode to remain active."
+            }
+        },
+        "guide": {
+            "title": "MASTERNODE GUIDE FOR WINDOWS",
+            "subtitle": "Follow these step-by-step instructions to set up your FairCoin masternode on Windows",
+            "steps": [
+                {
+                    "title": "Open FairCoin Wallet",
+                    "description": "Launch faircoin-qt.exe for the first time",
+                    "details": "Run the FairCoin wallet application. Your firewall and antivirus might pop up to allow connections - please allow them by making appropriate tick marks."
+                },
+                {
+                    "title": "Wait for Synchronization",
+                    "description": "Ensure wallet is fully synced with network",
+                    "details": "In the lower left corner, you'll see 'Synchronizing with network' and other sync messages. If you see 'No Block Source Available', close and re-open the wallet until it synchronizes."
+                },
+                {
+                    "title": "Access Debug Console",
+                    "description": "Go to Help → Debug Console",
+                    "details": "Open the debug console from the Help menu to access wallet commands."
+                },
+                {
+                    "title": "Get Deposit Address",
+                    "description": "Generate your masternode deposit address",
+                    "details": "In the console, enter: getaccountaddress 0. Copy the result - this is your MASTERNODE DEPOSIT ADDRESS where you'll deposit exactly 25,000 FAIR coins."
+                },
+                {
+                    "title": "Deposit Coins",
+                    "description": "Send exactly 25,000 FAIR to deposit address",
+                    "details": "Pay exactly 25,000 FAIR coins (no more, no less) to your masternode deposit address. Wait for 15 confirmations of the transaction."
+                },
+                {
+                    "title": "Generate Private Key",
+                    "description": "Create your masternode private key",
+                    "details": "In the debug console, enter: masternode genkey. Copy the result - this is your MASTERNODE PRIVKEY."
+                },
+                {
+                    "title": "Configure faircoin.conf",
+                    "description": "Set up wallet configuration file",
+                    "details": "Open C:/users/[username]/appdata/roaming/faircoin/faircoin.conf in Notepad and add the required configuration parameters."
+                },
+                {
+                    "title": "Configure masternode.conf",
+                    "description": "Set up masternode configuration file",
+                    "details": "Open C:/users/[username]/appdata/roaming/faircoin/masternode.conf and add your masternode entry with the correct parameters."
+                },
+                {
+                    "title": "Restart Wallet",
+                    "description": "Close and reopen wallet to apply changes",
+                    "details": "Close the wallet (File → Exit) and reopen it by running faircoin-qt.exe. This is how you'll always start the wallet going forward."
+                },
+                {
+                    "title": "Start Masternode",
+                    "description": "Activate your masternode from the wallet",
+                    "details": "Wait for 15 confirmations, then go to the Masternodes tab and click 'Start all' or 'Start alias'. You should see 'Masternode started successfully'."
+                }
+            ],
+            "configuration": {
+                "title": "Configuration Files",
+                "faircoinConf": {
+                    "title": "faircoin.conf",
+                    "copy": "Copy Configuration"
+                },
+                "masternodeConf": {
+                    "title": "masternode.conf",
+                    "copy": "Copy Configuration"
+                },
+                "notes": {
+                    "title": "Important Notes:",
+                    "note1": "Replace YOURIP with your actual external IP address",
+                    "note2": "Replace PRIVATEKEYREPLACETHIS with your generated masternode private key",
+                    "note3": "Replace INSERTYOURTXID with the transaction ID of your 25,000 FAIR deposit",
+                    "note4": "All masternodes need to be active for a certain amount of blocks before they are recognized by the network and eligible for rewards"
+                }
+            }
+        },
+        "requirements": {
+            "title": "Masternode Requirements",
+            "subtitle": "Ensure you meet all requirements before setting up your masternode",
+            "hardware": {
+                "title": "Hardware Requirements",
+                "items": [
+                    "Dedicated VPS or server (24/7 uptime)",
+                    "Minimum 1GB RAM",
+                    "Minimum 10GB storage",
+                    "Stable internet connection"
+                ]
+            },
+            "software": {
+                "title": "Software Requirements",
+                "items": [
+                    "FairCoin wallet (faircoin-qt.exe)",
+                    "Windows operating system",
+                    "Firewall access for port 53472",
+                    "Administrator privileges"
+                ]
+            },
+            "network": {
+                "title": "Network Requirements",
+                "items": [
+                    "25,000 FAIR coins (exact amount)",
+                    "15 confirmations for activation",
+                    "Stable network connection",
+                    "Port 53472 open and accessible"
+                ]
+            },
+            "note": "These requirements ensure your masternode runs reliably and contributes effectively to the FairCoin network. Meeting all requirements is essential for successful masternode operation."
+        },
+        "troubleshooting": {
+            "title": "Troubleshooting Guide",
+            "subtitle": "Common issues and their solutions when setting up your masternode",
+            "issues": [
+                {
+                    "issue": "Wallet won't synchronize",
+                    "solution": "Close and reopen the wallet. If the problem persists, check your internet connection and firewall settings."
+                },
+                {
+                    "issue": "Masternode not starting",
+                    "solution": "Verify all configuration files are correct, ensure 15 confirmations are received, and check that port 53472 is accessible."
+                },
+                {
+                    "issue": "Configuration file not found",
+                    "solution": "The faircoin.conf file is located in the hidden AppData folder. Enable 'Show hidden files' in Windows Explorer."
+                },
+                {
+                    "issue": "Masternode status not updating",
+                    "solution": "Wait for network propagation. Masternodes need to be active for a certain number of blocks before being recognized by the network."
+                }
+            ],
+            "help": {
+                "title": "Need Help?",
+                "description": "If you're still experiencing issues after trying these solutions, please check the FairCoin community forums or Discord for additional support."
+            }
+        },
         "budget": {
             "title": "Budget API",
             "description": "FairCoin supports full decentralized budgets paid from blockchain",

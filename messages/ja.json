@@ -348,7 +348,203 @@
         "currentlyEnabled": "現在有効",
         "blockRewardsAndFees": "ブロック報酬 + 取引手数料",
         "enablesMixingAndFastSend": "マスターノードはコインミキシングとファストセンド機能を有効にします",
-        "decentralizedVoting": "ネットワーク決定のための分散型ブロックチェーン投票"
+        "decentralizedVoting": "ネットワーク決定のための分散型ブロックチェーン投票",
+        "tabs": {
+            "overview": "概要",
+            "guide": "Windowsガイド",
+            "budget": "予算API",
+            "requirements": "要件",
+            "troubleshooting": "トラブルシューティング"
+        },
+        "header": {
+            "title": "マスターノード",
+            "subtitle": "FairCoinマスターノードを実行し、ネットワークを保護しながら報酬を獲得"
+        },
+        "stats": {
+            "requiredCollateral": "必要担保",
+            "network": "ネットワーク",
+            "confirmationBlocks": "確認ブロック",
+            "activeMasternodes": "アクティブマスターノード"
+        },
+        "overview": {
+            "whatAreMasternodes": {
+                "title": "マスターノードとは？",
+                "description": "マスターノードは、FairCoinネットワーク内の特別なノードで、単純なトランザクション検証を超えた追加サービスを提供します。",
+                "features": {
+                    "security": "ネットワークセキュリティと安定性の向上",
+                    "instantTx": "インスタントトランザクション処理",
+                    "governance": "分散型ガバナンス参加",
+                    "rewards": "定期的な報酬分配"
+                }
+            },
+            "benefits": {
+                "title": "利点",
+                "earnRewards": "定期的なFAIRコイン報酬を獲得",
+                "secureNetwork": "ネットワークセキュリティに貢献",
+                "governance": "ネットワークガバナンスに参加",
+                "ecosystem": "FairCoinエコシステムの成長をサポート"
+            },
+            "important": {
+                "title": "重要：",
+                "description": "マスターノードを実行するには、正確に25,000 FAIRコインを担保として必要とします。これらのコインはウォレットに残り、支出されませんが、マスターノードをアクティブに保つためにそこに留めておく必要があります。"
+            }
+        },
+        "guide": {
+            "title": "WINDOWS用マスターノードガイド",
+            "subtitle": "WindowsでFairCoinマスターノードを設定するためのステップバイステップの手順に従ってください",
+            "steps": [
+                {
+                    "title": "FairCoinウォレットを開く",
+                    "description": "faircoin-qt.exeを初めて起動",
+                    "details": "FairCoinウォレットアプリケーションを実行してください。ファイアウォールとアンチウイルスが接続を許可するためにポップアップ表示される場合があります - 適切なチェックマークを付けて許可してください。"
+                },
+                {
+                    "title": "同期を待つ",
+                    "description": "ウォレットがネットワークと完全に同期していることを確認",
+                    "details": "左下隅に'Synchronizing with network'と他の同期メッセージが表示されます。'No Block Source Available'が表示された場合は、ウォレットが同期するまで閉じて再度開いてください。"
+                },
+                {
+                    "title": "デバッグコンソールにアクセス",
+                    "description": "ヘルプ → デバッグコンソールに移動",
+                    "details": "ヘルプメニューからデバッグコンソールを開き、ウォレットコマンドにアクセスします。"
+                },
+                {
+                    "title": "入金アドレスを取得",
+                    "description": "マスターノード入金アドレスを生成",
+                    "details": "コンソールで入力：getaccountaddress 0。結果をコピー - これは正確に25,000 FAIRコインを入金するあなたのMASTERNODE DEPOSIT ADDRESSです。"
+                },
+                {
+                    "title": "コインを入金",
+                    "description": "入金アドレスに正確に25,000 FAIRを送信",
+                    "details": "マスターノード入金アドレスに正確に25,000 FAIRコイン（それ以上でもそれ以下でもない）を支払います。トランザクションの15確認を待ちます。"
+                },
+                {
+                    "title": "秘密鍵を生成",
+                    "description": "マスターノード秘密鍵を作成",
+                    "details": "デバッグコンソールで入力：masternode genkey。結果をコピー - これはあなたのMASTERNODE PRIVKEYです。"
+                },
+                {
+                    "title": "faircoin.confを設定",
+                    "description": "ウォレット設定ファイルを設定",
+                    "details": "メモ帳でC:/users/[username]/appdata/roaming/faircoin/faircoin.confを開き、必要な設定パラメータを追加します。"
+                },
+                {
+                    "title": "masternode.confを設定",
+                    "description": "マスターノード設定ファイルを設定",
+                    "details": "C:/users/[username]/appdata/roaming/faircoin/masternode.confを開き、正しいパラメータでマスターノードエントリを追加します。"
+                },
+                {
+                    "title": "ウォレットを再起動",
+                    "description": "変更を適用するためにウォレットを閉じて再度開く",
+                    "details": "ウォレットを閉じ（ファイル → 終了）、faircoin-qt.exeを実行して再度開きます。これが今後ウォレットを常に起動する方法です。"
+                },
+                {
+                    "title": "マスターノードを開始",
+                    "description": "ウォレットからマスターノードをアクティブ化",
+                    "details": "15確認を待ち、それからマスターノードタブに移動して'すべて開始'または'エイリアス開始'をクリックします。'Masternode started successfully'が表示されるはずです。"
+                }
+            ],
+            "configuration": {
+                "title": "設定ファイル",
+                "faircoinConf": {
+                    "title": "faircoin.conf",
+                    "copy": "設定をコピー"
+                },
+                "masternodeConf": {
+                    "title": "masternode.conf",
+                    "copy": "設定をコピー"
+                },
+                "notes": {
+                    "title": "重要な注意事項：",
+                    "note1": "YOURIPを実際の外部IPアドレスに置き換え",
+                    "note2": "PRIVATEKEYREPLACETHISを生成されたマスターノード秘密鍵に置き換え",
+                    "note3": "INSERTYOURTXIDを25,000 FAIR入金のトランザクションIDに置き換え",
+                    "note4": "すべてのマスターノードは、ネットワークに認識され報酬の対象となる前に、一定数のブロックでアクティブである必要があります"
+                }
+            }
+        },
+        "requirements": {
+            "title": "マスターノード要件",
+            "subtitle": "マスターノードを設定する前にすべての要件を満たしていることを確認してください",
+            "hardware": {
+                "title": "ハードウェア要件",
+                "items": [
+                    "専用VPSまたはサーバー（24/7稼働）",
+                    "最小1GB RAM",
+                    "最小10GBストレージ",
+                    "安定したインターネット接続"
+                ]
+            },
+            "software": {
+                "title": "ソフトウェア要件",
+                "items": [
+                    "FairCoinウォレット（faircoin-qt.exe）",
+                    "Windowsオペレーティングシステム",
+                    "ポート53472のファイアウォールアクセス",
+                    "管理者権限"
+                ]
+            },
+            "network": {
+                "title": "ネットワーク要件",
+                "items": [
+                    "25,000 FAIRコイン（正確な金額）",
+                    "アクティベーションのための15確認",
+                    "安定したネットワーク接続",
+                    "ポート53472が開いていてアクセス可能"
+                ]
+            },
+            "note": "これらの要件は、マスターノードが確実に動作し、FairCoinネットワークに効果的に貢献することを保証します。すべての要件を満たすことは、マスターノードの成功した運用に不可欠です。"
+        },
+        "troubleshooting": {
+            "title": "トラブルシューティングガイド",
+            "subtitle": "マスターノードを設定する際の一般的な問題とその解決策",
+            "issues": [
+                {
+                    "issue": "ウォレットが同期しない",
+                    "solution": "ウォレットを閉じて再度開いてください。問題が解決しない場合は、インターネット接続とファイアウォール設定を確認してください。"
+                },
+                {
+                    "issue": "マスターノードが開始しない",
+                    "solution": "すべての設定ファイルが正しいことを確認し、15確認が受信されていることを確認し、ポート53472がアクセス可能であることを確認してください。"
+                },
+                {
+                    "issue": "設定ファイルが見つからない",
+                    "solution": "faircoin.confファイルは隠しAppDataフォルダにあります。Windowsエクスプローラーで'隠しファイルを表示'を有効にしてください。"
+                },
+                {
+                    "issue": "マスターノードステータスが更新されない",
+                    "solution": "ネットワーク伝播を待ってください。マスターノードはネットワークに認識される前に一定数のブロックでアクティブである必要があります。"
+                }
+            ],
+            "help": {
+                "title": "ヘルプが必要ですか？",
+                "description": "これらの解決策を試しても問題が解決しない場合は、FairCoinコミュニティフォーラムまたはDiscordで追加サポートを確認してください。"
+            }
+        },
+        "budget": {
+            "title": "予算 API",
+            "subtitle": "FairCoin 予算提案システム",
+            "description": "予算システムは、コミュニティがネットワーク開発のための資金を提案し、投票できるようにします。",
+            "proposals": {
+                "title": "予算提案",
+                "description": "現在の予算提案を表示し、投票します。",
+                "viewAll": "すべての提案を表示",
+                "createProposal": "提案を作成"
+            },
+            "voting": {
+                "title": "投票",
+                "description": "予算提案に投票するには、マスターノードが必要です。",
+                "requirements": "投票要件",
+                "howToVote": "投票方法"
+            },
+            "stats": {
+                "title": "予算統計",
+                "totalBudget": "総予算",
+                "allocated": "割り当て済み",
+                "remaining": "残り",
+                "nextCycle": "次のサイクル"
+            }
+        }
     },
     "network": {
         "title": "ネットワーク状態",

@@ -348,7 +348,179 @@
         "currentlyEnabled": "현재 활성화됨",
         "blockRewardsAndFees": "블록 보상 + 거래 수수료",
         "enablesMixingAndFastSend": "마스터노드는 코인 믹싱과 패스트센드 기능을 활성화합니다",
-        "decentralizedVoting": "네트워크 결정을 위한 분산 블록체인 투표"
+        "decentralizedVoting": "네트워크 결정을 위한 분산 블록체인 투표",
+        "tabs": {
+            "overview": "개요",
+            "guide": "Windows 가이드",
+            "budget": "예산 API",
+            "requirements": "요구사항",
+            "troubleshooting": "문제 해결"
+        },
+        "header": {
+            "title": "마스터노드",
+            "subtitle": "FairCoin 마스터노드를 실행하고 네트워크를 보호하면서 보상을 받으세요"
+        },
+        "stats": {
+            "requiredCollateral": "필요한 담보",
+            "network": "네트워크",
+            "confirmationBlocks": "확인 블록",
+            "activeMasternodes": "활성 마스터노드"
+        },
+        "overview": {
+            "whatAreMasternodes": {
+                "title": "마스터노드란 무엇인가요?",
+                "description": "마스터노드는 FairCoin 네트워크의 특별한 노드로, 단순한 트랜잭션 검증을 넘어 추가 서비스를 제공합니다.",
+                "features": {
+                    "security": "향상된 네트워크 보안 및 안정성",
+                    "instantTx": "인스턴트 트랜잭션 처리",
+                    "governance": "분산 거버넌스 참여",
+                    "rewards": "정기적인 보상 분배"
+                }
+            },
+            "benefits": {
+                "title": "혜택",
+                "earnRewards": "정기적인 FAIR 코인 보상 받기",
+                "secureNetwork": "네트워크 보안에 기여",
+                "governance": "네트워크 거버넌스 참여",
+                "ecosystem": "FairCoin 생태계 성장 지원"
+            },
+            "important": {
+                "title": "중요:",
+                "description": "마스터노드를 실행하려면 정확히 25,000 FAIR 코인을 담보로 필요로 합니다. 이 코인들은 지갑에 남아 있으며 지출되지 않지만, 마스터노드가 활성 상태를 유지하려면 그곳에 있어야 합니다."
+            }
+        },
+        "guide": {
+            "title": "WINDOWS용 마스터노드 가이드",
+            "subtitle": "Windows에서 FairCoin 마스터노드를 설정하기 위한 단계별 지침을 따르세요",
+            "steps": [
+                {
+                    "title": "FairCoin 지갑 열기",
+                    "description": "faircoin-qt.exe를 처음으로 실행",
+                    "details": "FairCoin 지갑 애플리케이션을 실행하세요. 방화벽과 바이러스 백신이 연결을 허용하기 위해 팝업될 수 있습니다 - 적절한 체크 표시를 하여 허용하세요."
+                },
+                {
+                    "title": "동기화 대기",
+                    "description": "지갑이 네트워크와 완전히 동기화되었는지 확인",
+                    "details": "왼쪽 아래 모서리에 'Synchronizing with network' 및 다른 동기화 메시지가 표시됩니다. 'No Block Source Available'이 표시되면 동기화될 때까지 지갑을 닫고 다시 여세요."
+                },
+                {
+                    "title": "디버그 콘솔 액세스",
+                    "description": "도움말 → 디버그 콘솔로 이동",
+                    "details": "도움말 메뉴에서 디버그 콘솔을 열어 지갑 명령에 액세스하세요."
+                },
+                {
+                    "title": "입금 주소 가져오기",
+                    "description": "마스터노드 입금 주소 생성",
+                    "details": "콘솔에서 입력: getaccountaddress 0. 결과를 복사하세요 - 이것은 정확히 25,000 FAIR 코인을 입금할 MASTERNODE DEPOSIT ADDRESS입니다."
+                },
+                {
+                    "title": "코인 입금",
+                    "description": "입금 주소에 정확히 25,000 FAIR 보내기",
+                    "details": "마스터노드 입금 주소에 정확히 25,000 FAIR 코인(더도 덜도 말고)을 지불하세요. 트랜잭션의 15 확인을 기다리세요."
+                },
+                {
+                    "title": "개인 키 생성",
+                    "description": "마스터노드 개인 키 생성",
+                    "details": "디버그 콘솔에서 입력: masternode genkey. 결과를 복사하세요 - 이것은 MASTERNODE PRIVKEY입니다."
+                },
+                {
+                    "title": "faircoin.conf 설정",
+                    "description": "지갑 설정 파일 설정",
+                    "details": "메모장에서 C:/users/[username]/appdata/roaming/faircoin/faircoin.conf를 열고 필요한 설정 매개변수를 추가하세요."
+                },
+                {
+                    "title": "masternode.conf 설정",
+                    "description": "마스터노드 설정 파일 설정",
+                    "details": "C:/users/[username]/appdata/roaming/faircoin/masternode.conf를 열고 올바른 매개변수로 마스터노드 항목을 추가하세요."
+                },
+                {
+                    "title": "지갑 재시작",
+                    "description": "변경 사항을 적용하기 위해 지갑을 닫고 다시 열기",
+                    "details": "지갑을 닫고(파일 → 종료) faircoin-qt.exe를 실행하여 다시 여세요. 앞으로 지갑을 항상 이렇게 시작하게 됩니다."
+                },
+                {
+                    "title": "마스터노드 시작",
+                    "description": "지갑에서 마스터노드 활성화",
+                    "details": "15 확인을 기다린 후 마스터노드 탭으로 이동하여 '모두 시작' 또는 '별칭 시작'을 클릭하세요. 'Masternode started successfully'가 표시되어야 합니다."
+                }
+            ],
+            "configuration": {
+                "title": "설정 파일",
+                "faircoinConf": {
+                    "title": "faircoin.conf",
+                    "copy": "설정 복사"
+                },
+                "masternodeConf": {
+                    "title": "masternode.conf",
+                    "copy": "설정 복사"
+                },
+                "notes": {
+                    "title": "중요한 참고사항:",
+                    "note1": "YOURIP를 실제 외부 IP 주소로 교체",
+                    "note2": "PRIVATEKEYREPLACETHIS를 생성된 마스터노드 개인 키로 교체",
+                    "note3": "INSERTYOURTXID를 25,000 FAIR 입금의 트랜잭션 ID로 교체",
+                    "note4": "모든 마스터노드는 네트워크에 인식되고 보상을 받을 자격이 되기 전에 특정 수의 블록 동안 활성 상태여야 합니다"
+                }
+            }
+        },
+        "requirements": {
+            "title": "마스터노드 요구사항",
+            "subtitle": "마스터노드를 설정하기 전에 모든 요구사항을 충족하는지 확인하세요",
+            "hardware": {
+                "title": "하드웨어 요구사항",
+                "items": [
+                    "전용 VPS 또는 서버(24/7 가동)",
+                    "최소 1GB RAM",
+                    "최소 10GB 저장소",
+                    "안정적인 인터넷 연결"
+                ]
+            },
+            "software": {
+                "title": "소프트웨어 요구사항",
+                "items": [
+                    "FairCoin 지갑(faircoin-qt.exe)",
+                    "Windows 운영 체제",
+                    "포트 53472 방화벽 액세스",
+                    "관리자 권한"
+                ]
+            },
+            "network": {
+                "title": "네트워크 요구사항",
+                "items": [
+                    "25,000 FAIR 코인(정확한 금액)",
+                    "활성화를 위한 15 확인",
+                    "안정적인 네트워크 연결",
+                    "포트 53472 개방 및 접근 가능"
+                ]
+            },
+            "note": "이러한 요구사항은 마스터노드가 안정적으로 작동하고 FairCoin 네트워크에 효과적으로 기여하도록 보장합니다. 모든 요구사항을 충족하는 것은 성공적인 마스터노드 운영에 필수적입니다."
+        },
+        "troubleshooting": {
+            "title": "문제 해결 가이드",
+            "subtitle": "마스터노드를 설정할 때의 일반적인 문제 및 해결책",
+            "issues": [
+                {
+                    "issue": "지갑이 동기화되지 않음",
+                    "solution": "지갑을 닫고 다시 여세요. 문제가 지속되면 인터넷 연결과 방화벽 설정을 확인하세요."
+                },
+                {
+                    "issue": "마스터노드가 시작되지 않음",
+                    "solution": "모든 설정 파일이 올바른지 확인하고, 15 확인이 수신되었는지 확인하고, 포트 53472가 접근 가능한지 확인하세요."
+                },
+                {
+                    "issue": "설정 파일을 찾을 수 없음",
+                    "solution": "faircoin.conf 파일은 숨겨진 AppData 폴더에 있습니다. Windows 탐색기에서 '숨긴 파일 표시'를 활성화하세요."
+                },
+                {
+                    "issue": "마스터노드 상태가 업데이트되지 않음",
+                    "solution": "네트워크 전파를 기다리세요. 마스터노드는 네트워크에 인식되기 전에 특정 수의 블록 동안 활성 상태여야 합니다."
+                }
+            ],
+            "help": {
+                "title": "도움이 필요하신가요?",
+                "description": "이 해결책들을 시도한 후에도 문제가 지속되면 FairCoin 커뮤니티 포럼이나 Discord에서 추가 지원을 확인하세요."
+            }
+        }
     },
     "network": {
         "title": "네트워크 상태",

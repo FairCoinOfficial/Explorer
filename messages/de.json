@@ -367,7 +367,271 @@
         "currentlyEnabled": "Derzeit aktiviert",
         "blockRewardsAndFees": "Blockbelohnungen + Transaktionsgebühren",
         "enablesMixingAndFastSend": "Masternodes ermöglichen Coin-Mixing und FastSend-Funktionen",
-        "decentralizedVoting": "Dezentralisierte Blockchain-Abstimmung für Netzwerkentscheidungen"
+        "decentralizedVoting": "Dezentralisierte Blockchain-Abstimmung für Netzwerkentscheidungen",
+        "tabs": {
+            "overview": "Übersicht",
+            "guide": "Windows-Anleitung",
+            "budget": "Budget-API",
+            "requirements": "Anforderungen",
+            "troubleshooting": "Fehlerbehebung"
+        },
+        "header": {
+            "title": "Masternodes",
+            "subtitle": "Führen Sie einen FairCoin-Masternode aus und verdienen Sie Belohnungen, während Sie das Netzwerk sichern"
+        },
+        "stats": {
+            "requiredCollateral": "Erforderliche Sicherheit",
+            "network": "Netzwerk",
+            "confirmationBlocks": "Bestätigungsblöcke",
+            "activeMasternodes": "Aktive Masternodes"
+        },
+        "overview": {
+            "whatAreMasternodes": {
+                "title": "Was sind Masternodes?",
+                "description": "Masternodes sind spezielle Knoten im FairCoin-Netzwerk, die zusätzliche Dienste über die einfache Transaktionsvalidierung hinaus bieten.",
+                "features": {
+                    "security": "Erhöhte Netzwerksicherheit und Stabilität",
+                    "instantTx": "Sofortige Transaktionsverarbeitung",
+                    "governance": "Dezentralisierte Governance-Teilnahme",
+                    "rewards": "Regelmäßige Belohnungsverteilung"
+                }
+            },
+            "benefits": {
+                "title": "Vorteile",
+                "earnRewards": "Verdienen Sie regelmäßige FAIR-Münzbelohnungen",
+                "secureNetwork": "Beitragen Sie zur Netzwerksicherheit",
+                "governance": "Nehmen Sie an der Netzwerk-Governance teil",
+                "ecosystem": "Unterstützen Sie das Wachstum des FairCoin-Ökosystems"
+            },
+            "important": {
+                "title": "Wichtig:",
+                "description": "Der Betrieb eines Masternodes erfordert genau 25.000 FAIR-Münzen als Sicherheit. Diese Münzen bleiben in Ihrer Wallet und werden nicht ausgegeben, müssen aber dort bleiben, damit der Masternode aktiv bleibt."
+            }
+        },
+        "guide": {
+            "title": "MASTERNODE-ANLEITUNG FÜR WINDOWS",
+            "subtitle": "Befolgen Sie diese Schritt-für-Schritt-Anweisungen, um Ihren FairCoin-Masternode unter Windows einzurichten",
+            "steps": [
+                {
+                    "title": "FairCoin-Wallet öffnen",
+                    "description": "Starten Sie faircoin-qt.exe zum ersten Mal",
+                    "details": "Führen Sie die FairCoin-Wallet-Anwendung aus. Ihre Firewall und Ihr Antivirus könnten Pop-ups anzeigen, um Verbindungen zuzulassen - bitte erlauben Sie diese, indem Sie die entsprechenden Häkchen setzen."
+                },
+                {
+                    "title": "Auf Synchronisation warten",
+                    "description": "Stellen Sie sicher, dass die Wallet vollständig mit dem Netzwerk synchronisiert ist",
+                    "details": "In der unteren linken Ecke sehen Sie 'Synchronizing with network' und andere Synchronisationsmeldungen. Wenn Sie 'No Block Source Available' sehen, schließen und öffnen Sie die Wallet erneut, bis sie synchronisiert."
+                },
+                {
+                    "title": "Debug-Konsole aufrufen",
+                    "description": "Gehen Sie zu Hilfe → Debug-Konsole",
+                    "details": "Öffnen Sie die Debug-Konsole aus dem Hilfe-Menü, um auf Wallet-Befehle zuzugreifen."
+                },
+                {
+                    "title": "Einzahlungsadresse abrufen",
+                    "description": "Generieren Sie Ihre Masternode-Einzahlungsadresse",
+                    "details": "Geben Sie in der Konsole ein: getaccountaddress 0. Kopieren Sie das Ergebnis - dies ist Ihre MASTERNODE DEPOSIT ADDRESS, wohin Sie genau 25.000 FAIR-Münzen einzahlen werden."
+                },
+                {
+                    "title": "Münzen einzahlen",
+                    "description": "Senden Sie genau 25.000 FAIR an die Einzahlungsadresse",
+                    "details": "Zahlen Sie genau 25.000 FAIR-Münzen (weder mehr noch weniger) auf Ihre Masternode-Einzahlungsadresse ein. Warten Sie auf 15 Bestätigungen der Transaktion."
+                },
+                {
+                    "title": "Privaten Schlüssel generieren",
+                    "description": "Erstellen Sie Ihren Masternode-privaten Schlüssel",
+                    "details": "Geben Sie in der Debug-Konsole ein: masternode genkey. Kopieren Sie das Ergebnis - dies ist Ihr MASTERNODE PRIVKEY."
+                },
+                {
+                    "title": "faircoin.conf konfigurieren",
+                    "description": "Wallet-Konfigurationsdatei einrichten",
+                    "details": "Öffnen Sie C:/users/[username]/appdata/roaming/faircoin/faircoin.conf in Notepad und fügen Sie die erforderlichen Konfigurationsparameter hinzu."
+                },
+                {
+                    "title": "masternode.conf konfigurieren",
+                    "description": "Masternode-Konfigurationsdatei einrichten",
+                    "details": "Öffnen Sie C:/users/[username]/appdata/roaming/faircoin/masternode.conf und fügen Sie Ihren Masternode-Eintrag mit den korrekten Parametern hinzu."
+                },
+                {
+                    "title": "Wallet neu starten",
+                    "description": "Wallet schließen und erneut öffnen, um Änderungen anzuwenden",
+                    "details": "Schließen Sie die Wallet (Datei → Beenden) und öffnen Sie sie erneut, indem Sie faircoin-qt.exe ausführen. So werden Sie die Wallet immer starten."
+                },
+                {
+                    "title": "Masternode starten",
+                    "description": "Aktivieren Sie Ihren Masternode von der Wallet aus",
+                    "details": "Warten Sie auf 15 Bestätigungen, gehen Sie dann zur Registerkarte Masternodes und klicken Sie auf 'Alle starten' oder 'Alias starten'. Sie sollten 'Masternode started successfully' sehen."
+                }
+            ],
+            "configuration": {
+                "title": "Konfigurationsdateien",
+                "faircoinConf": {
+                    "title": "faircoin.conf",
+                    "copy": "Konfiguration kopieren"
+                },
+                "masternodeConf": {
+                    "title": "masternode.conf",
+                    "copy": "Konfiguration kopieren"
+                },
+                "notes": {
+                    "title": "Wichtige Hinweise:",
+                    "note1": "Ersetzen Sie YOURIP durch Ihre tatsächliche externe IP-Adresse",
+                    "note2": "Ersetzen Sie PRIVATEKEYREPLACETHIS durch Ihren generierten Masternode-privaten Schlüssel",
+                    "note3": "Ersetzen Sie INSERTYOURTXID durch die Transaktions-ID Ihrer 25.000 FAIR-Einzahlung",
+                    "note4": "Alle Masternodes müssen für eine bestimmte Anzahl von Blöcken aktiv sein, bevor sie vom Netzwerk erkannt werden und für Belohnungen berechtigt sind"
+                }
+            }
+        },
+        "requirements": {
+            "title": "Masternode-Anforderungen",
+            "subtitle": "Stellen Sie sicher, dass Sie alle Anforderungen erfüllen, bevor Sie Ihren Masternode einrichten",
+            "hardware": {
+                "title": "Hardware-Anforderungen",
+                "items": [
+                    "Dedizierter VPS oder Server (24/7-Betriebszeit)",
+                    "Mindestens 1 GB RAM",
+                    "Mindestens 10 GB Speicher",
+                    "Stabile Internetverbindung"
+                ]
+            },
+            "software": {
+                "title": "Software-Anforderungen",
+                "items": [
+                    "FairCoin-Wallet (faircoin-qt.exe)",
+                    "Windows-Betriebssystem",
+                    "Firewall-Zugang für Port 53472",
+                    "Administratorrechte"
+                ]
+            },
+            "network": {
+                "title": "Netzwerk-Anforderungen",
+                "items": [
+                    "25.000 FAIR-Münzen (genauer Betrag)",
+                    "15 Bestätigungen für Aktivierung",
+                    "Stabile Netzwerkverbindung",
+                    "Port 53472 offen und zugänglich"
+                ]
+            },
+            "note": "Diese Anforderungen stellen sicher, dass Ihr Masternode zuverlässig läuft und effektiv zum FairCoin-Netzwerk beiträgt. Die Erfüllung aller Anforderungen ist für den erfolgreichen Masternode-Betrieb unerlässlich."
+        },
+        "troubleshooting": {
+            "title": "Leitfaden zur Fehlerbehebung",
+            "subtitle": "Häufige Probleme und deren Lösungen bei der Einrichtung Ihres Masternodes",
+            "issues": [
+                {
+                    "issue": "Wallet synchronisiert nicht",
+                    "solution": "Schließen und öffnen Sie die Wallet erneut. Wenn das Problem weiterhin besteht, überprüfen Sie Ihre Internetverbindung und Firewall-Einstellungen."
+                },
+                {
+                    "issue": "Masternode startet nicht",
+                    "solution": "Überprüfen Sie, ob alle Konfigurationsdateien korrekt sind, stellen Sie sicher, dass 15 Bestätigungen empfangen wurden, und überprüfen Sie, dass Port 53472 zugänglich ist."
+                },
+                {
+                    "issue": "Konfigurationsdatei nicht gefunden",
+                    "solution": "Die faircoin.conf-Datei befindet sich im versteckten AppData-Ordner. Aktivieren Sie 'Versteckte Dateien anzeigen' im Windows Explorer."
+                },
+                {
+                    "issue": "Masternode-Status aktualisiert sich nicht",
+                    "solution": "Warten Sie auf die Netzwerkverbreitung. Masternodes müssen für eine bestimmte Anzahl von Blöcken aktiv sein, bevor sie vom Netzwerk erkannt werden."
+                }
+            ],
+            "help": {
+                "title": "Brauchen Sie Hilfe?",
+                "description": "Wenn Sie weiterhin Probleme haben, nachdem Sie diese Lösungen ausprobiert haben, besuchen Sie bitte die FairCoin-Community-Foren oder Discord für zusätzliche Unterstützung."
+            }
+        },
+        "budget": {
+            "title": "Budget-API",
+            "description": "FairCoin unterstützt vollständig dezentrale Budgets, die aus der Blockchain bezahlt werden",
+            "stages": {
+                "prepare": {
+                    "title": "Vorbereiten",
+                    "description": "Erstellen Sie eine spezielle Transaktion, die Münzen zerstört, um einen Vorschlag zu machen",
+                    "details": "Verwenden Sie den mnbudget prepare-Befehl, um eine Sicherheitsleistungstransaktion zu erstellen"
+                },
+                "submit": {
+                    "title": "Einreichen",
+                    "description": "Verbreiten Sie die Transaktion an Peers im Netzwerk",
+                    "details": "Verwenden Sie den mnbudget submit-Befehl, um den Vorschlag im Netzwerk zu veröffentlichen"
+                },
+                "voting": {
+                    "title": "Abstimmung",
+                    "description": "Werben Sie für Stimmen für Ihren Vorschlag",
+                    "details": "Kampagne für Stimmen von anderen Masternodes. Sie brauchen 10% des Netzwerks"
+                },
+                "finalization": {
+                    "title": "Finalisierung",
+                    "description": "Vorschläge werden sortiert und zu einem endgültigen Budget zusammengestellt",
+                    "details": "Gültige Vorschläge werden zu einem endgültigen Budget für die Abstimmung zusammengestellt"
+                },
+                "budgetVoting": {
+                    "title": "Budget-Abstimmung",
+                    "description": "Masternodes stimmen über das endgültige Budget ab",
+                    "details": "Masternodes stimmen über das vollständige Budgetpaket ab"
+                },
+                "payment": {
+                    "title": "Zahlung",
+                    "description": "Das gewonnene endgültige Budget wird ausgezahlt",
+                    "details": "Erfolgreiche Vorschläge erhalten monatliche Zahlungen über Superblöcke"
+                }
+            },
+            "commands": {
+                "prepare": {
+                    "name": "mnbudget prepare",
+                    "description": "Vorschlag für Netzwerk vorbereiten, indem signiert und tx erstellt wird",
+                    "example": "mnbudget prepare cool-project http://www.cool-project/one.json 12 100000 y6R9oN12KnB9zydzTLc3LikD9cCjjQzYG7 1200 true",
+                    "output": "464a0eb70ea91c94295214df48c47baa72b3876cfb658744aaf863c7b5bf1ff0",
+                    "copy": "Befehl kopieren"
+                },
+                "submit": {
+                    "name": "mnbudget submit",
+                    "description": "Vorschlag für Netzwerk einreichen",
+                    "example": "mnbudget submit cool-project http://www.cool-project/one.json 12 100000 y6R9oN12KnB9zydzTLc3LikD9cCjjQzYG7 1200 464a0eb70ea91c94295214df48c47baa72b3876cfb658744aaf863c7b5bf1ff0",
+                    "output": "a2b29778ae82e45a973a94309ffa6aa2e2388b8f95b39ab3739f0078835f0491",
+                    "copy": "Befehl kopieren"
+                },
+                "getinfo": {
+                    "name": "mnbudget getinfo",
+                    "description": "Aktuelle Masternode-Budgets anzeigen",
+                    "example": "mnbudget getinfo cool-project",
+                    "output": "JSON-Antwort mit Vorschlagsdetails",
+                    "copy": "Befehl kopieren"
+                },
+                "vote": {
+                    "name": "mnbudget vote",
+                    "description": "Über eine FairCoin-Initiative/Budget abstimmen",
+                    "example": "mnbudget vote a2b29778ae82e45a973a94309ffa6aa2e2388b8f95b39ab3739f0078835f0491 yes",
+                    "output": "Erfolgreich abgestimmt - Ihre Stimme wurde übermittelt und akzeptiert.",
+                    "copy": "Befehl kopieren"
+                },
+                "projection": {
+                    "name": "mnbudget projection",
+                    "description": "Projektion von Vorschlägen anzeigen, die im nächsten Zyklus bezahlt werden",
+                    "example": "mnbudget projection",
+                    "output": "JSON-Antwort mit Budgetprojektionen",
+                    "copy": "Befehl kopieren"
+                },
+                "finalbudget": {
+                    "name": "mnfinalbudget vote",
+                    "description": "Über ein endgültiges Budget abstimmen",
+                    "example": "mnfinalbudget vote <budget_hash> yes",
+                    "output": "Stimme für endgültiges Budget aufgezeichnet",
+                    "copy": "Befehl kopieren"
+                }
+            },
+            "sections": {
+                "budgetStages": "Budget-Phasen",
+                "budgetCommands": "Budget-Befehle",
+                "example": "Beispiel:",
+                "output": "Ausgabe:",
+                "warning": "Warnung",
+                "important": "Wichtig"
+            },
+            "alerts": {
+                "votingRequirement": "Vorschläge müssen mindestens 1 Tag aktiv sein und 10% des Masternode-Netzwerks in Ja-Stimmen erhalten, um sich zu qualifizieren. Zum Beispiel, wenn es 2500 Masternodes gibt, brauchen Sie 250 Ja-Stimmen.",
+                "collateralWarning": "Wenn Sie Felder innerhalb des prepare-Befehls ändern, wird die Sicherheitsleistungstransaktion ungültig. Stellen Sie sicher, dass alle Details korrekt sind, bevor Sie fortfahren."
+            }
+        }
     },
     "network": {
         "title": "Netzwerkstatus",
@@ -384,7 +648,6 @@
         "warnings": "Warnungen"
     },
     "stats": {
-        "title": "Netzwerkstatistiken",
         "subtitle": "FairCoin Blockchain-Netzwerk Metriken und Leistung",
         "loadingMessage": "Netzwerkstatistiken werden geladen...",
         "errorTitle": "Fehler beim Laden der Statistiken",
