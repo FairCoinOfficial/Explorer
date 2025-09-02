@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from 'next-intl'
 import { useNetwork } from "@/contexts/network-context"
@@ -11,30 +11,56 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 
-export function AdvancedSearchContent() {
+interface AdvancedSearchContentProps {
+    initialQuery?: string
+    initialNetwork?: string
+}
+
+export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mainnet" }: AdvancedSearchContentProps) {
     const t = useTranslations('search')
     const tCommon = useTranslations('common')
     const { currentNetwork } = useNetwork()
     const router = useRouter()
-    const [searchQuery, setSearchQuery] = useState("")
+    const [searchQuery, setSearchQuery] = useState(initialQuery)
     const [isSearching, setIsSearching] = useState(false)
+    const [searchResults, setSearchResults] = useState<any>(null)
+    const [searchError, setSearchError] = useState<string | null>(null)
 
-    const handleSearch = async (query: string) => {
+    // Auto-search when component mounts with initial query
+    useEffect(() => {
+        if (initialQuery.trim()) {
+            performSearch(initialQuery)
+        }
+    }, [initialQuery])
+
+    const performSearch = async (query: string) => {
         if (!query.trim()) return
 
         setIsSearching(true)
-
-        // Add network parameter to search
-        const searchUrl = `/search?q=${encodeURIComponent(query.trim())}&network=${currentNetwork}`
+        setSearchError(null)
+        setSearchResults(null)
 
         try {
-            // Use the search API route which will redirect appropriately
-            window.location.href = searchUrl
+            const response = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}&network=${currentNetwork}`)
+
+            if (response.ok) {
+                const data = await response.json()
+                setSearchResults(data)
+            } else {
+                const errorData = await response.json()
+                setSearchError(errorData.error || 'Search failed')
+            }
         } catch (error) {
             console.error("Search failed:", error)
+            setSearchError('Search failed. Please try again.')
         } finally {
             setIsSearching(false)
         }
+    }
+
+    const handleSearch = async (query: string) => {
+        if (!query.trim()) return
+        await performSearch(query)
     }
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -98,118 +124,108 @@ export function AdvancedSearchContent() {
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-2">
-                <Search className="h-5 w-5" />
+                <Search className="h-6 w-6 text-primary" />
                 <h1 className="text-2xl font-bold">{t('title')}</h1>
-                <Badge variant="outline">{currentNetwork.toUpperCase()}</Badge>
             </div>
 
+            {/* Search Input */}
             <Card>
-                <CardHeader>
-                    <CardTitle>{t('searchBlockchain')}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="pt-6">
                     <div className="flex gap-2">
                         <Input
-                            type="text"
                             placeholder={t('searchPlaceholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onKeyPress={handleKeyPress}
-                            className="font-mono text-sm"
+                            className="flex-1"
                         />
                         <Button
                             onClick={() => handleSearch(searchQuery)}
-                            disabled={!searchQuery.trim() || isSearching}
-                            className="shrink-0"
+                            disabled={isSearching || !searchQuery.trim()}
                         >
-                            {isSearching ? t('searching') : tCommon('search')}
+                            {isSearching ? t('searching') : t('search')}
                         </Button>
-                    </div>
-
-                    <div className="text-sm text-muted-foreground">
-                        <p>{t('searchSupports')}:</p>
-                        <ul className="mt-1 ml-4 space-y-1">
-                            <li>• {t('supportBlockHeights')}</li>
-                            <li>• {t('supportBlockHashes')}</li>
-                            <li>• {t('supportTransactionIds')}</li>
-                            <li>• {t('supportAddresses')}</li>
-                        </ul>
                     </div>
                 </CardContent>
             </Card>
 
+            {/* Search Results */}
+            {isSearching && (
+                <Card>
+                    <CardContent className="pt-6">
+                        <div className="flex items-center gap-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                            <span>{t('searching')}...</span>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {searchError && (
+                <Card>
+                    <CardContent className="pt-6">
+                        <div className="text-red-600">
+                            <p className="font-medium">Search Error:</p>
+                            <p>{searchError}</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {searchResults && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Search Results</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <pre className="text-sm overflow-auto">
+                            {JSON.stringify(searchResults, null, 2)}
+                        </pre>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Search Examples */}
             <div className="grid gap-4 md:grid-cols-2">
                 {searchExamples.map((example, index) => (
-                    <Card key={index} className="cursor-pointer hover:shadow-md transition-shadow">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="flex items-center gap-2 text-base">
-                                <example.icon className={`h-4 w-4 ${example.color}`} />
-                                {example.title}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground mb-2">{example.description}</p>
-                            <div className="bg-muted p-2 rounded-md">
-                                <code className="text-xs break-all">{example.example}</code>
+                    <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSearchQuery(example.example)}>
+                        <CardContent className="pt-6">
+                            <div className="flex items-start gap-3">
+                                <example.icon className={`h-5 w-5 ${example.color} mt-0.5`} />
+                                <div className="flex-1">
+                                    <h3 className="font-semibold text-sm">{example.title}</h3>
+                                    <p className="text-xs text-muted-foreground mt-1">{example.description}</p>
+                                    <div className="mt-2 p-2 bg-muted rounded text-xs font-mono break-all">
+                                        {example.example}
+                                    </div>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
                 ))}
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t('quickActions')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid gap-3 md:grid-cols-3">
-                        {quickActions.map((action, index) => (
-                            <Button
-                                key={index}
-                                variant="outline"
-                                className="h-auto p-4 flex flex-col items-start gap-2"
-                                onClick={action.action}
-                            >
-                                <div className="flex items-center gap-2 w-full">
-                                    <action.icon className="h-4 w-4" />
-                                    <span className="font-medium">{action.title}</span>
-                                </div>
-                                <span className="text-xs text-muted-foreground text-left">
-                                    {action.description}
-                                </span>
-                            </Button>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
+            <Separator />
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t('searchTips')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                            <h4 className="font-semibold mb-2">{t('formatRecognition')}</h4>
-                            <ul className="text-sm text-muted-foreground space-y-1">
-                                <li>• {t('formatNumbers')}</li>
-                                <li>• {t('formatHex')}</li>
-                                <li>• {t('formatAddresses')}</li>
-                                <li>• {t('formatCaseInsensitive')}</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold mb-2">{t('networkAwareness')}</h4>
-                            <ul className="text-sm text-muted-foreground space-y-1">
-                                <li>• {t('networkSpecific')}</li>
-                                <li>• {t('networkSwitch')}</li>
-                                <li>• {t('networkAddressValidation')}</li>
-                                <li>• {t('networkSeparateIndices')}</li>
-                            </ul>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+            {/* Quick Actions */}
+            <div>
+                <h2 className="text-lg font-semibold mb-4">{t('quickActions')}</h2>
+                <div className="grid gap-4 md:grid-cols-3">
+                    {quickActions.map((action, index) => (
+                        <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer" onClick={action.action}>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center gap-3">
+                                    <action.icon className="h-5 w-5 text-primary" />
+                                    <div>
+                                        <h3 className="font-semibold text-sm">{action.title}</h3>
+                                        <p className="text-xs text-muted-foreground mt-1">{action.description}</p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </div>
         </div>
     )
 }

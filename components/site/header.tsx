@@ -15,36 +15,41 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, X, Zap, Globe, Code, BookOpen, Github, ExternalLink, Activity, Wrench } from 'lucide-react';
+import { Search, X, Globe, Code, BookOpen, Github, ExternalLink, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export function SiteHeader() {
   const t = useTranslations('navigation');
+  const router = useRouter();
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
+      // Navigate to search page with query parameter
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
-  // Quick actions that complement the sidebar navigation
-  const quickActions = [
-    { label: 'Advanced Search', href: '/search', icon: Search, description: 'Search blocks, transactions, addresses' },
-    { label: 'Network Status', href: '/network-status', icon: Activity, description: 'Check network health and performance' },
-    { label: 'Blockchain Tools', href: '/tools', icon: Wrench, description: 'Address validator, fee calculator' },
-    { label: 'API Documentation', href: '/api', icon: Code, description: 'Developer API reference' },
-  ];
+  const handleMobileSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // Navigate to search page with query parameter
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      // Close mobile search after navigation
+      setIsSearchExpanded(false);
+    }
+  };
 
   // External resources and links
   const externalLinks = [
     { label: 'FairCoin Website', href: 'https://fairco.in', icon: ExternalLink, description: 'Official project website' },
     { label: 'GitHub Repository', href: 'https://github.com/faircoin', icon: Github, description: 'View source code' },
-    { label: 'User Documentation', href: 'https://docs.fairco.in', icon: BookOpen, description: 'User guides and tutorials' },
-    { label: 'Community Forum', href: 'https://community.fairco.in', icon: Github, description: 'Join discussions' },
+    { label: 'User Documentation', href: 'https://docs.fairco.in', icon: Code, description: 'User guides and tutorials' },
+    { label: 'Community Forum', href: 'https://community.fairco.in', icon: Users, description: 'Join discussions' },
   ];
 
   return (
@@ -92,45 +97,6 @@ export function SiteHeader() {
 
         {/* Right Section - Actions and Settings */}
         <div className="flex items-center gap-2">
-          {/* Quick Actions Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 w-9 p-0 hover:bg-accent/50 transition-colors rounded-lg"
-                aria-label="Quick actions"
-              >
-                <Zap className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72 p-3">
-              <DropdownMenuLabel className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-foreground">
-                <Zap className="h-4 w-4 text-primary" />
-                Quick Actions
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="grid gap-1">
-                {quickActions.map((action) => (
-                  <DropdownMenuItem key={action.href} asChild className="cursor-pointer p-2 rounded-md">
-                    <Link
-                      href={action.href}
-                      className="flex items-center gap-3 p-2 rounded-md hover:bg-accent/50 transition-colors"
-                    >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <action.icon className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-foreground">{action.label}</div>
-                        <div className="text-xs text-muted-foreground truncate">{action.description}</div>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
           {/* External Resources Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -143,27 +109,27 @@ export function SiteHeader() {
                 <Globe className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72 p-3">
-              <DropdownMenuLabel className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-foreground">
-                <Globe className="h-4 w-4 text-primary" />
+            <DropdownMenuContent align="end" className="w-80 p-2">
+              <DropdownMenuLabel className="flex items-center gap-2 px-2 py-1.5 text-xs font-semibold text-foreground">
+                <Globe className="h-3 w-3 text-primary" />
                 External Resources
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <div className="grid gap-1">
                 {externalLinks.map((link) => (
-                  <DropdownMenuItem key={link.href} asChild className="cursor-pointer p-2 rounded-md">
+                  <DropdownMenuItem key={link.href} asChild className="cursor-pointer p-1 rounded-md">
                     <Link
                       href={link.href}
                       target="_blank"
                       rel="noreferrer"
                       className="flex items-center gap-3 p-2 rounded-md hover:bg-accent/50 transition-colors"
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary/10 text-secondary-foreground">
-                        <link.icon className="h-4 w-4" />
+                      <div className="flex h-7 w-7 items-center justify-center rounded-md bg-secondary/10 text-secondary-foreground flex-shrink-0">
+                        <link.icon className="h-3.5 w-3.5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-foreground">{link.label}</div>
-                        <div className="text-xs text-muted-foreground truncate">{link.description}</div>
+                        <div className="text-sm font-medium text-foreground leading-tight">{link.label}</div>
+                        <div className="text-xs text-muted-foreground leading-tight mt-0.5 line-clamp-2">{link.description}</div>
                       </div>
                     </Link>
                   </DropdownMenuItem>
@@ -197,7 +163,7 @@ export function SiteHeader() {
       {isSearchExpanded && (
         <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="container py-4">
-            <form onSubmit={handleSearch} className="relative">
+            <form onSubmit={handleMobileSearch} className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
                 type="text"
@@ -209,24 +175,6 @@ export function SiteHeader() {
                 autoFocus
               />
             </form>
-            
-            {/* Mobile Quick Actions */}
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              {quickActions.map((action) => (
-                <Button
-                  key={action.href}
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  className="h-12 justify-start text-sm"
-                >
-                  <Link href={action.href} onClick={() => setIsSearchExpanded(false)}>
-                    <action.icon className="h-4 w-4 mr-2" />
-                    {action.label}
-                  </Link>
-                </Button>
-              ))}
-            </div>
           </div>
         </div>
       )}
