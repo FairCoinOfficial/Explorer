@@ -95,7 +95,7 @@ export function BlocksContent() {
     )
 
     return (
-        <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
+        <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8 w-full">
             {/* Header */}
             <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
                 <div className="flex-1">
@@ -144,10 +144,10 @@ export function BlocksContent() {
             </StatsGrid>
 
             {/* Recent Blocks Section */}
-            <div className="space-y-4">
+            <div className="space-y-4 w-full">
                 <SectionHeader icon={Database} title={t('recentBlocks.title')} badge={{ text: t('recentBlocks.badge', { count: filteredBlocks.length }), variant: 'secondary' }} />
 
-                <BlocksTable blocks={paginatedBlocks} currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} loading={loading} />
+                <BlocksTable blocks={paginatedBlocks} currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} loading={loading} className="w-full" />
             </div>
 
             {/* Navigation */}

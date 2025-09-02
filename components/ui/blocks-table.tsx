@@ -25,9 +25,10 @@ interface BlocksTableProps {
     totalPages: number
     onPageChange?: (page: number) => void
     loading?: boolean
+    className?: string
 }
 
-export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loading = false }: BlocksTableProps) {
+export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loading = false, className }: BlocksTableProps) {
     const t = useTranslations('common.table')
 
     if (loading) {
@@ -49,7 +50,7 @@ export function BlocksTable({ blocks, currentPage, totalPages, onPageChange, loa
     }
 
     return (
-        <div className="space-y-4">
+        <div className={`space-y-4 w-full max-w-full overflow-hidden ${className || ''}`}>
             {/* Table View */}
             <div>
                 <Card className="overflow-hidden shadow-sm">
