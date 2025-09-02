@@ -569,6 +569,7 @@
     },
     "search": {
         "title": "Advanced Search",
+        "search": "Search",
         "searchBlockchain": "Search the FairCoin Blockchain",
         "searchPlaceholder": "Enter block hash, height, transaction ID, or address...",
         "searching": "Searching...",

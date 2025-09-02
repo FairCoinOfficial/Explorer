@@ -137,7 +137,7 @@ export function SiteHeader() {
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
           {/* Network Status */}
           <div className="hidden sm:block">
             <NetworkStatus />
