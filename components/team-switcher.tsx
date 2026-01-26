@@ -37,7 +37,7 @@ export function TeamSwitcher() {
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             size="lg"
-                            className="data-[state=open]:bg-primary data-[state=open]:text-primary-foreground"
+                            className="data-[state=open]:bg-primary data-[state=open]:text-primary-foreground cursor-pointer"
                             tooltip="Switch Network"
                         >
                             <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white p-1">
