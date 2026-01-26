@@ -1,3 +1,5 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,56 +7,84 @@
 @layer base {
   :root {
    /* Improved theme for better contrast and modern look */
-   
+
    /* Main dark background */
-   --background: 71 51% 8%;
-   --foreground: 0 0% 100%;
+   --background: oklch(1 0 0);
+   --foreground: oklch(0.145 0 0);
 
    /* Muted surfaces - slightly lighter than background */
-   --muted: 71 28% 15%;
-   --muted-foreground: 0 0% 70%;
+   --muted: oklch(0.97 0 0);
+   --muted-foreground: oklch(0.556 0 0);
 
    /* Cards and surfaces - dark with subtle green tint */
-   --card: 71 20% 12%;
-   --card-foreground: 0 0% 95%;
+   --card: oklch(1 0 0);
+   --card-foreground: oklch(0.145 0 0);
 
    /* Popover - slightly lighter than cards */
-   --popover: 71 25% 16%;
-   --popover-foreground: 0 0% 95%;
+   --popover: oklch(1 0 0);
+   --popover-foreground: oklch(0.145 0 0);
 
    /* Borders and inputs - visible but subtle */
-   --border: 71 20% 20%;
-   --input: 71 20% 16%;
+   --border: oklch(0.922 0 0);
+   --input: oklch(0.922 0 0);
 
    /* Primary: bright green accent */
-   --primary: 93 97% 65%;
-   --primary-foreground: 71 51% 8%;
+   --primary: oklch(0.65 0.18 132);
+   --primary-foreground: oklch(0.99 0.03 121);
 
    /* Secondary: muted green */
-   --secondary: 71 30% 20%;
-   --secondary-foreground: 0 0% 90%;
+   --secondary: oklch(0.967 0.001 286.375);
+   --secondary-foreground: oklch(0.21 0.006 285.885);
 
    /* Accent: same as primary for consistency */
-   --accent: 93 97% 65%;
-   --accent-foreground: 71 51% 8%;
+   --accent: oklch(0.97 0 0);
+   --accent-foreground: oklch(0.205 0 0);
 
    /* Destructive: red for errors */
-   --destructive: 0 84% 56%;
+   --destructive: oklch(0.58 0.22 27);
    --destructive-foreground: 0 0% 100%;
 
    /* Ring: primary color for focus states */
-   --ring: 93 97% 65%;
+   --ring: oklch(0.708 0 0);
 
-   --radius: 0.75rem;
+   --radius: 0.875rem;
+
+   --chart-1: oklch(0.90 0.18 127);
+
+   --chart-2: oklch(0.85 0.21 129);
+
+   --chart-3: oklch(0.77 0.20 131);
+
+   --chart-4: oklch(0.65 0.18 132);
+
+   --chart-5: oklch(0.53 0.14 132);
+
+   --sidebar: oklch(0.985 0 0);
+
+   --sidebar-foreground: oklch(0.145 0 0);
+
+   --sidebar-primary: oklch(0.65 0.18 132);
+
+   --sidebar-primary-foreground: oklch(0.99 0.03 121);
+
+   --sidebar-accent: oklch(0.97 0 0);
+
+   --sidebar-accent-foreground: oklch(0.205 0 0);
+
+   --sidebar-border: oklch(0.922 0 0);
+
+   --sidebar-ring: oklch(0.708 0 0);
   }
 
   /* dark mode rules may be added here if needed */
 
   * {
     @apply border-border;
+    @apply border-border outline-ring/50;
   }
 
   body {
+    @apply bg-background text-foreground;
     @apply bg-background text-foreground;
   }
 
@@ -86,6 +116,42 @@
 
   html::-webkit-scrollbar-corner, body::-webkit-scrollbar-corner {
     background: hsl(var(--muted));
+  }
+  .dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.77 0.20 131);
+    --primary-foreground: oklch(0.27 0.07 132);
+    --secondary: oklch(0.274 0.006 286.033);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.371 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.90 0.18 127);
+    --chart-2: oklch(0.85 0.21 129);
+    --chart-3: oklch(0.77 0.20 131);
+    --chart-4: oklch(0.65 0.18 132);
+    --chart-5: oklch(0.53 0.14 132);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.85 0.21 129);
+    --sidebar-primary-foreground: oklch(0.27 0.07 132);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+  }
+  .theme {
+    --font-sans: var(--font-sans);
   }
 }
 

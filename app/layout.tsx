@@ -8,6 +8,9 @@ import { NetworkProvider } from '@/contexts/network-context';
 import { Inter } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getLocale } from 'next-intl/server';
+import { cn } from "@/lib/utils";
+
+const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -134,7 +137,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className="dark">
+    <html lang={locale} className={cn("dark", inter.variable)}>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="application-name" content="FairCoin Explorer" />
