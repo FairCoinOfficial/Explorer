@@ -2,7 +2,9 @@
 
 import { useTranslations } from 'next-intl'
 import { useNetwork } from '@/contexts/network-context'
+import { useBlockchain } from '@/contexts/blockchain-context'
 import { NetworkStatus } from '@/components/network-status'
+import { ConnectionIndicator } from '@/components/realtime/connection-indicator'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -33,6 +35,7 @@ export default function MempoolContent() {
     const t = useTranslations('mempool')
     const tCommon = useTranslations('common')
     const { currentNetwork } = useNetwork()
+    const { mempoolSize, mempoolBytes, subscribe, unsubscribe, isConnected } = useBlockchain()
     const [mempoolInfo, setMempoolInfo] = useState<MempoolInfo | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -57,13 +60,31 @@ export default function MempoolContent() {
         }
     }
 
+    // Initial fetch
     useEffect(() => {
         fetchMempool()
-        // Auto-refresh every 10 seconds
-        const interval = setInterval(fetchMempool, 10000)
-        return () => clearInterval(interval)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentNetwork])
+
+    // Subscribe to WebSocket mempool updates
+    useEffect(() => {
+        const handleMempoolUpdate = (event: any) => {
+            if (event.type === 'mempool-update' && event.network === currentNetwork) {
+                setMempoolInfo(prevInfo => ({
+                    size: event.data.size,
+                    bytes: event.data.bytes,
+                    usage: event.data.usage,
+                    maxmempool: event.data.maxmempool,
+                    mempoolminfee: event.data.mempoolminfee,
+                    transactions: event.data.transactions || prevInfo?.transactions || []
+                }))
+                setLoading(false)
+            }
+        }
+
+        subscribe('mempool-update', handleMempoolUpdate)
+        return () => unsubscribe('mempool-update', handleMempoolUpdate)
+    }, [currentNetwork, subscribe, unsubscribe])
 
     if (loading) {
         return (
@@ -116,10 +137,7 @@ export default function MempoolContent() {
                 <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
                     <div className="flex items-center space-x-2">
                         <NetworkStatus />
-                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
-                            <Clock className="w-3 h-3 mr-1" />
-                            {t('auto_refresh', { seconds: '10' })}
-                        </Badge>
+                        <ConnectionIndicator />
                     </div>
                     <Button onClick={fetchMempool} variant="outline" size="sm" className="w-full sm:w-auto">
                         <RefreshCw className="h-4 w-4 mr-2" />

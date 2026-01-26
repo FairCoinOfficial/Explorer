@@ -5,6 +5,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { SiteHeader } from '@/components/site/header';
 import { PWAInstallPrompt } from '@/components/pwa-install-prompt';
 import { NetworkProvider } from '@/contexts/network-context';
+import { BlockchainProvider } from '@/contexts/blockchain-context';
 import { Inter } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getLocale } from 'next-intl/server';
@@ -240,15 +241,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={cn(inter.className, "min-h-screen bg-background text-foreground antialiased")}>
         <NextIntlClientProvider messages={messages}>
           <NetworkProvider>
-            <SidebarProvider>
-              <AppSidebar />
-              <SidebarInset>
-                <SiteHeader />
-                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-                  {children}
-                </div>
-              </SidebarInset>
-            </SidebarProvider>
+            <BlockchainProvider>
+              <SidebarProvider>
+                <AppSidebar />
+                <SidebarInset>
+                  <SiteHeader />
+                  <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+                    {children}
+                  </div>
+                </SidebarInset>
+              </SidebarProvider>
+            </BlockchainProvider>
           </NetworkProvider>
         </NextIntlClientProvider>
 

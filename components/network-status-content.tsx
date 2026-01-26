@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useTranslations } from 'next-intl'
 import { useNetwork } from "@/contexts/network-context"
+import { useBlockchain } from "@/contexts/blockchain-context"
 import { Activity, Wifi, WifiOff, CheckCircle, XCircle, Clock, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -24,6 +25,7 @@ export function NetworkStatusContent() {
     const t = useTranslations('networkStatus')
     const tCommon = useTranslations('common')
     const { currentNetwork } = useNetwork()
+    const { blockHeight, mempoolSize, networkStats, isConnected, subscribe, unsubscribe } = useBlockchain()
     const [status, setStatus] = useState<NetworkStatus | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
@@ -61,8 +63,8 @@ export function NetworkStatusContent() {
                     connections: networkData.connections || 0,
                     difficulty: miningData.difficulty || 0,
                     hashrate: miningData.networkhashps || miningData.hashrate || "0 H/s",
-                    lastBlockTime: Date.now(), // Will get from getblock later
-                    mempool: 0, // Will get from getmempoolinfo
+                    lastBlockTime: Date.now(),
+                    mempool: 0,
                     version: networkData.subversion || networkData.version || t('unknown')
                 })
             } else {
@@ -95,16 +97,72 @@ export function NetworkStatusContent() {
             setIsLoading(false)
             setLastUpdate(new Date())
         }
-    }, [currentNetwork])
+    }, [currentNetwork, t])
 
+    // Initial fetch
     useEffect(() => {
         fetchNetworkStatus()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentNetwork])
 
-        // Auto-refresh every 30 seconds
-        const interval = setInterval(fetchNetworkStatus, 30000)
+    // Subscribe to WebSocket updates
+    useEffect(() => {
+        const handleBlockCount = (event: any) => {
+            if (event.type === 'block-count' && event.network === currentNetwork) {
+                setStatus(prev => prev ? { ...prev, blockHeight: event.data.height, isOnline: true } : null)
+                setLastUpdate(new Date())
+                setIsLoading(false)
+            }
+        }
 
-        return () => clearInterval(interval)
-    }, [fetchNetworkStatus])
+        const handleNetworkStats = (event: any) => {
+            if (event.type === 'network-stats' && event.network === currentNetwork) {
+                setStatus(prev => prev ? {
+                    ...prev,
+                    connections: event.data.connections,
+                    difficulty: event.data.difficulty,
+                    hashrate: event.data.hashrate,
+                    version: event.data.version,
+                    isOnline: true
+                } : null)
+                setLastUpdate(new Date())
+            }
+        }
+
+        const handleMempoolUpdate = (event: any) => {
+            if (event.type === 'mempool-update' && event.network === currentNetwork) {
+                setStatus(prev => prev ? { ...prev, mempool: event.data.size } : null)
+            }
+        }
+
+        subscribe('block-count', handleBlockCount)
+        subscribe('network-stats', handleNetworkStats)
+        subscribe('mempool-update', handleMempoolUpdate)
+
+        return () => {
+            unsubscribe('block-count', handleBlockCount)
+            unsubscribe('network-stats', handleNetworkStats)
+            unsubscribe('mempool-update', handleMempoolUpdate)
+        }
+    }, [currentNetwork, subscribe, unsubscribe])
+
+    // Update from context when available
+    useEffect(() => {
+        if (isConnected && (blockHeight > 0 || networkStats)) {
+            setStatus(prev => ({
+                isOnline: true,
+                latency: prev?.latency || 0,
+                blockHeight: blockHeight || prev?.blockHeight || 0,
+                connections: networkStats?.connections || prev?.connections || 0,
+                difficulty: networkStats?.difficulty || prev?.difficulty || 0,
+                hashrate: networkStats?.hashrate || prev?.hashrate || "0 H/s",
+                lastBlockTime: prev?.lastBlockTime || Date.now(),
+                mempool: mempoolSize || prev?.mempool || 0,
+                version: networkStats?.version || prev?.version || t('unknown')
+            }))
+            setIsLoading(false)
+        }
+    }, [blockHeight, mempoolSize, networkStats, isConnected, t])
 
     const getStatusColor = (isOnline: boolean) => {
         return isOnline
