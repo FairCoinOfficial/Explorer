@@ -135,7 +135,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={cn("dark", inter.variable)}>
+    <html lang={locale} className={cn("dark", inter.variable)} suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="application-name" content="FairCoin Explorer" />
@@ -237,14 +237,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }}
         />
       </head>
-      <body className={`${inter.className} min-h-screen bg-background text-foreground`}>
+      <body className={cn(inter.className, "min-h-screen bg-background text-foreground antialiased")}>
         <NextIntlClientProvider messages={messages}>
           <NetworkProvider>
             <SidebarProvider>
               <AppSidebar />
               <SidebarInset>
                 <SiteHeader />
-                <div className="flex flex-1 flex-col gap-4 p-2 pt-0 md:p-3 lg:p-4">
+                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
                   {children}
                 </div>
               </SidebarInset>
