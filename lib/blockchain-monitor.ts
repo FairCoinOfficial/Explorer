@@ -23,8 +23,8 @@ import { BlockCache } from './cache'
 export class BlockchainMonitor {
   private wsManager: WebSocketManager
   private networkStates: Map<NetworkType, NetworkState>
-  private pollInterval: NodeJS.Timer | null = null
-  private statsInterval: NodeJS.Timer | null = null
+  private pollInterval: NodeJS.Timeout | null = null
+  private statsInterval: NodeJS.Timeout | null = null
   private config: BlockchainMonitorConfig
   private isRunning: boolean = false
   private blockCache: BlockCache
@@ -263,9 +263,6 @@ export class BlockchainMonitor {
         state.mempoolSize = mempoolInfo.size
         state.mempoolBytes = mempoolInfo.bytes
 
-        // Get recent mempool transactions
-        const recentTransactions = await this.blockCache.getRecentMempoolTransactions(network, 20)
-
         // Broadcast mempool update event
         const mempoolEvent: MempoolUpdateEvent = {
           type: 'mempool-update',
@@ -277,7 +274,7 @@ export class BlockchainMonitor {
             usage: mempoolInfo.usage,
             maxmempool: mempoolInfo.maxmempool,
             mempoolminfee: mempoolInfo.mempoolminfee,
-            transactions: recentTransactions
+            transactions: []
           }
         }
         this.wsManager.broadcast(mempoolEvent, network)

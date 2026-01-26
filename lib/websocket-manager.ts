@@ -14,7 +14,7 @@ export class WebSocketManager {
   private connectionsByIP: Map<string, Set<string>>
   private connectionsByNetwork: Map<NetworkType, Set<string>>
   private config: Required<WebSocketManagerConfig>
-  private cleanupInterval: NodeJS.Timer | null = null
+  private cleanupInterval: NodeJS.Timeout | null = null
 
   constructor(config?: WebSocketManagerConfig) {
     this.connections = new Map()
