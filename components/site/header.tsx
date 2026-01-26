@@ -53,57 +53,41 @@ export function SiteHeader() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      {/* Main Header Bar */}
-      <div className="container flex h-16 items-center justify-between">
-        {/* Left Section - Logo and Sidebar Trigger */}
-        <div className="flex items-center gap-4">
-          <SidebarTrigger className="md:hidden" />
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative h-9 w-9 rounded-xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 shadow-sm ring-1 ring-primary/10">
-              <Image
-                src="/images/FairCoin-Logo.jpg"
-                alt="FairCoin"
-                fill
-                className="object-cover group-hover:scale-110 transition-transform duration-300"
-                priority
-              />
-            </div>
-            <div className="hidden sm:block">
-              <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/90 to-primary/80 bg-clip-text text-transparent group-hover:from-primary/90 group-hover:via-primary group-hover:to-primary/90 transition-all duration-300">
-                FairCoin Explorer
-              </span>
-              <div className="text-xs text-muted-foreground -mt-1 group-hover:text-muted-foreground/80 transition-colors duration-300">Blockchain Explorer</div>
-            </div>
-          </Link>
+    <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+      <div className="flex w-full items-center gap-2 px-4">
+        {/* Left Section - Sidebar Trigger */}
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className="-ml-1" />
         </div>
 
         {/* Center Section - Search Bar */}
-        <div className="hidden md:flex flex-1 max-w-lg mx-8">
-          <div className="relative w-full group">
-            <form onSubmit={handleSearch} className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none transition-colors duration-200 group-focus-within:text-primary/70" />
-              <Input
-                type="text"
-                placeholder="Search blocks, transactions, addresses..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 h-10 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all duration-200 hover:bg-muted/70 focus:shadow-lg"
-                aria-label="Search blockchain"
-              />
-            </form>
+        <div className="flex flex-1 items-center gap-2 px-2">
+          <div className="hidden md:flex flex-1 max-w-2xl">
+            <div className="relative w-full group">
+              <form onSubmit={handleSearch} className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none transition-colors duration-200 group-focus-within:text-primary/70" />
+                <Input
+                  type="text"
+                  placeholder="Search blocks, transactions, addresses..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 h-9 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all duration-200 hover:bg-muted/70"
+                  aria-label="Search blockchain"
+                />
+              </form>
+            </div>
           </div>
         </div>
 
         {/* Right Section - Actions and Settings */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-auto">
           {/* External Resources Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-9 w-9 p-0 hover:bg-accent/50 transition-colors rounded-lg"
+                size="icon"
+                className="h-8 w-8"
                 aria-label="External resources"
               >
                 <Globe className="h-4 w-4" />
@@ -149,8 +133,8 @@ export function SiteHeader() {
           {/* Mobile Search Toggle */}
           <Button
             variant="ghost"
-            size="sm"
-            className="md:hidden h-9 w-9 p-0 hover:bg-accent/50 transition-colors rounded-lg"
+            size="icon"
+            className="md:hidden h-8 w-8"
             onClick={() => setIsSearchExpanded(!isSearchExpanded)}
             aria-label="Toggle search"
           >
@@ -161,21 +145,19 @@ export function SiteHeader() {
 
       {/* Mobile Search Bar */}
       {isSearchExpanded && (
-        <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container py-4">
-            <form onSubmit={handleMobileSearch} className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                type="text"
-                placeholder="Search blocks, transactions, addresses..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 h-11 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20"
-                aria-label="Search blockchain"
-                autoFocus
-              />
-            </form>
-          </div>
+        <div className="md:hidden border-t px-4 py-3">
+          <form onSubmit={handleMobileSearch} className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search blocks, transactions, addresses..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 h-10 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20"
+              aria-label="Search blockchain"
+              autoFocus
+            />
+          </form>
         </div>
       )}
     </header>
