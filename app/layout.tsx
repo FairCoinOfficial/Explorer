@@ -10,8 +10,6 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getLocale } from 'next-intl/server';
 import { cn } from "@/lib/utils";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
-
 const inter = Inter({ subsets: ['latin'] });
 
 export const viewport: Viewport = {
