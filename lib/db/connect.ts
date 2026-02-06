@@ -4,7 +4,14 @@ import { config } from 'dotenv';
 // Load environment variables
 config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/faircoin-explorer';
+const APP_NAME = "explorer";
+
+function getDatabaseName(): string {
+  const env = process.env.NODE_ENV || "development";
+  return `${APP_NAME}-${env}`;
+}
+
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/explorer-development';
 
 if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
@@ -27,7 +34,9 @@ async function connectToDatabase() {
   }
 
   if (!cached.promise) {
+    const dbName = getDatabaseName();
     const opts = {
+      dbName,
       bufferCommands: false,
       // Optimized connection settings for MongoDB Atlas
       maxPoolSize: 10, // Maintain up to 10 socket connections
