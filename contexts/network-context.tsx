@@ -17,7 +17,7 @@ const NETWORK_CONFIGS: Record<NetworkType, NetworkConfig> = {
     mainnet: {
         name: 'mainnet',
         rpcHost: 'seed1.fairco.in',
-        rpcPort: 40405,
+        rpcPort: 46373,
         rpcScheme: 'http',
         displayName: 'FairCoin Mainnet',
         shortName: 'FC'
@@ -25,7 +25,7 @@ const NETWORK_CONFIGS: Record<NetworkType, NetworkConfig> = {
     testnet: {
         name: 'testnet',
         rpcHost: '127.0.0.1', // Local testnet node
-        rpcPort: 18332,
+        rpcPort: 46375,
         rpcScheme: 'http',
         displayName: 'FairCoin Testnet',
         shortName: 'FT'

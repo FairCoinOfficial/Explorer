@@ -30,13 +30,13 @@ export async function GET(request: NextRequest) {
     const latestBlock = blockHeight > 0 ? await blockCache.getBlock(blockHeight, network, true).catch(() => null) : null
 
     // FairCoin-specific calculations
-    const totalSupply = blockchainInfo?.moneysupply || 53193831 // Max supply if not available
+    const totalSupply = blockchainInfo?.moneysupply || 33000000 // Max supply if not available
     const circulatingSupply = totalSupply * 0.9 // 90% premine is circulating
     const masternodeCount = typeof masternodeList === 'object' ? Object.keys(masternodeList).length : 0
     const avgBlockTime = 120 // FairCoin target block time (2 minutes)
     
-    // Determine current phase (PoW blocks 1-25000, PoS 25001+)
-    const phase = blockHeight > 25000 ? 'PoS' : 'PoW'
+    // Determine current phase (PoW blocks 1-10000, PoS 10001+)
+    const phase = blockHeight > 10000 ? 'PoS' : 'PoW'
     
     // Calculate hashrate for the current phase
     const difficulty = miningInfo?.difficulty || 0

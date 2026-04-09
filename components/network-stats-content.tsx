@@ -93,7 +93,7 @@ export function StatsContent() {
         )
     }
 
-    const maxSupply = 53193831
+    const maxSupply = 33000000
     const supplyProgress = stats ? (stats.totalSupply / maxSupply) * 100 : 0
     const stakeProgress = stats?.stakePercentage || 0
 

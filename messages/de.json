@@ -499,7 +499,7 @@
                 "items": [
                     "FairCoin-Wallet (faircoin-qt.exe)",
                     "Windows-Betriebssystem",
-                    "Firewall-Zugang für Port 53472",
+                    "Firewall-Zugang für Port 46372",
                     "Administratorrechte"
                 ]
             },
@@ -509,7 +509,7 @@
                     "25.000 FAIR-Münzen (genauer Betrag)",
                     "15 Bestätigungen für Aktivierung",
                     "Stabile Netzwerkverbindung",
-                    "Port 53472 offen und zugänglich"
+                    "Port 46372 offen und zugänglich"
                 ]
             },
             "note": "Diese Anforderungen stellen sicher, dass Ihr Masternode zuverlässig läuft und effektiv zum FairCoin-Netzwerk beiträgt. Die Erfüllung aller Anforderungen ist für den erfolgreichen Masternode-Betrieb unerlässlich."
@@ -524,7 +524,7 @@
                 },
                 {
                     "issue": "Masternode startet nicht",
-                    "solution": "Überprüfen Sie, ob alle Konfigurationsdateien korrekt sind, stellen Sie sicher, dass 15 Bestätigungen empfangen wurden, und überprüfen Sie, dass Port 53472 zugänglich ist."
+                    "solution": "Überprüfen Sie, ob alle Konfigurationsdateien korrekt sind, stellen Sie sicher, dass 15 Bestätigungen empfangen wurden, und überprüfen Sie, dass Port 46372 zugänglich ist."
                 },
                 {
                     "issue": "Konfigurationsdatei nicht gefunden",
@@ -691,7 +691,7 @@
         "premine": "Premine",
         "perBlock": "Pro Block",
         "proofOfWorkPhase": "Proof-of-Work Phase",
-        "blocks1to25000": "Blöcke 1-25,000",
+        "blocks1to10000": "Blöcke 1-10,000",
         "initialMiningPhase": "Anfängliche Mining-Phase mit Quark-Algorithmus",
         "proofOfStakePhase": "Proof-of-Stake Phase",
         "blocks25001Plus": "Blöcke 25,001+",

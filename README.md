@@ -32,7 +32,7 @@ Open http://localhost:3000
 FAIRCOIN_RPC_USER=fair
 FAIRCOIN_RPC_PASS=change_me
 FAIRCOIN_RPC_HOST=seed1.fairco.in
-FAIRCOIN_RPC_PORT=40405
+FAIRCOIN_RPC_PORT=46373
 FAIRCOIN_RPC_SCHEME=http
 
 # MongoDB Configuration

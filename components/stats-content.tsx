@@ -134,7 +134,7 @@ export function StatsContent() {
         )
     }
 
-    const maxSupply = 53193831
+    const maxSupply = 33000000
     const supplyProgress = (stats.totalSupply / maxSupply) * 100
 
     return (
@@ -335,7 +335,7 @@ export function StatsContent() {
                                     <div className="border rounded-lg p-4">
                                         <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
                                             <span className="font-medium">{t('proofOfWorkPhase')}</span>
-                                            <span className="text-sm text-muted-foreground">{t('blocks1to25000')}</span>
+                                            <span className="text-sm text-muted-foreground">{t('blocks1to10000')}</span>
                                         </div>
                                         <div className="text-xs text-muted-foreground mt-2">
                                             {t('initialMiningPhase')}

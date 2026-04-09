@@ -499,7 +499,7 @@
                 "items": [
                     "Portefeuille FairCoin (faircoin-qt.exe)",
                     "Système d'exploitation Windows",
-                    "Accès pare-feu pour le port 53472",
+                    "Accès pare-feu pour le port 46372",
                     "Privilèges d'administrateur"
                 ]
             },
@@ -509,7 +509,7 @@
                     "25 000 pièces FAIR (montant exact)",
                     "15 confirmations pour l'activation",
                     "Connexion réseau stable",
-                    "Port 53472 ouvert et accessible"
+                    "Port 46372 ouvert et accessible"
                 ]
             },
             "note": "Ces exigences garantissent que votre masternode fonctionne de manière fiable et contribue efficacement au réseau FairCoin. Il est essentiel de répondre à toutes les exigences pour une opération réussie du masternode."
@@ -524,7 +524,7 @@
                 },
                 {
                     "issue": "Le masternode ne démarre pas",
-                    "solution": "Vérifiez que tous les fichiers de configuration sont corrects, assurez-vous que 15 confirmations sont reçues, et vérifiez que le port 53472 est accessible."
+                    "solution": "Vérifiez que tous les fichiers de configuration sont corrects, assurez-vous que 15 confirmations sont reçues, et vérifiez que le port 46372 est accessible."
                 },
                 {
                     "issue": "Fichier de configuration introuvable",
@@ -692,7 +692,7 @@
         "premine": "Préminé",
         "perBlock": "Par Bloc",
         "proofOfWorkPhase": "Phase de Preuve de Travail",
-        "blocks1to25000": "Blocs 1-25,000",
+        "blocks1to10000": "Blocs 1-10,000",
         "initialMiningPhase": "Phase de minage initiale avec algorithme Quark",
         "proofOfStakePhase": "Phase de Preuve d'Enjeu",
         "blocks25001Plus": "Blocs 25,001+",

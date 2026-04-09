@@ -129,9 +129,9 @@ daemon=1
 allowip=127.0.0.1
 masternode=1
 externalip=YOURIP
-masternodeaddr=127.0.0.1:53472
+masternodeaddr=127.0.0.1:46372
 masternodeprivkey=PRIVATEKEYREPLACETHIS`,
-        masternodeConf: `mn1 127.0.0.1:53472 PRIVATEKEYREPLACETHIS INSERTYOURTXID 0`
+        masternodeConf: `mn1 127.0.0.1:46372 PRIVATEKEYREPLACETHIS INSERTYOURTXID 0`
     }
 
     const requirements = [

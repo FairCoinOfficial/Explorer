@@ -26,14 +26,14 @@ const NETWORK_CONFIGS: Record<NetworkType, NetworkConfig> = {
     rpcUser: process.env.FAIRCOIN_RPC_USER || 'fair',
     rpcPass: process.env.FAIRCOIN_RPC_PASS || 'change_me',
     rpcHost: process.env.FAIRCOIN_RPC_HOST || 'seed1.fairco.in',
-    rpcPort: process.env.FAIRCOIN_RPC_PORT || '40405',
+    rpcPort: process.env.FAIRCOIN_RPC_PORT || '46373',
     rpcScheme: process.env.FAIRCOIN_RPC_SCHEME || 'http',
   },
   testnet: {
     rpcUser: process.env.FAIRCOIN_TESTNET_RPC_USER || process.env.FAIRCOIN_RPC_USER || 'fair',
     rpcPass: process.env.FAIRCOIN_TESTNET_RPC_PASS || process.env.FAIRCOIN_RPC_PASS || 'change_me',
     rpcHost: process.env.FAIRCOIN_TESTNET_RPC_HOST || '127.0.0.1',
-    rpcPort: process.env.FAIRCOIN_TESTNET_RPC_PORT || '18332',
+    rpcPort: process.env.FAIRCOIN_TESTNET_RPC_PORT || '46375',
     rpcScheme: process.env.FAIRCOIN_TESTNET_RPC_SCHEME || 'http',
   }
 };
@@ -42,7 +42,7 @@ const NETWORK_CONFIGS: Record<NetworkType, NetworkConfig> = {
 const RPC_USER = process.env.FAIRCOIN_RPC_USER;
 const RPC_PASS = process.env.FAIRCOIN_RPC_PASS;
 const RPC_HOST = process.env.FAIRCOIN_RPC_HOST || '127.0.0.1';
-const RPC_PORT = process.env.FAIRCOIN_RPC_PORT || '40405';
+const RPC_PORT = process.env.FAIRCOIN_RPC_PORT || '46373';
 const RPC_SCHEME = process.env.FAIRCOIN_RPC_SCHEME || 'http';
 
 if (!RPC_USER || !RPC_PASS) {

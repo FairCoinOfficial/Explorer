@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       blockchainInfo
     ] = await Promise.all([
       blockCache.getMasternodeList(network, 'full').catch(() => ({})),
-      blockCache.get<any>('getblockchaininfo', [], { network, ttl: 300 }).catch(() => ({ moneysupply: 53193831 }))
+      blockCache.get<any>('getblockchaininfo', [], { network, ttl: 300 }).catch(() => ({ moneysupply: 33000000 }))
     ])
 
     // Process masternode data
@@ -33,8 +33,8 @@ export async function GET(request: NextRequest) {
     })
 
     // Calculate statistics
-    const totalSupply = blockchainInfo.moneysupply || 53193831
-    const collateralPerMasternode = 25000 // FairCoin masternode collateral
+    const totalSupply = blockchainInfo.moneysupply || 33000000
+    const collateralPerMasternode = 5000 // FairCoin masternode collateral
     const totalCollateral = masternodes.length * collateralPerMasternode
     const collateralPercentage = totalSupply > 0 ? (totalCollateral / totalSupply) * 100 : 0
 
