@@ -1,43 +1,27 @@
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { CheckmarkCircle02Icon, InformationCircleIcon, Alert02Icon, MultiplicationSignCircleIcon, Loading03Icon } from "@hugeicons/core-free-icons"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const prefersDark = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
-  const theme = prefersDark ? 'dark' : 'light'
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={isDark ? 'dark' : 'light'}
       className="toaster group"
-      icons={{
-        success: (
-          <HugeiconsIcon icon={CheckmarkCircle02Icon} strokeWidth={2} className="size-4" />
-        ),
-        info: (
-          <HugeiconsIcon icon={InformationCircleIcon} strokeWidth={2} className="size-4" />
-        ),
-        warning: (
-          <HugeiconsIcon icon={Alert02Icon} strokeWidth={2} className="size-4" />
-        ),
-        error: (
-          <HugeiconsIcon icon={MultiplicationSignCircleIcon} strokeWidth={2} className="size-4" />
-        ),
-        loading: (
-          <HugeiconsIcon icon={Loading03Icon} strokeWidth={2} className="size-4 animate-spin" />
-        ),
-      }}
-      style={
-        {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
-        } as React.CSSProperties
-      }
+      style={{
+        "--normal-bg": "hsl(var(--popover))",
+        "--normal-text": "hsl(var(--popover-foreground))",
+        "--normal-border": "hsl(var(--border))",
+        "--success-bg": "hsl(var(--primary))",
+        "--success-text": "hsl(var(--primary-foreground))",
+        "--success-border": "hsl(var(--primary))",
+        "--error-bg": "hsl(var(--destructive))",
+        "--error-text": "hsl(var(--destructive-foreground))",
+        "--error-border": "hsl(var(--destructive))",
+        "--border-radius": "var(--radius)",
+      } as React.CSSProperties}
       toastOptions={{
         classNames: {
-          toast: "cn-toast",
+          toast: "shadow-lg",
         },
       }}
       {...props}
