@@ -63,7 +63,7 @@ function NavItem({ icon: Icon, label, to, collapsed }: NavItemProps) {
             to={to}
             onClick={() => setOpenMobile(false)}
             className={cn(
-              "flex flex-row items-center gap-1 overflow-hidden rounded-xl text-left h-[36px] border border-transparent w-full p-1.5 no-underline",
+              "flex flex-row items-center gap-2 overflow-hidden rounded-xl text-left h-[36px] w-full p-1.5",
               isActive
                 ? "bg-muted"
                 : "hover:bg-muted active:bg-muted/80",

@@ -8,6 +8,10 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { blockCache } from './lib/cache'
 import { rpcWithNetwork, type NetworkType } from './lib/rpc'
+import priceRouter from './routes/price'
+import addressRouter from './routes/address'
+import broadcastRouter from './routes/broadcast'
+import feeEstimateRouter from './routes/fee-estimate'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -70,20 +74,17 @@ app.get('/api/transaction/:txid', async (req, res) => {
   }
 })
 
-app.get('/api/address/:address', async (req, res) => {
-  try {
-    const network = (req.query.network as string || 'mainnet') as NetworkType
-    const { address } = req.params
-    const addressInfo = {
-      address, balance: 0, totalReceived: 0, totalSent: 0, txCount: 0, transactions: []
-    }
-    res.json({ addressInfo, network })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch address info'
-    console.error('Error fetching address info:', error)
-    res.status(500).json({ error: message })
-  }
-})
+// Address routes (addressindex RPC + fallback)
+app.use('/api/address', addressRouter)
+
+// Price routes (DB-defined prices with history)
+app.use('/api/price', priceRouter)
+
+// Broadcast route (send raw transactions)
+app.use('/api/tx', broadcastRouter)
+
+// Fee estimate route
+app.use('/api/fee-estimate', feeEstimateRouter)
 
 app.get('/api/mempool', async (req, res) => {
   try {

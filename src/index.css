@@ -118,8 +118,12 @@ a {
   color: inherit;
 }
 
-* {
+*,
+*::before,
+*::after {
   border-color: hsl(var(--border));
+  border-style: solid;
+  border-width: 0;
 }
 
 body {

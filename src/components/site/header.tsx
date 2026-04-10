@@ -1,6 +1,5 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { NetworkStatus } from '@/components/network-status'
 import {
@@ -11,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Search, X, Globe, Code, BookOpen, Github, ExternalLink, Users } from 'lucide-react'
+import { Search, X, Globe, Code, Github, ExternalLink, Users } from 'lucide-react'
 import { useState } from 'react'
 
 export function SiteHeader() {
@@ -23,6 +22,7 @@ export function SiteHeader() {
     e.preventDefault()
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      setSearchQuery('')
     }
   }
 
@@ -31,64 +31,62 @@ export function SiteHeader() {
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
       setIsSearchExpanded(false)
+      setSearchQuery('')
     }
   }
 
   const externalLinks = [
     { label: 'FairCoin Website', href: 'https://fairco.in', icon: ExternalLink, description: 'Official project website' },
-    { label: 'GitHub Repository', href: 'https://github.com/faircoin', icon: Github, description: 'View source code' },
-    { label: 'User Documentation', href: 'https://docs.fairco.in', icon: Code, description: 'User guides and tutorials' },
-    { label: 'Community Forum', href: 'https://community.fairco.in', icon: Users, description: 'Join discussions' },
+    { label: 'GitHub Repository', href: 'https://github.com/FairCoinOfficial', icon: Github, description: 'View source code' },
+    { label: 'Documentation', href: 'https://docs.fairco.in', icon: Code, description: 'User guides and tutorials' },
+    { label: 'Community', href: 'https://community.fairco.in', icon: Users, description: 'Join discussions' },
   ]
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 border-b">
+    <header className="flex h-14 shrink-0 items-center gap-2">
       <div className="flex w-full items-center gap-2 px-4">
-        <div className="flex items-center gap-2">
-          <SidebarTrigger className="-ml-1" />
+        {/* Sidebar trigger (mobile) */}
+        <SidebarTrigger className="-ml-1 md:hidden" />
+
+        {/* Search bar - fully rounded like Google Photos */}
+        <div className="hidden md:flex flex-1 max-w-xl mx-auto">
+          <form onSubmit={handleSearch} className="relative w-full">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none transition-colors group-focus-within:text-foreground" />
+            <input
+              type="text"
+              placeholder="Search blocks, transactions, addresses..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-10 pl-11 pr-4 rounded-full bg-muted/60 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all duration-200 hover:bg-muted focus:bg-muted focus:ring-2 focus:ring-primary/20"
+              aria-label="Search blockchain"
+            />
+          </form>
         </div>
 
-        <div className="flex flex-1 items-center gap-2 px-2">
-          <div className="hidden md:flex flex-1 max-w-2xl">
-            <div className="relative w-full group">
-              <form onSubmit={handleSearch} className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none transition-colors duration-200 group-focus-within:text-primary/70" />
-                <Input
-                  type="text"
-                  placeholder="Search blocks, transactions, addresses..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 h-9 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all duration-200 hover:bg-muted/70"
-                  aria-label="Search blockchain"
-                />
-              </form>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 ml-auto">
+        {/* Right side actions */}
+        <div className="flex items-center gap-1.5 ml-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="External resources">
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl" aria-label="External resources">
                 <Globe className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 p-2">
+            <DropdownMenuContent align="end" className="w-72 p-1.5">
               <DropdownMenuLabel className="flex items-center gap-2 px-2 py-1.5 text-xs font-semibold text-foreground">
                 <Globe className="h-3 w-3 text-primary" />
-                External Resources
+                Resources
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <div className="grid gap-1">
+              <div className="grid gap-0.5">
                 {externalLinks.map((link) => (
-                  <DropdownMenuItem key={link.href} asChild className="cursor-pointer p-1 rounded-md">
-                    <a href={link.href} target="_blank" rel="noreferrer" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent/50 transition-colors">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-md bg-secondary/10 text-secondary-foreground flex-shrink-0">
-                        <link.icon className="h-3.5 w-3.5" />
+                  <DropdownMenuItem key={link.href} asChild className="cursor-pointer rounded-lg p-0">
+                    <a href={link.href} target="_blank" rel="noreferrer" className="flex items-center gap-3 px-2 py-2 rounded-lg">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-muted shrink-0">
+                        <link.icon className="h-3.5 w-3.5 text-muted-foreground" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-foreground leading-tight">{link.label}</div>
-                        <div className="text-xs text-muted-foreground leading-tight mt-0.5 line-clamp-2">{link.description}</div>
+                        <div className="text-sm font-medium leading-tight">{link.label}</div>
+                        <div className="text-xs text-muted-foreground leading-tight mt-0.5">{link.description}</div>
                       </div>
                     </a>
                   </DropdownMenuItem>
@@ -101,10 +99,11 @@ export function SiteHeader() {
             <NetworkStatus />
           </div>
 
+          {/* Mobile search toggle */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden h-8 w-8"
+            className="md:hidden h-9 w-9 rounded-xl"
             onClick={() => setIsSearchExpanded(!isSearchExpanded)}
             aria-label="Toggle search"
           >
@@ -113,16 +112,17 @@ export function SiteHeader() {
         </div>
       </div>
 
+      {/* Mobile search expanded */}
       {isSearchExpanded && (
-        <div className="md:hidden border-t px-4 py-3">
+        <div className="md:hidden absolute top-14 left-0 right-0 z-20 bg-background px-4 py-3 border-b border-border">
           <form onSubmit={handleMobileSearch} className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <input
               type="text"
               placeholder="Search blocks, transactions, addresses..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 h-10 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20"
+              className="w-full h-10 pl-11 pr-4 rounded-full bg-muted/60 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/20"
               aria-label="Search blockchain"
               autoFocus
             />
