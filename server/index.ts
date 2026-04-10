@@ -132,8 +132,8 @@ app.get('/api/mempool', async (req, res) => {
 app.get('/api/masternodes', async (req, res) => {
   try {
     const network = (req.query.network as string || 'mainnet') as NetworkType
-    const COLLATERAL_PER_MASTERNODE = 10000
-    const BLOCK_REWARD = 5
+    const COLLATERAL_PER_MASTERNODE = 5000
+    const BLOCK_REWARD = 10
 
     const [masternodeList, masternodeCount, blockHeight] = await Promise.all([
       blockCache.getMasternodeList(network, 'full').catch(() => ({})),
@@ -203,7 +203,7 @@ app.get('/api/peers', async (req, res) => {
 app.get('/api/stats', async (req, res) => {
   try {
     const network = (req.query.network as string || 'mainnet') as NetworkType
-    const BLOCK_REWARD = 5
+    const BLOCK_REWARD = 10
     const [blockHeight, blockchainInfo, miningInfo, mempoolInfo, networkInfo, masternodeList] = await Promise.all([
       blockCache.getBlockCount(network).catch(() => 0),
       blockCache.get<Record<string, unknown>>('getblockchaininfo', [], { network, ttl: 300 }).catch(() => null),
@@ -217,7 +217,7 @@ app.get('/api/stats', async (req, res) => {
     const masternodeCount = typeof masternodeList === 'object' ? Object.keys(masternodeList).length : 0
     const difficulty = miningInfo?.difficulty || 0
     const phase = blockHeight > 10000 ? 'PoS' : 'PoW'
-    const hashrate = phase === 'PoW' ? (miningInfo?.networkhashps || difficulty * Math.pow(2, 32) / 120) : 0
+    const hashrate = phase === 'PoW' ? ((miningInfo as Record<string, number>)?.networkhashps || (difficulty as number) * Math.pow(2, 32) / 120) : 0
 
     const stats = {
       blockHeight, difficulty, hashrate, totalSupply, circulatingSupply: totalSupply,

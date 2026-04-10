@@ -274,7 +274,7 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
     ]
 
     const stats = [
-        { label: "requiredCollateral", value: "10,000 FAIR", icon: Shield },
+        { label: "requiredCollateral", value: "5,000 FAIR", icon: Shield },
         { label: "network", value: currentNetwork.toUpperCase(), icon: Globe },
         { label: "confirmationBlocks", value: "15", icon: Clock },
         { label: "activeMasternodes", value: "1,000+", icon: Users }

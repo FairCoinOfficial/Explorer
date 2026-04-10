@@ -342,7 +342,7 @@ export function StatsContent() {
                                 <Badge variant="default">Premium</Badge>
                             </div>
                             <div className="text-sm text-muted-foreground space-y-1">
-                                <p>• 10,000 FAIR collateral required</p>
+                                <p>• 5,000 FAIR collateral required</p>
                                 <p>• Provides network services (FastSend, Mixing)</p>
                                 <p>• Higher rewards than wallet staking</p>
                                 <p>• Enables governance voting</p>

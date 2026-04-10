@@ -2,8 +2,12 @@ import { Request, Response } from 'express'
 import { NetworkType } from '../lib/rpc'
 import { blockCache } from '../lib/cache'
 
-// FairCoin v3.0.0 block reward is 5 FAIR per block
-const BLOCK_REWARD = 5
+// FairCoin v3.0.0: block reward is 10 FAIR (halving every 525600 blocks, min 1.25 FAIR)
+// Premine: 5,000,000 FAIR on block 1
+const BLOCK_REWARD = 10
+const PREMINE = 5000000
+const HALVING_INTERVAL = 525600
+const MIN_REWARD = 1.25
 
 export default async function statsRoute(req: Request, res: Response) {
   try {
@@ -29,14 +33,26 @@ export default async function statsRoute(req: Request, res: Response) {
     const latestBlock = blockHeight > 0 ? await blockCache.getBlock(blockHeight, network, true).catch(() => null) : null
 
     // FairCoin v3.0.0: moneysupply not available in getblockchaininfo
-    // Estimate total supply as blockHeight * blockReward
-    const totalSupply = blockHeight > 0 ? blockHeight * BLOCK_REWARD : 0
+    // Calculate total supply with halvings: block 1 = premine, then 10 FAIR halving every 525600 blocks
+    let totalSupply = PREMINE
+    if (blockHeight > 1) {
+      let remaining = blockHeight - 1
+      let reward = BLOCK_REWARD
+      while (remaining > 0 && reward >= MIN_REWARD) {
+        const blocksInEra = Math.min(remaining, HALVING_INTERVAL)
+        totalSupply += blocksInEra * reward
+        remaining -= blocksInEra
+        reward = Math.max(reward / 2, MIN_REWARD)
+      }
+      if (remaining > 0) totalSupply += remaining * MIN_REWARD
+    }
     const circulatingSupply = totalSupply
     const masternodeCount = typeof masternodeList === 'object' ? Object.keys(masternodeList).length : 0
     const avgBlockTime = 120 // FairCoin target block time (2 minutes)
     
-    // Determine current phase (PoW blocks 1-10000, PoS 10001+)
-    const phase = blockHeight > 10000 ? 'PoS' : 'PoW'
+    // Determine current phase (PoW blocks 1-10000 mainnet / 1-200 testnet, then PoS)
+    const lastPowBlock = network === 'testnet' ? 200 : 10000
+    const phase = blockHeight > lastPowBlock ? 'PoS' : 'PoW'
     
     // Calculate hashrate for the current phase
     const difficulty = (miningInfo?.difficulty as number) || 0
@@ -44,8 +60,11 @@ export default async function statsRoute(req: Request, res: Response) {
       ? ((miningInfo?.networkhashps as number) || difficulty * Math.pow(2, 32) / avgBlockTime)
       : 0
 
-    // Staking information - getstakinginfo does not exist on v3.0.0
-    const stakingRewards = BLOCK_REWARD
+    // Current block reward considering halvings
+    const halvings = blockHeight > 0 ? Math.floor(blockHeight / HALVING_INTERVAL) : 0
+    const currentBlockReward = Math.max(BLOCK_REWARD / Math.pow(2, halvings), MIN_REWARD)
+    const masternodeReward = currentBlockReward / 2 // MN gets 50% of block reward
+    const stakingRewards = currentBlockReward
     const stakePercentage = 0
 
     const txField = latestBlock?.tx

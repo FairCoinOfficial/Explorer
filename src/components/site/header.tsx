@@ -1,16 +1,6 @@
 import { useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { NetworkStatus } from '@/components/network-status'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Search, X, Globe, Code, Github, ExternalLink, Users, Blocks, Receipt, Wallet, Hash } from 'lucide-react'
+import { Search, X, Blocks, Receipt, Wallet, Hash, Sun, Moon, ShoppingCart } from 'lucide-react'
 import { useState, useRef, useCallback } from 'react'
 import { toast } from 'sonner'
 import { useTranslations } from '@/lib/i18n'
@@ -27,11 +17,32 @@ const RESULT_ICONS: Record<string, typeof Blocks> = {
   address: Wallet,
 }
 
-  const RESULT_LABELS: Record<string, string> = {
-    block: 'Block',
-    transaction: 'Transaction',
-    address: 'Address',
+const RESULT_LABELS: Record<string, string> = {
+  block: 'Block',
+  transaction: 'Transaction',
+  address: 'Address',
+}
+
+function ThemeToggle() {
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'))
+
+  const toggle = () => {
+    const next = !dark
+    setDark(next)
+    document.documentElement.classList.toggle('dark', next)
+    localStorage.setItem('faircoin-theme', next ? 'dark' : 'light')
   }
+
+  return (
+    <button
+      onClick={toggle}
+      className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-muted transition-colors cursor-pointer"
+      aria-label="Toggle theme"
+    >
+      {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+    </button>
+  )
+}
 
 export function SiteHeader() {
   const navigate = useNavigate()
@@ -58,15 +69,12 @@ export function SiteHeader() {
         const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}`)
         if (res.ok) {
           const data = await res.json()
-          if (data.type === 'not_found') {
-            toast.error(`No results found for "${query.trim()}"`)
-          }
           setResults(data)
         } else {
-          toast.error('Search failed. Please try again.')
+          toast.error('Search failed')
         }
       } catch {
-        toast.error('Search failed. Please try again.')
+        toast.error('Search failed')
         setResults(null)
       } finally {
         setIsSearching(false)
@@ -87,15 +95,10 @@ export function SiteHeader() {
     inputRef.current?.blur()
     mobileInputRef.current?.blur()
 
-    if (result.type === 'block') {
-      navigate(`/block/${result.query}`)
-    } else if (result.type === 'transaction') {
-      navigate(`/tx/${result.query}`)
-    } else if (result.type === 'address') {
-      navigate(`/address/${result.query}`)
-    } else {
-      navigate(`/search?q=${encodeURIComponent(result.query)}`)
-    }
+    if (result.type === 'block') navigate(`/block/${result.query}`)
+    else if (result.type === 'transaction') navigate(`/tx/${result.query}`)
+    else if (result.type === 'address') navigate(`/address/${result.query}`)
+    else navigate(`/search?q=${encodeURIComponent(result.query)}`)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -129,23 +132,21 @@ export function SiteHeader() {
   const hasContent = isSearching || results !== null
   const ResultIcon = results ? RESULT_ICONS[results.type] : null
 
-  const externalLinks = [
-    { label: t('fairCoinWebsite'), href: 'https://fairco.in', icon: ExternalLink, description: t('fairCoinWebsiteDesc') },
-    { label: t('github'), href: 'https://github.com/FairCoinOfficial', icon: Github, description: t('githubDesc') },
-    { label: t('documentation'), href: 'https://docs.fairco.in', icon: Code, description: t('documentationDesc') },
-    { label: t('community'), href: 'https://community.fairco.in', icon: Users, description: t('communityDesc') },
-  ]
-
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 relative">
       <div className="flex w-full items-center gap-2 px-4">
         {/* Sidebar trigger (mobile) */}
         <SidebarTrigger className="-ml-1 md:hidden" />
 
-        {/* Search bar with autocomplete - desktop */}
+        {/* Search bar with morph autocomplete - desktop */}
         <div className="hidden md:flex flex-1 max-w-xl mx-auto relative z-50">
-          <div className="w-full bg-muted/60 rounded-[20px] hover:bg-muted focus-within:bg-muted transition-colors duration-150 overflow-hidden">
-            {/* Input row */}
+          {/* Invisible spacer to reserve layout space */}
+          <div className="w-full h-10" />
+          {/* Actual search box - absolute so it can grow over content */}
+          <div
+            className="absolute inset-x-0 top-0 bg-muted/60 rounded-[20px] hover:bg-muted focus-within:bg-muted transition-colors duration-150 overflow-hidden"
+            style={showDropdown && hasContent ? { backgroundColor: 'hsl(var(--muted))' } : undefined}
+          >
             <form onSubmit={handleSubmit} className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <input
@@ -162,7 +163,7 @@ export function SiteHeader() {
               />
             </form>
 
-            {/* Results - slides down inside the same container */}
+            {/* Results - slides down inside same container, overlays page content */}
             <div
               className="transition-[max-height,opacity] duration-200 ease-out"
               style={{
@@ -180,7 +181,7 @@ export function SiteHeader() {
                 ) : results && results.type !== 'not_found' && ResultIcon ? (
                   <button
                     type="button"
-                    className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-background/40 rounded-lg mx-0 text-left transition-colors cursor-pointer"
+                    className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-background/40 rounded-lg text-left transition-colors cursor-pointer"
                     onMouseDown={(e) => { e.preventDefault(); navigateToResult(results) }}
                   >
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
@@ -218,112 +219,87 @@ export function SiteHeader() {
           </div>
         </div>
 
-        {/* Right side actions */}
-        <div className="flex items-center gap-2 ml-auto">
-          {/* Buy button */}
+        {/* Right side - clean, minimal */}
+        <div className="flex items-center gap-1 ml-auto">
+          <ThemeToggle />
+
           <a
             href="https://buy.fairco.in/"
             target="_blank"
             rel="noreferrer"
-            className="hidden sm:flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+            className="hidden sm:flex items-center gap-1.5 h-9 px-4 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
           >
+            <ShoppingCart className="h-3.5 w-3.5" />
             Buy FAIR
           </a>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" aria-label={t('resources')}>
-                <Globe className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 p-1.5">
-              <DropdownMenuLabel className="flex items-center gap-2 px-2 py-1.5 text-xs font-semibold">
-                <Globe className="h-3 w-3 text-primary" />
-                {t('resources')}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="grid gap-0.5">
-                {externalLinks.map((link) => (
-                  <DropdownMenuItem key={link.href} asChild className="cursor-pointer rounded-lg p-0">
-                    <a href={link.href} target="_blank" rel="noreferrer" className="flex items-center gap-3 px-2 py-2 rounded-lg">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-muted shrink-0">
-                        <link.icon className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium leading-tight">{link.label}</div>
-                        <div className="text-xs text-muted-foreground leading-tight mt-0.5">{link.description}</div>
-                      </div>
-                    </a>
-                  </DropdownMenuItem>
-                ))}
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <div className="hidden sm:block">
-            <NetworkStatus />
-          </div>
-
           {/* Mobile search toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden h-9 w-9 rounded-full"
+          <button
+            className="md:hidden h-9 w-9 rounded-full flex items-center justify-center hover:bg-muted transition-colors cursor-pointer"
             onClick={() => setIsSearchExpanded(!isSearchExpanded)}
             aria-label={t('toggleSearch')}
           >
             {isSearchExpanded ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
-          </Button>
+          </button>
         </div>
       </div>
 
-      {/* Mobile search expanded with autocomplete */}
+      {/* Mobile search expanded */}
       {isSearchExpanded && (
         <div className="md:hidden absolute top-14 left-0 right-0 z-20 bg-background px-4 py-3" style={{ borderBottom: '1px solid hsl(var(--border))' }}>
-          <form onSubmit={handleMobileSubmit} className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <input
-              ref={mobileInputRef}
-              type="text"
-              placeholder={t('searchPlaceholder')}
-              value={searchQuery}
-              onChange={(e) => handleInputChange(e.target.value)}
-              className="w-full h-10 pl-11 pr-4 rounded-full bg-muted/60 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/20"
-              aria-label={t('searchBlockchain')}
-              autoFocus
-              autoComplete="off"
-            />
-          </form>
+          <div className="bg-muted/60 rounded-[20px] overflow-hidden focus-within:bg-muted transition-colors duration-150">
+            <form onSubmit={handleMobileSubmit} className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <input
+                ref={mobileInputRef}
+                type="text"
+                placeholder={t('searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => handleInputChange(e.target.value)}
+                className="w-full h-10 pl-11 pr-4 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+                aria-label={t('searchBlockchain')}
+                autoFocus
+                autoComplete="off"
+              />
+            </form>
 
-          {/* Mobile autocomplete results */}
-          {searchQuery.trim().length >= 2 && (
-            <div className="mt-2">
-              {isSearching ? (
-                <div className="flex items-center gap-3 px-2 py-2">
-                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                   <span className="text-sm text-muted-foreground">{t('searching')}</span>
-                </div>
-              ) : results && results.type !== 'not_found' && ResultIcon ? (
-                <button
-                  type="button"
-                  className="flex items-center gap-3 w-full px-2 py-2 rounded-xl hover:bg-muted text-left transition-colors cursor-pointer"
-                  onClick={() => navigateToResult(results)}
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                    <ResultIcon className="h-4 w-4 text-primary" />
+            {/* Mobile results - same morph pattern */}
+            <div
+              className="transition-[max-height,opacity] duration-200 ease-out"
+              style={{
+                maxHeight: searchQuery.trim().length >= 2 && hasContent ? '300px' : '0',
+                opacity: searchQuery.trim().length >= 2 && hasContent ? 1 : 0,
+              }}
+            >
+              <div className="mx-4" style={{ borderTop: '1px solid hsl(var(--border))' }} />
+              <div className="py-1">
+                {isSearching ? (
+                  <div className="flex items-center gap-3 px-4 py-2.5">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm text-muted-foreground">{t('searching')}</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{results.query}</div>
-                    <div className="text-xs text-muted-foreground">{RESULT_LABELS[results.type]}</div>
+                ) : results && results.type !== 'not_found' && ResultIcon ? (
+                  <button
+                    type="button"
+                    className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-background/40 rounded-lg text-left transition-colors cursor-pointer"
+                    onClick={() => navigateToResult(results)}
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                      <ResultIcon className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{results.query}</div>
+                      <div className="text-xs text-muted-foreground">{RESULT_LABELS[results.type]}</div>
+                    </div>
+                  </button>
+                ) : results?.type === 'not_found' ? (
+                  <div className="flex items-center gap-3 px-4 py-2.5">
+                    <span className="text-sm text-muted-foreground">{t('noResultsFound')}</span>
                   </div>
-                </button>
-              ) : results?.type === 'not_found' ? (
-                <div className="flex items-center gap-3 px-2 py-2">
-                  <span className="text-sm text-muted-foreground">{t('noResultsFound')}</span>
-                </div>
-              ) : null}
+                ) : null}
+              </div>
             </div>
-          )}
+          </div>
         </div>
       )}
     </header>

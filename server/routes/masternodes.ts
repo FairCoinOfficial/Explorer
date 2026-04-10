@@ -2,11 +2,11 @@ import { Request, Response } from 'express'
 import { rpcWithNetwork, NetworkType } from '../lib/rpc'
 import { blockCache } from '../lib/cache'
 
-// FairCoin v3.0.0 masternode collateral
-const COLLATERAL_PER_MASTERNODE = 10000
+// FairCoin v3.0.0 masternode collateral (MASTER_NODE_AMOUNT in protocol.h)
+const COLLATERAL_PER_MASTERNODE = 5000
 
-// FairCoin v3.0.0 block reward is 5 FAIR per block
-const BLOCK_REWARD = 5
+// FairCoin v3.0.0 block reward is 10 FAIR, MN gets 50% = 5 FAIR
+const BLOCK_REWARD = 10
 
 interface MasternodeEntry {
   txid: string
