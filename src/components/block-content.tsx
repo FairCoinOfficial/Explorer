@@ -1,10 +1,8 @@
 import { useNetwork } from '@/contexts/network-context'
 import { NetworkStatus } from '@/components/network-status'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CopyButton } from '@/components/copy-button'
 import { Hash, Clock, Database, ArrowLeft, ArrowRight, RefreshCw, Home, Receipt } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -121,150 +119,112 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
             </div>
 
             {/* Block Stats */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{t('blockHeight')}</CardTitle>
-                        <Hash className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{block.height.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">{t('blockNumber')}</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{common('transactions')}</CardTitle>
-                        <Database className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{block.tx.length.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">{t('totalTransactions')}</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{t('blockSize')}</CardTitle>
-                        <Database className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            {(block.size / 1024).toFixed(1)} KB
-                        </div>
-                        <p className="text-xs text-muted-foreground">{block.size.toLocaleString()} {t('bytes')}</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{common('confirmations')}</CardTitle>
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{block.confirmations.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">{t('networkConfirmations')}</p>
-                    </CardContent>
-                </Card>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div>
+                    <p className="text-xs text-muted-foreground mb-1">{t('blockHeight')}</p>
+                    <p className="text-2xl font-bold tabular-nums">{block.height.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('blockNumber')}</p>
+                </div>
+                <div>
+                    <p className="text-xs text-muted-foreground mb-1">{common('transactions')}</p>
+                    <p className="text-2xl font-bold tabular-nums">{block.tx.length.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('totalTransactions')}</p>
+                </div>
+                <div>
+                    <p className="text-xs text-muted-foreground mb-1">{t('blockSize')}</p>
+                    <p className="text-2xl font-bold tabular-nums">{(block.size / 1024).toFixed(1)} KB</p>
+                    <p className="text-xs text-muted-foreground mt-1">{block.size.toLocaleString()} {t('bytes')}</p>
+                </div>
+                <div>
+                    <p className="text-xs text-muted-foreground mb-1">{common('confirmations')}</p>
+                    <p className="text-2xl font-bold tabular-nums">{block.confirmations.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('networkConfirmations')}</p>
+                </div>
             </div>
 
+            <div className="h-px bg-border" />
+
             {/* Block Details */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Hash className="h-5 w-5" />
-                        {t('blockInformation')}
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid gap-4">
-                        <div>
-                            <label className="text-sm font-medium text-muted-foreground">{t('blockHash')}</label>
-                            <div className="flex items-center gap-2 mt-1">
-                                <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">
-                                    {block.hash}
-                                </code>
-                                <CopyButton text={block.hash} />
-                            </div>
-                        </div>
+            <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('blockInformation')}</h3>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground">{t('timestamp')}</label>
-                                <p className="mt-1">{new Date(block.time * 1000).toLocaleString()}</p>
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground">{t('difficulty')}</label>
-                                <p className="mt-1 font-mono">{block.difficulty.toFixed(6)}</p>
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground">{t('nonce')}</label>
-                                <p className="mt-1 font-mono">{block.nonce.toLocaleString()}</p>
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground">{t('version')}</label>
-                                <p className="mt-1 font-mono">{block.version}</p>
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground">{t('bits')}</label>
-                                <p className="mt-1 font-mono">{block.bits}</p>
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground">{t('weight')}</label>
-                                <p className="mt-1 font-mono">
-                                    {block.weight ? block.weight.toLocaleString() : 'N/A'}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="text-sm font-medium text-muted-foreground">{t('merkleRoot')}</label>
-                            <div className="flex items-center gap-2 mt-1">
-                                <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">
-                                    {block.merkleroot}
-                                </code>
-                                <CopyButton text={block.merkleroot} />
-                            </div>
-                        </div>
-
-                        {block.previousblockhash && (
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground">{t('previousBlock')}</label>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Link
-                                        to={`/block/${block.previousblockhash}`}
-                                        className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all hover:bg-muted/80 transition-colors"
-                                    >
-                                        {block.previousblockhash}
-                                    </Link>
-                                    <CopyButton text={block.previousblockhash} />
-                                </div>
-                            </div>
-                        )}
-
-                        {block.nextblockhash && (
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground">{t('nextBlock')}</label>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Link
-                                        to={`/block/${block.nextblockhash}`}
-                                        className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all hover:bg-muted/80 transition-colors"
-                                    >
-                                        {block.nextblockhash}
-                                    </Link>
-                                    <CopyButton text={block.nextblockhash} />
-                                </div>
-                            </div>
-                        )}
+                <div>
+                    <p className="text-xs text-muted-foreground">{t('blockHash')}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                        <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">
+                            {block.hash}
+                        </code>
+                        <CopyButton text={block.hash} />
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3">
+                    <div>
+                        <p className="text-xs text-muted-foreground">{t('timestamp')}</p>
+                        <p className="text-sm">{new Date(block.time * 1000).toLocaleString()}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">{t('difficulty')}</p>
+                        <p className="text-sm font-mono">{block.difficulty.toFixed(6)}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">{t('nonce')}</p>
+                        <p className="text-sm font-mono">{block.nonce.toLocaleString()}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">{t('version')}</p>
+                        <p className="text-sm font-mono">{block.version}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">{t('bits')}</p>
+                        <p className="text-sm font-mono">{block.bits}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">{t('weight')}</p>
+                        <p className="text-sm font-mono">{block.weight ? block.weight.toLocaleString() : 'N/A'}</p>
+                    </div>
+                </div>
+
+                <div>
+                    <p className="text-xs text-muted-foreground">{t('merkleRoot')}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                        <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">
+                            {block.merkleroot}
+                        </code>
+                        <CopyButton text={block.merkleroot} />
+                    </div>
+                </div>
+
+                {block.previousblockhash && (
+                    <div>
+                        <p className="text-xs text-muted-foreground">{t('previousBlock')}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <Link
+                                to={`/block/${block.previousblockhash}`}
+                                className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all hover:bg-muted/80 transition-colors"
+                            >
+                                {block.previousblockhash}
+                            </Link>
+                            <CopyButton text={block.previousblockhash} />
+                        </div>
+                    </div>
+                )}
+
+                {block.nextblockhash && (
+                    <div>
+                        <p className="text-xs text-muted-foreground">{t('nextBlock')}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <Link
+                                to={`/block/${block.nextblockhash}`}
+                                className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all hover:bg-muted/80 transition-colors"
+                            >
+                                {block.nextblockhash}
+                            </Link>
+                            <CopyButton text={block.nextblockhash} />
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* Block Navigation */}
             <div className="flex justify-between items-center">

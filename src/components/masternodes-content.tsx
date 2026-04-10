@@ -25,7 +25,6 @@ import {
     Calendar,
     Link
 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -296,17 +295,12 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
             </div>
 
             {/* Stats Grid */}
-            <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {stats.map((stat, index) => (
-                    <Card key={index}>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{t(`stats.${stat.label}`)}</CardTitle>
-                            <stat.icon className="h-4 w-4 text-primary" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stat.value}</div>
-                        </CardContent>
-                    </Card>
+                    <div key={index}>
+                        <p className="text-xs text-muted-foreground mb-1">{t(`stats.${stat.label}`)}</p>
+                        <p className="text-2xl font-bold tabular-nums">{stat.value}</p>
+                    </div>
                 ))}
             </div>
 
@@ -397,51 +391,43 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                     <div className="space-y-4">
                         <h3 className="text-xl font-bold tracking-tight text-center">{t('guide.configuration.title')}</h3>
                         <div className="grid gap-4 md:grid-cols-2">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <FileText className="h-4 w-4 text-primary" />
-                                        {t('guide.configuration.faircoinConf.title')}
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="bg-muted p-4 rounded-lg">
-                                        <pre className="text-xs text-foreground whitespace-pre-wrap font-mono">{configExamples.faircoinConf}</pre>
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="w-full"
-                                        onClick={() => copyToClipboard(configExamples.faircoinConf)}
-                                    >
-                                        <Copy className="h-4 w-4 mr-2 text-primary" />
-                                        {t('guide.configuration.faircoinConf.copy')}
-                                    </Button>
-                                </CardContent>
-                            </Card>
+                            <div className="space-y-3">
+                                <h4 className="flex items-center gap-2 font-semibold">
+                                    <FileText className="h-4 w-4 text-primary" />
+                                    {t('guide.configuration.faircoinConf.title')}
+                                </h4>
+                                <div className="bg-muted p-4 rounded-lg">
+                                    <pre className="text-xs text-foreground whitespace-pre-wrap font-mono">{configExamples.faircoinConf}</pre>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => copyToClipboard(configExamples.faircoinConf)}
+                                >
+                                    <Copy className="h-4 w-4 mr-2 text-primary" />
+                                    {t('guide.configuration.faircoinConf.copy')}
+                                </Button>
+                            </div>
 
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <FileText className="h-4 w-4 text-primary" />
-                                        {t('guide.configuration.masternodeConf.title')}
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="bg-muted p-4 rounded-lg">
-                                        <pre className="text-xs text-foreground whitespace-pre-wrap font-mono">{configExamples.masternodeConf}</pre>
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="w-full"
-                                        onClick={() => copyToClipboard(configExamples.masternodeConf)}
-                                    >
-                                        <Copy className="h-4 w-4 mr-2 text-primary" />
-                                        {t('guide.configuration.masternodeConf.copy')}
-                                    </Button>
-                                </CardContent>
-                            </Card>
+                            <div className="space-y-3">
+                                <h4 className="flex items-center gap-2 font-semibold">
+                                    <FileText className="h-4 w-4 text-primary" />
+                                    {t('guide.configuration.masternodeConf.title')}
+                                </h4>
+                                <div className="bg-muted p-4 rounded-lg">
+                                    <pre className="text-xs text-foreground whitespace-pre-wrap font-mono">{configExamples.masternodeConf}</pre>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => copyToClipboard(configExamples.masternodeConf)}
+                                >
+                                    <Copy className="h-4 w-4 mr-2 text-primary" />
+                                    {t('guide.configuration.masternodeConf.copy')}
+                                </Button>
+                            </div>
                         </div>
                     </div>
 
@@ -491,40 +477,36 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                         <h3 className="text-xl font-bold tracking-tight">{t('budget.sections.budgetCommands')}</h3>
                         <div className="space-y-4">
                             {budgetCommands.map((cmd, index) => (
-                                <Card key={index}>
-                                    <CardHeader>
-                                        <CardTitle className="flex items-center gap-2">
-                                            <Terminal className="h-4 w-4 text-primary" />
-                                            {cmd.command}
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-3">
-                                        <p className="text-muted-foreground text-sm">{cmd.description}</p>
-                                        <div className="space-y-2">
-                                            <div>
-                                                <span className="text-sm font-medium text-primary">{t('budget.sections.example')}</span>
-                                                <div className="bg-muted p-3 rounded-lg mt-1">
-                                                    <code className="text-xs text-foreground font-mono">{cmd.example}</code>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <span className="text-sm font-medium text-primary">{t('budget.sections.output')}</span>
-                                                <div className="bg-muted p-3 rounded-lg mt-1">
-                                                    <code className="text-xs text-foreground font-mono">{cmd.output}</code>
-                                                </div>
+                                <div key={index} className="rounded-xl border p-4 space-y-3">
+                                    <h4 className="flex items-center gap-2 font-semibold">
+                                        <Terminal className="h-4 w-4 text-primary" />
+                                        {cmd.command}
+                                    </h4>
+                                    <p className="text-muted-foreground text-sm">{cmd.description}</p>
+                                    <div className="space-y-2">
+                                        <div>
+                                            <span className="text-sm font-medium text-primary">{t('budget.sections.example')}</span>
+                                            <div className="bg-muted p-3 rounded-lg mt-1">
+                                                <code className="text-xs text-foreground font-mono">{cmd.example}</code>
                                             </div>
                                         </div>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="w-full"
-                                            onClick={() => copyToClipboard(cmd.example)}
-                                        >
-                                            <Copy className="h-4 w-4 mr-2 text-primary" />
-                                            {cmd.copy}
-                                        </Button>
-                                    </CardContent>
-                                </Card>
+                                        <div>
+                                            <span className="text-sm font-medium text-primary">{t('budget.sections.output')}</span>
+                                            <div className="bg-muted p-3 rounded-lg mt-1">
+                                                <code className="text-xs text-foreground font-mono">{cmd.output}</code>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full"
+                                        onClick={() => copyToClipboard(cmd.example)}
+                                    >
+                                        <Copy className="h-4 w-4 mr-2 text-primary" />
+                                        {cmd.copy}
+                                    </Button>
+                                </div>
                             ))}
                         </div>
                     </div>
@@ -554,26 +536,22 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                         </p>
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
+                    <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
                         {requirements.map((req, index) => (
-                            <Card key={index} className="h-full">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <req.icon className="h-4 w-4 text-primary" />
-                                        {req.title}
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <ul className="space-y-2">
-                                        {req.items.map((item, itemIndex) => (
-                                            <li key={itemIndex} className="flex items-start gap-2">
-                                                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                                                <span className="text-sm text-muted-foreground">{item}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </CardContent>
-                            </Card>
+                            <div key={index} className="space-y-3">
+                                <h4 className="flex items-center gap-2 font-semibold">
+                                    <req.icon className="h-4 w-4 text-primary" />
+                                    {req.title}
+                                </h4>
+                                <ul className="space-y-2">
+                                    {req.items.map((item, itemIndex) => (
+                                        <li key={itemIndex} className="flex items-start gap-2">
+                                            <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                                            <span className="text-sm text-muted-foreground">{item}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
                         ))}
                     </div>
 

@@ -1,10 +1,9 @@
 import { useNetwork } from '@/contexts/network-context'
 import { NetworkStatus } from '@/components/network-status'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { SectionHeader, StatsGrid, StatsCard, EmptyState, LoadingState, InfoGrid } from '@/components/ui'
+import { SectionHeader, StatsGrid, StatsCard, EmptyState, LoadingState } from '@/components/ui'
 import {
     Zap,
     Clock,
@@ -287,90 +286,89 @@ export function StatsContent() {
                 </TabsContent>
 
                 <TabsContent value="supply" className="space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <SectionHeader
-                                icon={Coins}
-                                title={t('supplyEconomics')}
-                            />
-                        </CardHeader>
-                        <CardContent className="space-y-6">
+                    <div className="space-y-6">
+                        <SectionHeader
+                            icon={Coins}
+                            title={t('supplyEconomics')}
+                        />
+
+                        <div className="space-y-4">
+                            <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
+                                <span className="text-sm font-medium">{t('currentSupply')}</span>
+                                <span className="text-sm font-semibold">{stats.totalSupply.toLocaleString()} FAIR</span>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-3">
+                                <div
+                                    className="bg-primary h-3 rounded-full transition-all duration-300"
+                                    style={{ width: `${supplyProgress}%` }}
+                                ></div>
+                            </div>
+                            <div className="flex flex-col space-y-1 sm:flex-row sm:justify-between sm:space-y-0">
+                                <span className="text-xs text-muted-foreground">0 FAIR</span>
+                                <span className="text-xs text-muted-foreground">{maxSupply.toLocaleString()} FAIR ({t('max')})</span>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6">
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">{t('premine')}</p>
+                                <p className="text-2xl font-bold">90%</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">{t('perBlock')}</p>
+                                <p className="text-2xl font-bold">5 FAIR</p>
+                            </div>
+                        </div>
+
+                        <div className="h-px bg-border" />
+
+                        <div className="grid gap-6 lg:grid-cols-2">
                             <div className="space-y-4">
-                                <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
-                                    <span className="text-sm font-medium">{t('currentSupply')}</span>
-                                    <span className="text-sm font-semibold">{stats.totalSupply.toLocaleString()} FAIR</span>
-                                </div>
-                                <div className="w-full bg-muted rounded-full h-3">
-                                    <div
-                                        className="bg-primary h-3 rounded-full transition-all duration-300"
-                                        style={{ width: `${supplyProgress}%` }}
-                                    ></div>
-                                </div>
-                                <div className="flex flex-col space-y-1 sm:flex-row sm:justify-between sm:space-y-0">
-                                    <span className="text-xs text-muted-foreground">0 FAIR</span>
-                                    <span className="text-xs text-muted-foreground">{maxSupply.toLocaleString()} FAIR ({t('max')})</span>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="border rounded-lg p-4 text-center">
-                                    <div className="text-xl font-bold">90%</div>
-                                    <div className="text-xs text-muted-foreground">{t('premine')}</div>
-                                </div>
-                                <div className="border rounded-lg p-4 text-center">
-                                    <div className="text-lg font-bold">5 FAIR</div>
-                                    <div className="text-xs text-muted-foreground">{t('perBlock')}</div>
-                                </div>
-                            </div>
-
-                            <div className="grid gap-6 lg:grid-cols-2">
-                                <div className="space-y-4">
-                                    <div className="border rounded-lg p-4">
-                                        <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
-                                            <span className="font-medium">{t('proofOfWorkPhase')}</span>
-                                            <span className="text-sm text-muted-foreground">{t('blocks1to10000')}</span>
-                                        </div>
-                                        <div className="text-xs text-muted-foreground mt-2">
-                                            {t('initialMiningPhase')}
-                                        </div>
+                                <div className="border rounded-lg p-4">
+                                    <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
+                                        <span className="font-medium">{t('proofOfWorkPhase')}</span>
+                                        <span className="text-sm text-muted-foreground">{t('blocks1to10000')}</span>
                                     </div>
-
-                                    <div className="border rounded-lg p-4">
-                                        <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
-                                            <span className="font-medium">{t('proofOfStakePhase')}</span>
-                                            <span className="text-sm text-muted-foreground">{t('blocks25001Plus')}</span>
-                                        </div>
-                                        <div className="text-xs text-muted-foreground mt-2">
-                                            {t('currentPhaseStaking')}
-                                        </div>
+                                    <div className="text-xs text-muted-foreground mt-2">
+                                        {t('initialMiningPhase')}
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <div className="flex justify-center">
-                                        <Badge variant={stats.phase === 'PoS' ? 'default' : 'secondary'} className="text-sm px-3 py-1">
-                                            {t('current', { phase: stats.phase || 'PoS' })}
-                                        </Badge>
+                                <div className="border rounded-lg p-4">
+                                    <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
+                                        <span className="font-medium">{t('proofOfStakePhase')}</span>
+                                        <span className="text-sm text-muted-foreground">{t('blocks25001Plus')}</span>
                                     </div>
-
-                                    <div className="border rounded-lg p-4 space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm">{t('blockReward')}</span>
-                                             <span className="text-sm font-mono font-semibold">5 FAIR</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm">{t('blockTime')}</span>
-                                            <span className="text-sm font-mono font-semibold">{t('seconds120')}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm">{t('dailyBlocks')}</span>
-                                            <span className="text-sm font-mono font-semibold">720</span>
-                                        </div>
+                                    <div className="text-xs text-muted-foreground mt-2">
+                                        {t('currentPhaseStaking')}
                                     </div>
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
+
+                            <div className="space-y-4">
+                                <div className="flex justify-center">
+                                    <Badge variant={stats.phase === 'PoS' ? 'default' : 'secondary'} className="text-sm px-3 py-1">
+                                        {t('current', { phase: stats.phase || 'PoS' })}
+                                    </Badge>
+                                </div>
+
+                                <div className="border rounded-lg p-4 space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm">{t('blockReward')}</span>
+                                         <span className="text-sm font-mono font-semibold">5 FAIR</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm">{t('blockTime')}</span>
+                                        <span className="text-sm font-mono font-semibold">{t('seconds120')}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm">{t('dailyBlocks')}</span>
+                                        <span className="text-sm font-mono font-semibold">720</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </TabsContent>
 
                 <TabsContent value="staking" className="space-y-4">
@@ -464,11 +462,9 @@ export function StatsContent() {
                             </div>
                         </div>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">{t('quickActions')}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
+                        <div>
+                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t('quickActions')}</h3>
+                            <div className="space-y-3">
                                 <Button asChild variant="outline" className="w-full justify-start h-auto p-3">
                                     <Link to="/blocks" className="flex items-center">
                                         <Database className="h-5 w-5 mr-3 flex-shrink-0" />
@@ -487,8 +483,8 @@ export function StatsContent() {
                                         <span className="text-left">{t('viewMempool')}</span>
                                     </Link>
                                 </Button>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     </div>
                 </TabsContent>
             </Tabs>

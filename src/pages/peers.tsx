@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useNetwork } from '@/contexts/network-context'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -90,10 +89,22 @@ export default function PeersPage() {
           <Button onClick={fetchPeers} variant="outline" size="sm"><RefreshCw className="h-4 w-4 mr-2" />Refresh</Button>
         </div>
       </div>
-      <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Peers</CardTitle><Users className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{peers.length}</div><p className="text-xs text-muted-foreground">Connected nodes</p></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Inbound</CardTitle><ArrowDownLeft className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{inboundCount}</div><p className="text-xs text-muted-foreground">Peers connecting to us</p></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Outbound</CardTitle><ArrowUpRight className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{outboundCount}</div><p className="text-xs text-muted-foreground">Peers we connect to</p></CardContent></Card>
+      <div className="grid grid-cols-3 gap-6">
+        <div>
+          <p className="text-xs text-muted-foreground mb-1">Total Peers</p>
+          <p className="text-2xl font-bold tabular-nums">{peers.length}</p>
+          <p className="text-xs text-muted-foreground mt-1">Connected nodes</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground mb-1">Inbound</p>
+          <p className="text-2xl font-bold tabular-nums">{inboundCount}</p>
+          <p className="text-xs text-muted-foreground mt-1">Peers connecting to us</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground mb-1">Outbound</p>
+          <p className="text-2xl font-bold tabular-nums">{outboundCount}</p>
+          <p className="text-xs text-muted-foreground mt-1">Peers we connect to</p>
+        </div>
       </div>
       {peers.length > 0 ? (
         <div className="rounded-md border overflow-auto custom-scrollbar">

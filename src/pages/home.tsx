@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -81,51 +80,31 @@ export default function HomePage() {
         </Button>
       </div>
 
-      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Height</CardTitle>
-            <Blocks className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-xl sm:text-2xl font-bold">{height?.toLocaleString() ?? '-'}</div>
-            <p className="text-xs text-muted-foreground">Latest block height</p>
-          </CardContent>
-        </Card>
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Latest Block</CardTitle>
-            <Hash className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-xl sm:text-2xl font-bold">{blocks[0]?.height ?? '-'}</div>
-            <p className="text-xs text-muted-foreground">{blocks[0]?.tx?.length ?? 0} transactions</p>
-          </CardContent>
-        </Card>
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Block Time</CardTitle>
-            <Clock className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-lg sm:text-xl font-bold">
-              {blocks[0] ? new Date(blocks[0].time * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {blocks[0] ? new Date(blocks[0].time * 1000).toLocaleDateString() : 'No data'}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="hover:shadow-md transition-shadow sm:col-span-2 lg:col-span-1">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Network</CardTitle>
-            <TrendingUp className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-lg sm:text-xl font-bold">Mainnet</div>
-            <p className="text-xs text-muted-foreground">FairCoin Blockchain</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div>
+          <p className="text-xs text-muted-foreground mb-1">Current Height</p>
+          <p className="text-2xl font-bold tabular-nums">{height?.toLocaleString() ?? '-'}</p>
+          <p className="text-xs text-muted-foreground mt-1">Latest block height</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground mb-1">Latest Block</p>
+          <p className="text-2xl font-bold tabular-nums">{blocks[0]?.height ?? '-'}</p>
+          <p className="text-xs text-muted-foreground mt-1">{blocks[0]?.tx?.length ?? 0} transactions</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground mb-1">Block Time</p>
+          <p className="text-2xl font-bold tabular-nums">
+            {blocks[0] ? new Date(blocks[0].time * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {blocks[0] ? new Date(blocks[0].time * 1000).toLocaleDateString() : 'No data'}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground mb-1">Network</p>
+          <p className="text-2xl font-bold">Mainnet</p>
+          <p className="text-xs text-muted-foreground mt-1">FairCoin Blockchain</p>
+        </div>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">

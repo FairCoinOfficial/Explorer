@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useNetwork } from "@/contexts/network-context"
 import { Wallet, CheckCircle, XCircle, Info, Shield } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -310,28 +310,23 @@ export function AddressValidatorContent() {
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <SectionHeader
-                        icon={Info}
-                        title={t('addressInfo.title')}
-                    />
-                </CardHeader>
-                <CardContent>
-                    <InfoGrid
-                        items={[
-                            { label: t('addressInfo.mainnetP2PKH'), value: t('addressInfo.mainnetP2PKHExample') },
-                            { label: t('addressInfo.mainnetP2SH'), value: t('addressInfo.mainnetP2SHExample') },
-                            { label: t('addressInfo.mainnetLength'), value: t('addressInfo.mainnetLengthValue') },
-                            { label: t('addressInfo.mainnetUsage'), value: t('addressInfo.mainnetUsageValue') },
-                            { label: t('addressInfo.testnetP2PKH'), value: t('addressInfo.testnetP2PKHValue') },
-                            { label: t('addressInfo.testnetP2SH'), value: t('addressInfo.testnetP2SHValue') },
-                            { label: t('addressInfo.testnetLength'), value: t('addressInfo.testnetLengthValue') },
-                            { label: t('addressInfo.testnetUsage'), value: t('addressInfo.testnetUsageValue') }
-                        ]}
-                    />
-                </CardContent>
-            </Card>
+            <div className="h-px bg-border" />
+
+            <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('addressInfo.title')}</h3>
+                <InfoGrid
+                    items={[
+                        { label: t('addressInfo.mainnetP2PKH'), value: t('addressInfo.mainnetP2PKHExample') },
+                        { label: t('addressInfo.mainnetP2SH'), value: t('addressInfo.mainnetP2SHExample') },
+                        { label: t('addressInfo.mainnetLength'), value: t('addressInfo.mainnetLengthValue') },
+                        { label: t('addressInfo.mainnetUsage'), value: t('addressInfo.mainnetUsageValue') },
+                        { label: t('addressInfo.testnetP2PKH'), value: t('addressInfo.testnetP2PKHValue') },
+                        { label: t('addressInfo.testnetP2SH'), value: t('addressInfo.testnetP2SHValue') },
+                        { label: t('addressInfo.testnetLength'), value: t('addressInfo.testnetLengthValue') },
+                        { label: t('addressInfo.testnetUsage'), value: t('addressInfo.testnetUsageValue') }
+                    ]}
+                />
+            </div>
         </div>
     )
 }

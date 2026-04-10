@@ -130,7 +130,7 @@ export function BlocksContent() {
                 </div>
             </div>
 
-            <StatsGrid columns={{ default: 1, sm: 2, lg: 4 }}>
+            <StatsGrid>
                 <StatsCard title="Current Height" value={height?.toLocaleString() ?? 'N/A'} description="Latest block height" icon={Hash} />
                 <StatsCard title="Blocks Shown" value={paginatedBlocks.length} description={`Page ${currentPage} of ${totalPages} (${filteredBlocks.length} total)`} icon={Database} />
                 <StatsCard title="Network" value={currentNetwork} description="Active network" icon={Clock} />

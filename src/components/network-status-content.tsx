@@ -2,9 +2,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useNetwork } from "@/contexts/network-context"
 import { useBlockchain } from "@/contexts/blockchain-context"
 import { Activity, Wifi, WifiOff, CheckCircle, XCircle, Clock, TrendingUp } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { toast } from 'sonner'
 import { useTranslations } from "@/lib/i18n"
 
@@ -217,164 +215,105 @@ export function NetworkStatusContent() {
                 <Badge variant="outline">{currentNetwork.toUpperCase()}</Badge>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="flex items-center gap-2 text-base">
-                            {status?.isOnline ? (
-                                <Wifi className="h-4 w-4 text-green-600" />
-                            ) : (
-                                <WifiOff className="h-4 w-4 text-red-600" />
-                            )}
-                            {t('connectionStatus')}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-2">
-                            <Badge className={getStatusColor(status?.isOnline || false)}>
-                                {status?.isOnline ? t('online') : t('offline')}
-                            </Badge>
-                            <div className="text-sm text-muted-foreground">
-                                <p className={getLatencyColor(status?.latency || 0)}>
-                                    {t('latency')}: {status?.latency || 0}ms
-                                </p>
-                                <p>{t('lastUpdate')}: {lastUpdate.toLocaleTimeString()}</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="flex items-center gap-2 text-base">
-                            <CheckCircle className="h-4 w-4" />
-                            {t('blockHeight')}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-2">
-                            <p className="text-2xl font-bold">{status?.blockHeight?.toLocaleString() || 0}</p>
-                            <p className="text-sm text-muted-foreground">{t('currentBlockHeight')}</p>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="flex items-center gap-2 text-base">
-                            <Activity className="h-4 w-4" />
-                            {t('connections')}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-2">
-                            <p className="text-2xl font-bold">{status?.connections || 0}</p>
-                            <p className="text-sm text-muted-foreground">{t('peerConnections')}</p>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="flex items-center gap-2 text-base">
-                            <TrendingUp className="h-4 w-4" />
-                            {t('difficulty')}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-2">
-                            <p className="text-xl font-bold">{status?.difficulty?.toExponential(2) || "0"}</p>
-                            <p className="text-sm text-muted-foreground">{t('networkDifficulty')}</p>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="flex items-center gap-2 text-base">
-                            <Activity className="h-4 w-4" />
-                            {t('hashrate')}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-2">
-                            <p className="text-xl font-bold">{formatHashrate(status?.hashrate || "0")}</p>
-                            <p className="text-sm text-muted-foreground">{t('networkHashrate')}</p>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="flex items-center gap-2 text-base">
-                            <Clock className="h-4 w-4" />
-                            {t('lastBlock')}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-2">
-                            <p className="text-sm font-mono">{formatTime(status?.lastBlockTime || 0)}</p>
-                            <p className="text-sm text-muted-foreground">{t('lastBlockTime')}</p>
-                        </div>
-                    </CardContent>
-                </Card>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                <div>
+                    <p className="text-xs text-muted-foreground mb-1">
+                        {status?.isOnline ? (
+                            <span className="inline-flex items-center gap-1"><Wifi className="h-3 w-3 text-green-600" />{t('connectionStatus')}</span>
+                        ) : (
+                            <span className="inline-flex items-center gap-1"><WifiOff className="h-3 w-3 text-red-600" />{t('connectionStatus')}</span>
+                        )}
+                    </p>
+                    <div className="space-y-1">
+                        <Badge className={getStatusColor(status?.isOnline || false)}>
+                            {status?.isOnline ? t('online') : t('offline')}
+                        </Badge>
+                        <p className={`text-xs ${getLatencyColor(status?.latency || 0)}`}>
+                            {t('latency')}: {status?.latency || 0}ms
+                        </p>
+                        <p className="text-xs text-muted-foreground">{t('lastUpdate')}: {lastUpdate.toLocaleTimeString()}</p>
+                    </div>
+                </div>
+                <div>
+                    <p className="text-xs text-muted-foreground mb-1">{t('blockHeight')}</p>
+                    <p className="text-2xl font-bold tabular-nums">{status?.blockHeight?.toLocaleString() || 0}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('currentBlockHeight')}</p>
+                </div>
+                <div>
+                    <p className="text-xs text-muted-foreground mb-1">{t('connections')}</p>
+                    <p className="text-2xl font-bold tabular-nums">{status?.connections || 0}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('peerConnections')}</p>
+                </div>
+                <div>
+                    <p className="text-xs text-muted-foreground mb-1">{t('difficulty')}</p>
+                    <p className="text-2xl font-bold tabular-nums">{status?.difficulty?.toExponential(2) || "0"}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('networkDifficulty')}</p>
+                </div>
+                <div>
+                    <p className="text-xs text-muted-foreground mb-1">{t('hashrate')}</p>
+                    <p className="text-2xl font-bold tabular-nums">{formatHashrate(status?.hashrate || "0")}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('networkHashrate')}</p>
+                </div>
+                <div>
+                    <p className="text-xs text-muted-foreground mb-1">{t('lastBlock')}</p>
+                    <p className="text-sm font-mono">{formatTime(status?.lastBlockTime || 0)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('lastBlockTime')}</p>
+                </div>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t('networkInformation')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <div className="space-y-2">
-                            <h4 className="font-semibold">{t('nodeInformation')}</h4>
-                            <div className="text-sm space-y-1">
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">{t('version')}:</span>
-                                    <span className="font-mono">{status?.version || t('unknown')}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">{tCommon('network')}:</span>
-                                    <Badge variant="outline">{currentNetwork}</Badge>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">{t('mempool')}:</span>
-                                    <span>{status?.mempool || 0} {t('transactions')}</span>
-                                </div>
+            <div className="h-px bg-border" />
+
+            <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('networkInformation')}</h3>
+                <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                        <h4 className="font-semibold">{t('nodeInformation')}</h4>
+                        <div className="text-sm space-y-1">
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">{t('version')}:</span>
+                                <span className="font-mono">{status?.version || t('unknown')}</span>
                             </div>
-                        </div>
-                        <div className="space-y-2">
-                            <h4 className="font-semibold">{t('statusIndicators')}</h4>
-                            <div className="text-sm space-y-1">
-                                <div className="flex items-center gap-2">
-                                    {status?.isOnline ? (
-                                        <CheckCircle className="h-3 w-3 text-green-600" />
-                                    ) : (
-                                        <XCircle className="h-3 w-3 text-red-600" />
-                                    )}
-                                    <span>{t('nodeConnection')}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {(status?.connections || 0) > 0 ? (
-                                        <CheckCircle className="h-3 w-3 text-green-600" />
-                                    ) : (
-                                        <XCircle className="h-3 w-3 text-red-600" />
-                                    )}
-                                    <span>{t('peerConnections')}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {(status?.blockHeight || 0) > 0 ? (
-                                        <CheckCircle className="h-3 w-3 text-green-600" />
-                                    ) : (
-                                        <XCircle className="h-3 w-3 text-red-600" />
-                                    )}
-                                    <span>{t('blockchainSync')}</span>
-                                </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">{tCommon('network')}:</span>
+                                <Badge variant="outline">{currentNetwork}</Badge>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">{t('mempool')}:</span>
+                                <span>{status?.mempool || 0} {t('transactions')}</span>
                             </div>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+                    <div className="space-y-2">
+                        <h4 className="font-semibold">{t('statusIndicators')}</h4>
+                        <div className="text-sm space-y-1">
+                            <div className="flex items-center gap-2">
+                                {status?.isOnline ? (
+                                    <CheckCircle className="h-3 w-3 text-green-600" />
+                                ) : (
+                                    <XCircle className="h-3 w-3 text-red-600" />
+                                )}
+                                <span>{t('nodeConnection')}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {(status?.connections || 0) > 0 ? (
+                                    <CheckCircle className="h-3 w-3 text-green-600" />
+                                ) : (
+                                    <XCircle className="h-3 w-3 text-red-600" />
+                                )}
+                                <span>{t('peerConnections')}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {(status?.blockHeight || 0) > 0 ? (
+                                    <CheckCircle className="h-3 w-3 text-green-600" />
+                                ) : (
+                                    <XCircle className="h-3 w-3 text-red-600" />
+                                )}
+                                <span>{t('blockchainSync')}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }

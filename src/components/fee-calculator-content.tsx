@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo } from "react"
 import { useNetwork } from "@/contexts/network-context"
 import { Calculator, Info, Coins, AlertTriangle } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { SectionHeader, EmptyState, InfoGrid } from "@/components/ui"
 import { toast } from 'sonner'
 import { useTranslations } from "@/lib/i18n"
@@ -138,75 +137,59 @@ export function FeeCalculatorContent() {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader>
-                        <SectionHeader
-                            icon={Info}
-                            title={t('feeEstimate')}
+                <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('feeEstimate')}</h3>
+                    {amount && parseFloat(amount) > 0 ? (
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <p className="text-xs text-muted-foreground mb-1">{t('amount')}</p>
+                                    <p className="text-lg font-bold font-mono tabular-nums">{parseFloat(amount).toFixed(8)} FAIR</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground mb-1">{t('estimatedFee')}</p>
+                                    <p className="text-lg font-bold font-mono tabular-nums text-orange-600 dark:text-orange-400">
+                                        {estimatedFee.toFixed(8)} FAIR
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground mb-1">{t('totalCost')}</p>
+                                    <p className="text-lg font-bold font-mono tabular-nums">{totalCost.toFixed(8)} FAIR</p>
+                                </div>
+                            </div>
+                            <div className="text-xs text-muted-foreground space-y-1">
+                                <p>• {t('estimatedSize', { bytes: Math.ceil(estimateTransactionSize(parseFloat(amount)) * 1000) })}</p>
+                                <p>• {t('feeCalculationBased', { priority: priority })}</p>
+                                <p>• {t('actualFeesDisclaimer')}</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <EmptyState
+                            icon={Calculator}
+                            title={t('enterAmountTitle')}
+                            description={t('enterAmountDescription')}
                         />
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {amount && parseFloat(amount) > 0 ? (
-                            <>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-muted-foreground">{t('amount')}:</span>
-                                        <span className="font-mono">{parseFloat(amount).toFixed(8)} FAIR</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-muted-foreground">{t('estimatedFee')}:</span>
-                                        <span className="font-mono text-orange-600 dark:text-orange-400">
-                                            {estimatedFee.toFixed(8)} FAIR
-                                        </span>
-                                    </div>
-                                    <Separator />
-                                    <div className="flex justify-between items-center font-semibold">
-                                        <span>{t('totalCost')}:</span>
-                                        <span className="font-mono">
-                                            {totalCost.toFixed(8)} FAIR
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="text-xs text-muted-foreground space-y-1">
-                                    <p>• {t('estimatedSize', { bytes: Math.ceil(estimateTransactionSize(parseFloat(amount)) * 1000) })}</p>
-                                    <p>• {t('feeCalculationBased', { priority: priority })}</p>
-                                    <p>• {t('actualFeesDisclaimer')}</p>
-                                </div>
-                            </>
-                        ) : (
-                            <EmptyState
-                                icon={Calculator}
-                                title={t('enterAmountTitle')}
-                                description={t('enterAmountDescription')}
-                            />
-                        )}
-                    </CardContent>
-                </Card>
+                    )}
+                </div>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <SectionHeader
-                        icon={Info}
-                        title={t('feeInformation')}
-                    />
-                </CardHeader>
-                <CardContent>
-                    <InfoGrid
-                        items={[
-                            { label: t('standardTransactions'), value: t('standardMinimum') },
-                            { label: t('instantXLabel'), value: t('nearInstantConfirmation') },
-                            { label: t('privateSendLabel'), value: t('enhancedPrivacy') },
-                            { label: t('multiSigSupport'), value: t('available') },
-                            { label: t('blockTime'), value: t('blockTimeValue') },
-                            { label: t('currentNetwork'), value: currentNetwork },
-                            { label: t('confirmationTime'), value: t('variesByPriority') },
-                            { label: t('recommendedConfirmations'), value: t('sixConfirmations') }
-                        ]}
-                    />
-                </CardContent>
-            </Card>
+            <div className="h-px bg-border" />
+
+            <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('feeInformation')}</h3>
+                <InfoGrid
+                    items={[
+                        { label: t('standardTransactions'), value: t('standardMinimum') },
+                        { label: t('instantXLabel'), value: t('nearInstantConfirmation') },
+                        { label: t('privateSendLabel'), value: t('enhancedPrivacy') },
+                        { label: t('multiSigSupport'), value: t('available') },
+                        { label: t('blockTime'), value: t('blockTimeValue') },
+                        { label: t('currentNetwork'), value: currentNetwork },
+                        { label: t('confirmationTime'), value: t('variesByPriority') },
+                        { label: t('recommendedConfirmations'), value: t('sixConfirmations') }
+                    ]}
+                />
+            </div>
         </div>
     )
 }

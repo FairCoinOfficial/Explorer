@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CopyButton } from '@/components/copy-button'
-import { SectionHeader, StatsGrid, StatsCard, EmptyState, LoadingState, InfoGrid } from '@/components/ui'
+import { SectionHeader, StatsGrid, StatsCard, EmptyState, LoadingState } from '@/components/ui'
 import { Hash, Clock, CheckCircle, XCircle, Database, LinkIcon, FileText, AlertTriangle, RefreshCw, Home, ArrowLeft, ArrowRight, DollarSign } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
@@ -213,93 +213,82 @@ export function TransactionContent({ txid }: { txid: string }) {
             </div>
 
             {/* Transaction Info */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Hash className="h-5 w-5" />
-                        Transaction Information
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid gap-4">
-                        <div>
-                            <label className="text-sm font-medium text-muted-foreground">Transaction ID</label>
-                            <div className="flex items-center gap-2 mt-1">
-                                <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">
-                                    {transaction.txid}
-                                </code>
-                                <CopyButton text={transaction.txid} />
-                            </div>
-                        </div>
+            <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Transaction Information</h3>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground">{common('status')}</label>
-                                <div className="mt-1">
-                                    <Badge variant={transaction.confirmations ? "default" : "secondary"} className="flex items-center gap-1 w-fit">
-                                        {transaction.confirmations ? (
-                                            <>
-                                                <CheckCircle className="h-3 w-3" />
-                                                {common('confirmed')}
-                                            </>
-                                        ) : (
-                                            <>
-                                                <XCircle className="h-3 w-3" />
-                                                {t('unconfirmed')}
-                                            </>
-                                        )}
-                                    </Badge>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground">{common('confirmations')}</label>
-                                <p className="mt-1 font-mono text-sm sm:text-base">{transaction.confirmations?.toLocaleString() ?? '0'}</p>
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground">{t('blockTime')}</label>
-                                <p className="mt-1 text-sm sm:text-base">
-                                    {transaction.blocktime
-                                        ? new Date(transaction.blocktime * 1000).toLocaleString()
-                                        : t('pending')
-                                    }
-                                </p>
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground">{common('size')}</label>
-                                <p className="mt-1 font-mono text-sm sm:text-base">{transaction.size} {common('bytes')}</p>
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground">Version</label>
-                                <p className="mt-1 font-mono text-sm sm:text-base">{transaction.version}</p>
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground">Lock Time</label>
-                                <p className="mt-1 font-mono text-sm sm:text-base">{transaction.locktime}</p>
-                            </div>
-                        </div>
-
-                        {transaction.blockhash && (
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground">Block Hash</label>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Link
-                                        to={`/block/${transaction.blockhash}`}
-                                        className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all hover:bg-muted/80 transition-colors"
-                                    >
-                                        {transaction.blockhash}
-                                    </Link>
-                                    <CopyButton text={transaction.blockhash} />
-                                </div>
-                            </div>
-                        )}
+                <div>
+                    <p className="text-xs text-muted-foreground">Transaction ID</p>
+                    <div className="flex items-center gap-2 mt-1">
+                        <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">
+                            {transaction.txid}
+                        </code>
+                        <CopyButton text={transaction.txid} />
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3">
+                    <div>
+                        <p className="text-xs text-muted-foreground">{common('status')}</p>
+                        <div className="mt-1">
+                            <Badge variant={transaction.confirmations ? "default" : "secondary"} className="flex items-center gap-1 w-fit">
+                                {transaction.confirmations ? (
+                                    <>
+                                        <CheckCircle className="h-3 w-3" />
+                                        {common('confirmed')}
+                                    </>
+                                ) : (
+                                    <>
+                                        <XCircle className="h-3 w-3" />
+                                        {t('unconfirmed')}
+                                    </>
+                                )}
+                            </Badge>
+                        </div>
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">{common('confirmations')}</p>
+                        <p className="text-sm font-mono">{transaction.confirmations?.toLocaleString() ?? '0'}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">{t('blockTime')}</p>
+                        <p className="text-sm">
+                            {transaction.blocktime
+                                ? new Date(transaction.blocktime * 1000).toLocaleString()
+                                : t('pending')
+                            }
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">{common('size')}</p>
+                        <p className="text-sm font-mono">{transaction.size} {common('bytes')}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">Version</p>
+                        <p className="text-sm font-mono">{transaction.version}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">Lock Time</p>
+                        <p className="text-sm font-mono">{transaction.locktime}</p>
+                    </div>
+                </div>
+
+                {transaction.blockhash && (
+                    <div>
+                        <p className="text-xs text-muted-foreground">Block Hash</p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <Link
+                                to={`/block/${transaction.blockhash}`}
+                                className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all hover:bg-muted/80 transition-colors"
+                            >
+                                {transaction.blockhash}
+                            </Link>
+                            <CopyButton text={transaction.blockhash} />
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className="h-px bg-border" />
 
             {/* Transaction Summary */}
             <div className="space-y-4">
