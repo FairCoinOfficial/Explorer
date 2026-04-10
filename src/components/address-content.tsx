@@ -1,6 +1,5 @@
 import { useNetwork } from '@/contexts/network-context'
 import { NetworkStatus } from '@/components/network-status'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -117,25 +116,21 @@ export function AddressContent({ address }: { address: string }) {
             </div>
 
             {/* Address Info */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Wallet className="h-5 w-5" />
-                        Address Information
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div>
-                        <label className="text-sm font-medium text-muted-foreground">Address</label>
-                        <div className="flex items-center gap-2 mt-1">
-                            <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">
-                                {addressInfo.address}
-                            </code>
-                            <CopyButton text={addressInfo.address} />
-                        </div>
+            <SectionHeader
+                icon={Wallet}
+                title="Address Information"
+            />
+            <div className="rounded-xl border p-4 space-y-4">
+                <div>
+                    <label className="text-sm font-medium text-muted-foreground">Address</label>
+                    <div className="flex items-center gap-2 mt-1">
+                        <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">
+                            {addressInfo.address}
+                        </code>
+                        <CopyButton text={addressInfo.address} />
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Balance Stats */}
             <div className="space-y-4">

@@ -323,42 +323,34 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                 {/* Overview Tab */}
                 <TabsContent value="overview" className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Shield className="h-4 w-4 text-primary" />
-                                    {t('overview.whatAreMasternodes.title')}
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <p className="text-muted-foreground">
-                                    {t('overview.whatAreMasternodes.description')}
-                                </p>
-                                <ul className="text-sm text-muted-foreground space-y-1">
-                                    <li>• {t('overview.whatAreMasternodes.features.security')}</li>
-                                    <li>• {t('overview.whatAreMasternodes.features.instantTx')}</li>
-                                    <li>• {t('overview.whatAreMasternodes.features.governance')}</li>
-                                    <li>• {t('overview.whatAreMasternodes.features.rewards')}</li>
-                                </ul>
-                            </CardContent>
-                        </Card>
+                        <div className="rounded-xl border p-4 space-y-3">
+                            <div className="flex items-center gap-2 font-semibold">
+                                <Shield className="h-4 w-4 text-primary" />
+                                {t('overview.whatAreMasternodes.title')}
+                            </div>
+                            <p className="text-muted-foreground">
+                                {t('overview.whatAreMasternodes.description')}
+                            </p>
+                            <ul className="text-sm text-muted-foreground space-y-1">
+                                <li>• {t('overview.whatAreMasternodes.features.security')}</li>
+                                <li>• {t('overview.whatAreMasternodes.features.instantTx')}</li>
+                                <li>• {t('overview.whatAreMasternodes.features.governance')}</li>
+                                <li>• {t('overview.whatAreMasternodes.features.rewards')}</li>
+                            </ul>
+                        </div>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Award className="h-4 w-4 text-primary" />
-                                    {t('overview.benefits.title')}
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <ul className="text-sm text-muted-foreground space-y-1">
-                                    <li>• {t('overview.benefits.earnRewards')}</li>
-                                    <li>• {t('overview.benefits.secureNetwork')}</li>
-                                    <li>• {t('overview.benefits.governance')}</li>
-                                    <li>• {t('overview.benefits.ecosystem')}</li>
-                                </ul>
-                            </CardContent>
-                        </Card>
+                        <div className="rounded-xl border p-4 space-y-3">
+                            <div className="flex items-center gap-2 font-semibold">
+                                <Award className="h-4 w-4 text-primary" />
+                                {t('overview.benefits.title')}
+                            </div>
+                            <ul className="text-sm text-muted-foreground space-y-1">
+                                <li>• {t('overview.benefits.earnRewards')}</li>
+                                <li>• {t('overview.benefits.secureNetwork')}</li>
+                                <li>• {t('overview.benefits.governance')}</li>
+                                <li>• {t('overview.benefits.ecosystem')}</li>
+                            </ul>
+                        </div>
                     </div>
 
                     <Alert>
@@ -381,25 +373,23 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                     {/* Step-by-Step Guide */}
                     <div className="space-y-4">
                         {masternodeSteps.map((step, index) => (
-                            <Card key={index}>
-                                <CardContent className="pt-6">
-                                    <div className="flex items-start gap-4">
-                                        <div className="flex-shrink-0">
-                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                                <span className="text-primary font-bold text-lg">{step.step}</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <step.icon className="h-4 w-4 text-primary" />
-                                                <h3 className="text-lg font-semibold">{step.title}</h3>
-                                            </div>
-                                            <p className="text-primary font-medium mb-2">{step.description}</p>
-                                            <p className="text-muted-foreground text-sm">{step.details}</p>
+                            <div key={index} className="rounded-xl border p-4">
+                                <div className="flex items-start gap-4">
+                                    <div className="flex-shrink-0">
+                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <span className="text-primary font-bold text-lg">{step.step}</span>
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <step.icon className="h-4 w-4 text-primary" />
+                                            <h3 className="text-lg font-semibold">{step.title}</h3>
+                                        </div>
+                                        <p className="text-primary font-medium mb-2">{step.description}</p>
+                                        <p className="text-muted-foreground text-sm">{step.details}</p>
+                                    </div>
+                                </div>
+                            </div>
                         ))}
                     </div>
 
@@ -484,18 +474,14 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
                         <h3 className="text-xl font-bold tracking-tight">{t('budget.sections.budgetStages')}</h3>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {budgetStages.map((stage, index) => (
-                                <Card key={index} className="h-full">
-                                    <CardHeader>
-                                        <CardTitle className="flex items-center gap-2">
-                                            <stage.icon className="h-4 w-4 text-primary" />
-                                            {stage.stage}
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-2">
-                                        <p className="text-primary font-medium text-sm">{stage.description}</p>
-                                        <p className="text-muted-foreground text-xs">{stage.details}</p>
-                                    </CardContent>
-                                </Card>
+                                <div key={index} className="rounded-xl border p-4 h-full space-y-2">
+                                    <div className="flex items-center gap-2 font-semibold">
+                                        <stage.icon className="h-4 w-4 text-primary" />
+                                        {stage.stage}
+                                    </div>
+                                    <p className="text-primary font-medium text-sm">{stage.description}</p>
+                                    <p className="text-muted-foreground text-xs">{stage.details}</p>
+                                </div>
                             ))}
                             </div>
                     </div>
@@ -610,17 +596,15 @@ masternodeprivkey=PRIVATEKEYREPLACETHIS`,
 
                     <div className="space-y-4">
                         {troubleshooting.map((item, index) => (
-                            <Card key={index}>
-                                <CardContent className="pt-6">
-                                    <div className="flex items-start gap-3">
-                                        <AlertCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                                        <div className="flex-1">
-                                            <h4 className="font-semibold mb-2">{item.issue}</h4>
-                                            <p className="text-muted-foreground text-sm">{item.solution}</p>
-                                        </div>
+                            <div key={index} className="rounded-xl border p-4">
+                                <div className="flex items-start gap-3">
+                                    <AlertCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                                    <div className="flex-1">
+                                        <h4 className="font-semibold mb-2">{item.issue}</h4>
+                                        <p className="text-muted-foreground text-sm">{item.solution}</p>
+                                    </div>
+                                </div>
                             </div>
-                                </CardContent>
-                            </Card>
                         ))}
                     </div>
 

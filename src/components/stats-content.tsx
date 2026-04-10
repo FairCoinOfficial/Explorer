@@ -6,8 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SectionHeader, StatsGrid, StatsCard, EmptyState, LoadingState, InfoGrid } from '@/components/ui'
 import {
-    BarChart3,
-    TrendingUp,
     Zap,
     Clock,
     Database,
@@ -17,7 +15,6 @@ import {
     Coins,
     Activity,
     Shield,
-    Network,
     AlertTriangle
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -225,14 +222,12 @@ export function StatsContent() {
 
                 <TabsContent value="network" className="space-y-4">
                     <div className="grid gap-4 lg:grid-cols-2">
-                        <Card>
-                            <CardHeader>
-                                <SectionHeader
-                                    icon={Database}
-                                    title={t('networkInformation')}
-                                />
-                            </CardHeader>
-                            <CardContent className="space-y-4">
+                        <div>
+                            <SectionHeader
+                                icon={Database}
+                                title={t('networkInformation')}
+                            />
+                            <div className="rounded-xl border p-4 mt-3 space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">{t('networkWeight')}</label>
@@ -251,17 +246,15 @@ export function StatsContent() {
                                         <p className="text-lg font-semibold break-all">{(stats.hashrate / 1000000).toFixed(2)} MH/s</p>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
-                        <Card>
-                            <CardHeader>
-                                <SectionHeader
-                                    icon={Hash}
-                                    title={t('latestBlock')}
-                                />
-                            </CardHeader>
-                            <CardContent className="space-y-4">
+                        <div>
+                            <SectionHeader
+                                icon={Hash}
+                                title={t('latestBlock')}
+                            />
+                            <div className="rounded-xl border p-4 mt-3 space-y-4">
                                 <div className="space-y-3">
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">{t('height')}</label>
@@ -288,8 +281,8 @@ export function StatsContent() {
                                         <p className="text-sm">{(stats.lastBlock.size / 1024).toFixed(1)} KB</p>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     </div>
                 </TabsContent>
 
@@ -382,14 +375,12 @@ export function StatsContent() {
 
                 <TabsContent value="staking" className="space-y-4">
                     <div className="grid gap-4 lg:grid-cols-2">
-                        <Card>
-                            <CardHeader>
-                                <SectionHeader
-                                    icon={Shield}
-                                    title={t('masternodeStaking')}
-                                />
-                            </CardHeader>
-                            <CardContent className="space-y-4">
+                        <div>
+                            <SectionHeader
+                                icon={Shield}
+                                title={t('masternodeStaking')}
+                            />
+                            <div className="rounded-xl border p-4 mt-3 space-y-4">
                                 <div className="border rounded-lg p-4">
                                     <div className="flex items-center justify-between mb-3">
                                         <span className="font-medium">{t('requirements')}</span>
@@ -407,17 +398,15 @@ export function StatsContent() {
                                     <div className="text-3xl font-bold mb-1">{stats.masternodeCount || 'N/A'}</div>
                                     <div className="text-sm text-muted-foreground">{t('activeMasternodes')}</div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
-                        <Card>
-                            <CardHeader>
-                                <SectionHeader
-                                    icon={Coins}
-                                    title={t('walletStaking')}
-                                />
-                            </CardHeader>
-                            <CardContent className="space-y-4">
+                        <div>
+                            <SectionHeader
+                                icon={Coins}
+                                title={t('walletStaking')}
+                            />
+                            <div className="rounded-xl border p-4 mt-3 space-y-4">
                                 <div className="border rounded-lg p-4">
                                     <div className="flex items-center justify-between mb-3">
                                         <span className="font-medium">{t('requirements')}</span>
@@ -439,21 +428,19 @@ export function StatsContent() {
                                         {t('estimatedAnnualReturn')}
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     </div>
                 </TabsContent>
 
                 <TabsContent value="transactions" className="space-y-4">
                     <div className="grid gap-4 lg:grid-cols-2">
-                        <Card>
-                            <CardHeader>
-                                <SectionHeader
-                                    icon={Hash}
-                                    title={t('transactionStatistics')}
-                                />
-                            </CardHeader>
-                            <CardContent className="space-y-4">
+                        <div>
+                            <SectionHeader
+                                icon={Hash}
+                                title={t('transactionStatistics')}
+                            />
+                            <div className="rounded-xl border p-4 mt-3 space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">{t('totalTransactions')}</label>
@@ -474,8 +461,8 @@ export function StatsContent() {
                                         </p>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
                         <Card>
                             <CardHeader>

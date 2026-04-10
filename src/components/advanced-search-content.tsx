@@ -602,98 +602,88 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
             </div>
 
             {/* Search Input */}
-            <Card className="border-2 border-primary/20 shadow-lg">
-                <CardContent className="pt-6">
-                    <div className="relative">
-                        <div className="flex gap-2">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    placeholder="Enter block height, hash, transaction ID, or address..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    onKeyPress={handleKeyPress}
-                                    onFocus={() => setShowSuggestions(true)}
-                                    className="pl-10 pr-4 py-3 text-lg border-0 focus:ring-2 focus:ring-primary/20"
-                                />
-                                {searchQuery && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setSearchQuery('')}
-                                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                )}
-                            </div>
-                            <Button
-                                onClick={() => handleSearch(searchQuery)}
-                                disabled={isSearching || !searchQuery.trim()}
-                                size="lg"
-                                className="px-8"
-                            >
-                                {isSearching ? (
-                                    <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                        Searching...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Search className="h-4 w-4 mr-2" />
-                                        Search
-                                    </>
-                                )}
-                            </Button>
+            <div className="rounded-xl border-2 border-primary/20 shadow-lg p-6">
+                <div className="relative">
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Enter block height, hash, transaction ID, or address..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyPress={handleKeyPress}
+                                onFocus={() => setShowSuggestions(true)}
+                                className="pl-10 pr-4 py-3 text-lg border-0 focus:ring-2 focus:ring-primary/20"
+                            />
+                            {searchQuery && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
                         </div>
-
-                        {/* Search Suggestions */}
-                        {showSuggestions && suggestions.length > 0 && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                                {suggestions.map((suggestion, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer border-b border-border last:border-b-0"
-                                        onClick={() => handleSuggestionClick(suggestion)}
-                                    >
-                                        <suggestion.icon className={`h-5 w-5 ${suggestion.color}`} />
-                                        <div className="flex-1">
-                                            <div className="font-medium">{suggestion.label}</div>
-                                            <div className="text-sm text-muted-foreground">{suggestion.description}</div>
-                                        </div>
-                                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                        <Button
+                            onClick={() => handleSearch(searchQuery)}
+                            disabled={isSearching || !searchQuery.trim()}
+                            size="lg"
+                            className="px-8"
+                        >
+                            {isSearching ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                    Searching...
+                                </>
+                            ) : (
+                                <>
+                                    <Search className="h-4 w-4 mr-2" />
+                                    Search
+                                </>
+                            )}
+                        </Button>
                     </div>
-                </CardContent>
-            </Card>
+
+                    {/* Search Suggestions */}
+                    {showSuggestions && suggestions.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                            {suggestions.map((suggestion, index) => (
+                                <div
+                                    key={index}
+                                    className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer border-b border-border last:border-b-0"
+                                    onClick={() => handleSuggestionClick(suggestion)}
+                                >
+                                    <suggestion.icon className={`h-5 w-5 ${suggestion.color}`} />
+                                    <div className="flex-1">
+                                        <div className="font-medium">{suggestion.label}</div>
+                                        <div className="text-sm text-muted-foreground">{suggestion.description}</div>
+                                    </div>
+                                    <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
 
             {/* Search Results */}
             {isSearching && (
-                <Card className="border-2 border-primary/20">
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-center gap-3 py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                            <span className="text-lg font-medium">Searching...</span>
-                        </div>
-                    </CardContent>
-                </Card>
+                <div className="flex items-center gap-3 py-8 justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <span className="text-lg font-medium">Searching...</span>
+                </div>
             )}
 
             {searchError && (
-                <Card className="border-2 border-destructive/20 bg-destructive/5">
-                    <CardContent className="pt-6">
-                        <div className="flex items-center gap-3 text-destructive">
-                            <AlertCircle className="h-5 w-5" />
-                            <div>
-                                <p className="font-medium">Search Error</p>
-                                <p className="text-sm">{searchError}</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <div className="flex items-center gap-3 py-8 justify-center text-destructive">
+                    <AlertCircle className="h-5 w-5" />
+                    <div>
+                        <p className="font-medium">Search Error</p>
+                        <p className="text-sm">{searchError}</p>
+                    </div>
+                </div>
             )}
 
             {searchResults && renderSearchResults()}
@@ -740,22 +730,20 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
                             </div>
                             <div className="grid gap-2">
                                 {searchHistory.map((query, index) => (
-                                    <Card key={index} className="hover:shadow-sm transition-shadow cursor-pointer" onClick={() => setSearchQuery(query)}>
-                                        <CardContent className="py-3">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <History className="h-4 w-4 text-muted-foreground" />
-                                                    <span className="font-mono text-sm">{query}</span>
-                                                </div>
-                                                <Button variant="ghost" size="sm" onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    performSearch(query)
-                                                }}>
-                                                    <Search className="h-4 w-4" />
-                                                </Button>
+                                    <div key={index} className="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-muted cursor-pointer" onClick={() => setSearchQuery(query)}>
+                                        <div className="flex items-center justify-between flex-1">
+                                            <div className="flex items-center gap-3">
+                                                <History className="h-4 w-4 text-muted-foreground" />
+                                                <span className="font-mono text-sm">{query}</span>
                                             </div>
-                                        </CardContent>
-                                    </Card>
+                                            <Button variant="ghost" size="sm" onClick={(e) => {
+                                                e.stopPropagation()
+                                                performSearch(query)
+                                            }}>
+                                                <Search className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         </div>
