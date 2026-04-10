@@ -22,6 +22,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
+import { useNetwork } from "@/contexts/network-context"
 
 interface NavItemProps {
   icon: LucideIcon
@@ -102,17 +103,18 @@ const toolsNav = [
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { state, isMobile, toggleSidebar } = useSidebar()
+  const { currentNetwork, setNetwork } = useNetwork()
   const collapsed = state === 'collapsed' && !isMobile
 
   return (
     <Sidebar {...props}>
       {/* Header: logo + collapse toggle */}
       <SidebarHeader className={cn(
-        "h-14 flex-row items-center shrink-0 px-2",
+        "h-14 flex-row items-center px-2",
         collapsed && "justify-center px-0"
       )}>
         {collapsed ? (
-          <Link to="/" className="flex items-center justify-center">
+          <Link to="/" className="flex items-center justify-center no-underline">
             <img src="/images/FairCoin-Logo.jpg" alt="FairCoin" className="w-8 h-8 rounded-lg" />
           </Link>
         ) : (
@@ -133,6 +135,53 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           </>
         )}
       </SidebarHeader>
+
+      {/* Network switcher */}
+      {collapsed ? (
+        <div className="shrink-0 flex justify-center py-1">
+          <button
+            onClick={() => setNetwork(currentNetwork === 'mainnet' ? 'testnet' : 'mainnet')}
+            className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-muted cursor-pointer"
+            title={currentNetwork === 'mainnet' ? 'Mainnet (click to switch)' : 'Testnet (click to switch)'}
+          >
+            <span
+              className={cn(
+                "w-2.5 h-2.5 rounded-full",
+                currentNetwork === 'mainnet' ? "bg-green-500" : "bg-orange-500"
+              )}
+            />
+          </button>
+        </div>
+      ) : (
+        <div className="shrink-0 px-3 pb-1">
+          <div className="flex flex-col rounded-xl bg-muted p-1 gap-0.5">
+            <button
+              onClick={() => setNetwork('mainnet')}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-2 h-8 text-sm transition-colors cursor-pointer",
+                currentNetwork === 'mainnet'
+                  ? "bg-background text-foreground font-medium shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <span className="w-2 h-2 rounded-full bg-green-500" />
+              Mainnet
+            </button>
+            <button
+              onClick={() => setNetwork('testnet')}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-2 h-8 text-sm transition-colors cursor-pointer",
+                currentNetwork === 'testnet'
+                  ? "bg-background text-foreground font-medium shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <span className="w-2 h-2 rounded-full bg-orange-500" />
+              Testnet
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Nav items */}
       <SidebarContent>

@@ -252,7 +252,7 @@ function SidebarHeader({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("flex flex-col gap-2 p-2", className)} {...props} />
+    <div className={cn("flex shrink-0", className)} {...props} />
   )
 }
 
@@ -274,7 +274,7 @@ function SidebarFooter({
 }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("flex flex-col gap-2 p-2 mt-auto", className)}
+      className={cn("flex shrink-0 mt-auto", className)}
       {...props}
     />
   )
