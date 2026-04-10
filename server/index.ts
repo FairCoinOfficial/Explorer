@@ -5,12 +5,14 @@ import { createServer } from 'http'
 import { parse } from 'url'
 import { WebSocketServer } from 'ws'
 import path from 'path'
+import { fileURLToPath } from 'url'
 import { blockCache } from './lib/cache'
 import { rpcWithNetwork, type NetworkType } from './lib/rpc'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
-const PORT = parseInt(process.env.PORT || '4000', 10)
-const DIST_DIR = path.join(import.meta.dirname, '..', 'dist')
+const PORT = parseInt(process.env.PORT || '8080', 10)
+const DIST_DIR = path.resolve(__dirname, '..', 'dist')
 
 app.use(cors())
 app.use(express.json())
@@ -303,7 +305,7 @@ app.get('/api/search', async (req, res) => {
 
 // ---- Static Files + SPA Fallback ----
 app.use(express.static(DIST_DIR))
-app.get('*', (_req, res) => {
+app.get('{*path}', (_req, res) => {
   res.sendFile(path.join(DIST_DIR, 'index.html'))
 })
 
@@ -323,14 +325,16 @@ server.on('upgrade', (request, socket, head) => {
 })
 
 let wsHandler: { handleConnection: (ws: unknown, request: unknown, ip?: string) => void } | null = null
+let wsHandlerFailed = false
 
 wss.on('connection', (ws, request) => {
-  if (!wsHandler) {
-    try {
-      wsHandler = require('./lib/websocket-handler')
-    } catch (error) {
+  if (!wsHandler && !wsHandlerFailed) {
+    import('./lib/websocket-handler').then(mod => {
+      wsHandler = mod
+    }).catch(error => {
       console.error('WebSocket handler not available:', (error as Error).message)
-    }
+      wsHandlerFailed = true
+    })
   }
   if (!wsHandler) { ws.close(); return }
   try {
