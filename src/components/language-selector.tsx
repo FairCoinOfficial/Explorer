@@ -1,4 +1,4 @@
-import { useLocale, setLocale, SUPPORTED_LOCALES, type Locale } from '@/lib/i18n'
+import { useLocale, setLocale, SUPPORTED_LOCALES } from '@/lib/i18n'
 import { Globe } from 'lucide-react'
 import {
   DropdownMenu,
@@ -6,7 +6,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 interface LanguageSelectorProps {
@@ -22,19 +21,19 @@ export function LanguageSelector({ collapsed }: LanguageSelectorProps) {
       <DropdownMenuTrigger asChild>
         {collapsed ? (
           <button
-            className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-muted cursor-pointer"
+            className="flex items-center justify-center h-10 w-10 rounded-full hover:bg-muted cursor-pointer"
             title={current?.nativeName}
           >
             <Globe size={18} className="text-muted-foreground" />
           </button>
         ) : (
-          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 px-2 h-9 text-sm font-normal">
-            <Globe size={16} className="text-muted-foreground shrink-0" />
-            <span className="truncate">{current?.nativeName ?? 'English'}</span>
-          </Button>
+          <button className="flex flex-row items-center gap-2 rounded-full h-[36px] w-full px-3 mx-2.5 hover:bg-muted transition-colors cursor-pointer">
+            <Globe size={18} className="text-muted-foreground" />
+            <span className="text-sm text-foreground font-semibold">{current?.nativeName ?? 'English'}</span>
+          </button>
         )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align={collapsed ? 'center' : 'start'} side="top" className="w-48">
+      <DropdownMenuContent align={collapsed ? 'center' : 'start'} side="top" sideOffset={8} className="w-48">
         {SUPPORTED_LOCALES.map((loc) => (
           <DropdownMenuItem
             key={loc.code}

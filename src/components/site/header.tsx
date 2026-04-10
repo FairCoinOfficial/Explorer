@@ -136,12 +136,13 @@ export function SiteHeader() {
         <SidebarTrigger className="-ml-1 md:hidden" />
 
         {/* Search bar with autocomplete - desktop */}
-        <div className="hidden md:flex flex-1 max-w-xl mx-auto relative">
+        <div className="hidden md:flex flex-1 max-w-xl mx-auto relative z-50">
+          {/* Input container - always in flow */}
           <div className={cn(
             "w-full transition-all duration-200",
             showDropdown
-              ? "bg-muted rounded-3xl shadow-lg ring-2 ring-primary/20"
-              : "bg-muted/60 rounded-full hover:bg-muted focus-within:bg-muted focus-within:ring-2 focus-within:ring-primary/20",
+              ? "bg-muted rounded-t-3xl shadow-lg ring-1 ring-border"
+              : "bg-muted/60 rounded-full hover:bg-muted focus-within:bg-muted focus-within:ring-1 focus-within:ring-border",
           )}>
             <form onSubmit={handleSubmit} className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -158,11 +159,13 @@ export function SiteHeader() {
                 autoComplete="off"
               />
             </form>
+          </div>
 
-            {/* Autocomplete results - same box */}
-            {showDropdown && (
+          {/* Floating dropdown - absolutely positioned */}
+          {showDropdown && (
+            <div className="absolute top-full left-0 right-0 bg-muted rounded-b-3xl shadow-lg ring-1 ring-border overflow-hidden">
+              <div className="mx-3" style={{ borderTop: '1px solid hsl(var(--border))' }} />
               <div className="pb-2">
-                <div className="mx-3 mb-2" style={{ borderTop: '1px solid hsl(var(--border))' }} />
                 {isSearching ? (
                   <div className="flex items-center gap-3 px-4 py-2">
                     <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -206,8 +209,8 @@ export function SiteHeader() {
                   <span className="text-sm text-muted-foreground">Search for "<span className="text-foreground font-medium">{searchQuery}</span>"</span>
                 </button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Right side actions */}

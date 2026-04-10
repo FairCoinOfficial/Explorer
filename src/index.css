@@ -40,76 +40,76 @@
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
-/* ---- Light theme (default root) ---- */
+/* ---- Light theme ---- */
 :root {
-  --background: 0 0% 95%;
-  --foreground: 75 40% 10%;
+  --background: 0 0% 97%;
+  --foreground: 0 0% 9%;
   --card: 0 0% 100%;
-  --card-foreground: 75 40% 10%;
+  --card-foreground: 0 0% 9%;
   --popover: 0 0% 100%;
-  --popover-foreground: 75 40% 10%;
-  --primary: 92 96% 49%;
-  --primary-foreground: 92 90% 18%;
-  --secondary: 80 20% 92%;
-  --secondary-foreground: 75 40% 10%;
-  --muted: 80 10% 92%;
-  --muted-foreground: 75 10% 46%;
-  --accent: 85 45% 63%;
-  --accent-foreground: 75 40% 10%;
+  --popover-foreground: 0 0% 9%;
+  --primary: 96 80% 32%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 90 8% 91%;
+  --secondary-foreground: 0 0% 9%;
+  --muted: 90 6% 93%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 92 55% 50%;
+  --accent-foreground: 0 0% 100%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --border: 80 8% 85%;
-  --input: 80 8% 85%;
-  --ring: 92 96% 49%;
-  --chart-1: 92 80% 85%;
-  --chart-2: 92 80% 72%;
-  --chart-3: 92 80% 60%;
-  --chart-4: 92 70% 50%;
-  --chart-5: 92 60% 40%;
-  --sidebar: 80 10% 96%;
-  --sidebar-foreground: 75 40% 10%;
-  --sidebar-primary: 92 96% 49%;
-  --sidebar-primary-foreground: 92 90% 18%;
-  --sidebar-accent: 80 10% 92%;
-  --sidebar-accent-foreground: 75 40% 10%;
-  --sidebar-border: 80 8% 85%;
-  --sidebar-ring: 92 96% 49%;
+  --border: 0 0% 87%;
+  --input: 0 0% 87%;
+  --ring: 96 80% 32%;
+  --chart-1: 92 60% 75%;
+  --chart-2: 92 55% 62%;
+  --chart-3: 96 65% 45%;
+  --chart-4: 96 70% 35%;
+  --chart-5: 96 75% 28%;
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 0 0% 9%;
+  --sidebar-primary: 96 80% 32%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 90 6% 93%;
+  --sidebar-accent-foreground: 0 0% 9%;
+  --sidebar-border: 0 0% 87%;
+  --sidebar-ring: 96 80% 32%;
 }
 
 /* ---- Dark theme ---- */
 .dark {
-  --background: 0 0% 5%;
+  --background: 0 0% 4%;
   --foreground: 0 0% 93%;
-  --card: 0 0% 10%;
+  --card: 0 0% 9%;
   --card-foreground: 0 0% 93%;
-  --popover: 0 0% 10%;
+  --popover: 0 0% 9%;
   --popover-foreground: 0 0% 93%;
-  --primary: 92 96% 49%;
-  --primary-foreground: 92 90% 18%;
-  --secondary: 0 0% 14%;
+  --primary: 92 75% 48%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 13%;
   --secondary-foreground: 0 0% 93%;
-  --muted: 0 0% 14%;
-  --muted-foreground: 0 0% 65%;
-  --accent: 85 45% 63%;
-  --accent-foreground: 0 0% 93%;
-  --destructive: 0 84% 60%;
+  --muted: 0 0% 13%;
+  --muted-foreground: 0 0% 60%;
+  --accent: 92 55% 50%;
+  --accent-foreground: 0 0% 0%;
+  --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-  --border: 0 0% 16%;
-  --input: 0 0% 18%;
-  --ring: 92 96% 49%;
-  --chart-1: 92 80% 80%;
-  --chart-2: 92 70% 65%;
-  --chart-3: 92 60% 50%;
-  --chart-4: 92 50% 40%;
-  --chart-5: 92 40% 30%;
-  --sidebar: 0 0% 8%;
+  --border: 0 0% 15%;
+  --input: 0 0% 17%;
+  --ring: 92 75% 48%;
+  --chart-1: 92 70% 72%;
+  --chart-2: 92 60% 58%;
+  --chart-3: 96 55% 45%;
+  --chart-4: 96 50% 35%;
+  --chart-5: 96 45% 28%;
+  --sidebar: 0 0% 7%;
   --sidebar-foreground: 0 0% 93%;
-  --sidebar-primary: 92 96% 49%;
-  --sidebar-primary-foreground: 92 90% 18%;
-  --sidebar-accent: 0 0% 14%;
+  --sidebar-primary: 92 75% 48%;
+  --sidebar-primary-foreground: 0 0% 0%;
+  --sidebar-accent: 0 0% 13%;
   --sidebar-accent-foreground: 0 0% 93%;
-  --sidebar-border: 0 0% 16%;
-  --sidebar-ring: 92 96% 49%;
+  --sidebar-border: 0 0% 15%;
+  --sidebar-ring: 92 75% 48%;
 }
 
 /* ---- Base styles ---- */
@@ -155,7 +155,7 @@ html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
 }
 
 html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary) / 80%);
+  background: hsl(var(--accent));
 }
 
 html::-webkit-scrollbar-corner, body::-webkit-scrollbar-corner {
@@ -184,7 +184,7 @@ html::-webkit-scrollbar-corner, body::-webkit-scrollbar-corner {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary) / 80%);
+  background: hsl(var(--accent));
 }
 
 .custom-scrollbar::-webkit-scrollbar-corner {

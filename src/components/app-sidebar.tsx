@@ -46,14 +46,14 @@ function NavItem({ icon: Icon, label, to, collapsed }: NavItemProps) {
         onClick={() => setOpenMobile(false)}
         className={cn(
           "group/nav-icon flex w-10 h-10 rounded-full items-center justify-center transition-colors",
-          isActive ? "bg-primary/15 text-primary" : "hover:bg-muted active:bg-muted/80",
+          isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted active:bg-muted/80",
         )}
       >
         <Icon
           size={20}
           className={cn(
             "transition-transform group-hover/nav-icon:scale-110",
-            isActive ? "text-primary" : "text-foreground",
+            isActive ? "text-primary-foreground" : "text-foreground",
           )}
         />
       </Link>
@@ -70,16 +70,16 @@ function NavItem({ icon: Icon, label, to, collapsed }: NavItemProps) {
             className={cn(
               "flex flex-row items-center gap-2 overflow-hidden rounded-full text-left h-[36px] w-full px-3 transition-colors",
               isActive
-                ? "bg-primary/15 text-primary"
+                ? "bg-primary text-primary-foreground"
                 : "hover:bg-muted active:bg-muted/80",
             )}
           >
             <div className="w-6 h-6 flex items-center justify-center shrink-0">
-              <Icon size={18} className={isActive ? "text-primary" : "text-foreground"} />
+              <Icon size={18} className={isActive ? "text-primary-foreground" : "text-foreground"} />
             </div>
             <span className={cn(
               "text-sm select-none font-semibold",
-              isActive ? "text-primary" : "text-foreground",
+              isActive ? "text-primary-foreground" : "text-foreground",
             )}>
               {label}
             </span>
@@ -136,7 +136,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             <div className="ms-auto shrink-0">
               <button
                 onClick={toggleSidebar}
-                className="h-10 w-10 rounded-xl flex items-center justify-center hover:bg-muted cursor-pointer"
+                className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-muted cursor-pointer"
                 aria-label={tSidebar('collapseSidebar')}
               >
                 <ChevronsLeft size={18} className="text-muted-foreground" />
@@ -203,13 +203,13 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 <NavItem key={item.to} {...item} collapsed />
               ))}
             </div>
-            <div className="mx-2 border-t border-border/30 w-8 my-1" />
+            <div className="w-8 mx-auto my-1" style={{ borderTop: '1px solid hsl(var(--border) / 0.3)' }} />
             <div className="flex flex-col items-center gap-1 py-1 shrink-0">
               {networkNav.map((item) => (
                 <NavItem key={item.to} {...item} collapsed />
               ))}
             </div>
-            <div className="mx-2 border-t border-border/30 w-8 my-1" />
+            <div className="w-8 mx-auto my-1" style={{ borderTop: '1px solid hsl(var(--border) / 0.3)' }} />
             <div className="flex flex-col items-center gap-1 py-1 shrink-0">
               {toolsNav.map((item) => (
                 <NavItem key={item.to} {...item} collapsed />
@@ -224,13 +224,13 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 <NavItem key={item.to} {...item} />
               ))}
             </div>
-            <div className="mx-2 border-t border-border/30 my-1" />
+            <div className="mx-2 my-1" style={{ borderTop: '1px solid hsl(var(--border) / 0.3)' }} />
             <div className="shrink-0">
               {networkNav.map((item) => (
                 <NavItem key={item.to} {...item} />
               ))}
             </div>
-            <div className="mx-2 border-t border-border/30 my-1" />
+            <div className="mx-2 my-1" style={{ borderTop: '1px solid hsl(var(--border) / 0.3)' }} />
             <div className="shrink-0">
               {toolsNav.map((item) => (
                 <NavItem key={item.to} {...item} />
@@ -246,7 +246,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         {collapsed && (
           <button
             onClick={toggleSidebar}
-            className="h-10 w-10 rounded-xl flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
+            className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
             aria-label={tSidebar('expandSidebar')}
           >
             <ChevronsRight size={18} />
