@@ -44,16 +44,21 @@ app.prepare().then(() => {
   })
 
   // WebSocket connection handler
+  let wsHandlerFailed = false
   wss.on('connection', (ws, request) => {
     // Lazy load handler to avoid import issues during build
-    if (!wsHandler) {
+    if (!wsHandler && !wsHandlerFailed) {
       try {
         wsHandler = require('./lib/websocket-handler')
       } catch (error) {
-        console.error('Error loading WebSocket handler:', error)
-        ws.close()
-        return
+        console.error('WebSocket handler not available (TypeScript module not compiled):', error.message)
+        wsHandlerFailed = true
       }
+    }
+
+    if (!wsHandler) {
+      ws.close()
+      return
     }
 
     try {
