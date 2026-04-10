@@ -10,7 +10,8 @@
         "stats": "统计",
         "tools": "工具",
         "addressValidator": "地址验证器",
-        "feeCalculator": "费用计算器"
+        "feeCalculator": "费用计算器",
+        "peers": "节点"
     },
     "common": {
         "loading": "加载中...",
@@ -312,7 +313,7 @@
         "expired": "已过期",
         "newStartRequired": "需要重新开始",
         "watchdogExpired": "看门狗已过期",
-        "collateralPerNode": "每个节点25K FAIR",
+        "collateralPerNode": "每个节点10K FAIR",
         "ofTotalSupplyLocked": "总供应量的锁定部分",
         "masternodeRequirements": "主节点要求",
         "collateralRequired": "所需抵押",
@@ -325,7 +326,7 @@
         "currentlyEnabled": "当前已启用",
         "blockRewardsAndFees": "区块奖励 + 交易费用",
         "enablesMixingAndFastSend": "主节点启用混币和快速发送功能",
-                "decentralizedVoting": "用于网络决策的去中心化区块链投票",
+        "decentralizedVoting": "用于网络决策的去中心化区块链投票",
         "tabs": {
             "overview": "概述",
             "guide": "Windows 指南",
@@ -363,7 +364,7 @@
             },
             "important": {
                 "title": "重要：",
-                "description": "运行主节点需要确切的 25,000 FAIR 币作为抵押。这些币将留在您的钱包中，不会花费，但必须在那里才能保持主节点活跃状态。"
+                "description": "运行主节点需要确切的 10,000 FAIR 币作为抵押。这些币将留在您的钱包中，不会花费，但必须在那里才能保持主节点活跃状态。"
             }
         },
         "guide": {
@@ -388,12 +389,12 @@
                 {
                     "title": "获取存款地址",
                     "description": "生成主节点存款地址",
-                    "details": "在控制台中输入：getaccountaddress 0。复制结果 - 这是用于确切存款 25,000 FAIR 币的 MASTERNODE DEPOSIT ADDRESS。"
+                    "details": "在控制台中输入：getaccountaddress 0。复制结果 - 这是用于确切存款 10,000 FAIR 币的 MASTERNODE DEPOSIT ADDRESS。"
                 },
                 {
                     "title": "存款币",
-                    "description": "向存款地址发送确切的 25,000 FAIR",
-                    "details": "向主节点存款地址发送确切的 25,000 FAIR 币（不多不少）。等待交易的 15 个确认。"
+                    "description": "向存款地址发送确切的 10,000 FAIR",
+                    "details": "向主节点存款地址发送确切的 10,000 FAIR 币（不多不少）。等待交易的 15 个确认。"
                 },
                 {
                     "title": "生成私钥",
@@ -435,7 +436,7 @@
                     "title": "重要备注：",
                     "note1": "将 YOURIP 替换为您的实际外部 IP 地址",
                     "note2": "将 PRIVATEKEYREPLACETHIS 替换为生成的主节点私钥",
-                    "note3": "将 INSERTYOURTXID 替换为 25,000 FAIR 存款的交易 ID",
+                    "note3": "将 INSERTYOURTXID 替换为 10,000 FAIR 存款的交易 ID",
                     "note4": "所有主节点必须在被网络识别并有资格获得奖励之前保持活跃状态一定数量的区块"
                 }
             }
@@ -464,7 +465,7 @@
             "network": {
                 "title": "网络要求",
                 "items": [
-                    "25,000 FAIR 币（确切金额）",
+                    "10,000 FAIR 币（确切金额）",
                     "激活需要 15 个确认",
                     "稳定的网络连接",
                     "端口 46372 开放且可访问"
@@ -709,7 +710,7 @@
         "masternodeStaking": "主节点质押",
         "requirements": "要求",
         "premium": "高级",
-        "masternodeRequirement1": "需要25,000 FAIR抵押",
+        "masternodeRequirement1": "需要10,000 FAIR抵押",
         "masternodeRequirement2": "提供网络服务（快速发送、混币）",
         "masternodeRequirement3": "比钱包质押奖励更高",
         "masternodeRequirement4": "启用治理投票",

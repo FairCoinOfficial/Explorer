@@ -25,9 +25,6 @@ interface MempoolTransaction {
 interface MempoolInfo {
     size: number
     bytes: number
-    usage: number
-    maxmempool: number
-    mempoolminfee: number
     transactions: MempoolTransaction[]
 }
 
@@ -73,9 +70,6 @@ export default function MempoolContent() {
                 setMempoolInfo(prevInfo => ({
                     size: event.data.size,
                     bytes: event.data.bytes,
-                    usage: event.data.usage,
-                    maxmempool: event.data.maxmempool,
-                    mempoolminfee: event.data.mempoolminfee,
                     transactions: event.data.transactions || prevInfo?.transactions || []
                 }))
                 setLoading(false)
@@ -120,10 +114,6 @@ export default function MempoolContent() {
         )
     }
 
-    const utilizationPercent = mempoolInfo.maxmempool > 0
-        ? (mempoolInfo.bytes / mempoolInfo.maxmempool) * 100
-        : 0
-
     return (
         <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
             {/* Header */}
@@ -152,7 +142,7 @@ export default function MempoolContent() {
                     icon={Database}
                     title={t('statistics')}
                 />
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <div className="border rounded-lg p-4">
                         <div className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <h4 className="text-sm font-medium">{t('pending_transactions')}</h4>
@@ -168,22 +158,13 @@ export default function MempoolContent() {
                             <Database className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="text-2xl font-bold">
-                            {(mempoolInfo.bytes / 1024 / 1024).toFixed(1)} MB
+                            {mempoolInfo.bytes >= 1024 * 1024
+                                ? `${(mempoolInfo.bytes / 1024 / 1024).toFixed(1)} MB`
+                                : `${(mempoolInfo.bytes / 1024).toFixed(1)} KB`}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            {t('capacity_usage', { percentage: utilizationPercent.toFixed(1) })}
+                            {t('bytes_per_transaction')}
                         </p>
-                    </div>
-
-                    <div className="border rounded-lg p-4">
-                        <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <h4 className="text-sm font-medium">{t('min_fee_rate')}</h4>
-                            <Zap className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className="text-2xl font-bold">
-                            {(mempoolInfo.mempoolminfee * 100000000).toFixed(0)}
-                        </div>
-                        <p className="text-xs text-muted-foreground">{t('sat_vb_minimum')}</p>
                     </div>
 
                     <div className="border rounded-lg p-4">
@@ -195,35 +176,6 @@ export default function MempoolContent() {
                             {mempoolInfo.size > 0 ? Math.round(mempoolInfo.bytes / mempoolInfo.size) : 0}
                         </div>
                         <p className="text-xs text-muted-foreground">{t('bytes_per_transaction')}</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Mempool Utilization */}
-            <div className="space-y-4">
-                <SectionHeader
-                    icon={Database}
-                    title={t('utilization')}
-                />
-                <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">{t('memory_used')}</span>
-                        <span className="text-sm text-muted-foreground">
-                            {(mempoolInfo.bytes / 1024 / 1024).toFixed(2)} MB / {(mempoolInfo.maxmempool / 1024 / 1024).toFixed(0)} MB
-                        </span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3">
-                        <div
-                            className={`h-3 rounded-full transition-all duration-300 ${utilizationPercent > 80 ? 'bg-destructive' :
-                                utilizationPercent > 60 ? 'bg-yellow-500' : 'bg-primary'
-                                }`}
-                            style={{ width: `${Math.min(utilizationPercent, 100)}%` }}
-                        ></div>
-                    </div>
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>0%</span>
-                        <span className="font-medium">{utilizationPercent.toFixed(1)}%</span>
-                        <span>100%</span>
                     </div>
                 </div>
             </div>
@@ -274,9 +226,7 @@ export default function MempoolContent() {
                                             {tx.feeRate.toFixed(1)} sat/vB
                                         </TableCell>
                                         <TableCell>
-                                            <TableCell>
-                                                {t('time_ago', { minutes: Math.round((Date.now() / 1000 - tx.time) / 60) })}
-                                            </TableCell>
+                                            {t('time_ago', { minutes: Math.round((Date.now() / 1000 - tx.time) / 60) })}
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -323,7 +273,6 @@ export default function MempoolContent() {
                         <h4 className="text-sm font-medium mb-3">{t('mempool_tips')}</h4>
                         <div className="space-y-2 text-sm text-muted-foreground">
                             <p>• {t('tip_1')}</p>
-                            <p>• {t('tip_2', { rate: (mempoolInfo.mempoolminfee * 100000000).toFixed(0) })}</p>
                             <p>• {t('tip_3')}</p>
                             <p>• {t('tip_4')}</p>
                         </div>

@@ -10,7 +10,8 @@
         "stats": "Estadísticas",
         "tools": "Herramientas",
         "addressValidator": "Validador de Direcciones",
-        "feeCalculator": "Calculadora de Comisiones"
+        "feeCalculator": "Calculadora de Comisiones",
+        "peers": "Pares"
     },
     "common": {
         "loading": "Cargando...",
@@ -352,7 +353,7 @@
         "expired": "Expirado",
         "newStartRequired": "Nuevo Inicio Requerido",
         "watchdogExpired": "Watchdog Expirado",
-        "collateralPerNode": "25K FAIR por nodo",
+        "collateralPerNode": "10K FAIR por nodo",
         "ofTotalSupplyLocked": "Del suministro total bloqueado",
         "masternodeRequirements": "Requisitos de Masternodos",
         "collateralRequired": "Colateral Requerido",
@@ -403,7 +404,7 @@
             },
             "important": {
                 "title": "Importante:",
-                "description": "Ejecutar un masternodo requiere exactamente 25,000 monedas FAIR como colateral. Estas monedas permanecen en tu billetera y no se gastan, pero deben permanecer allí para que el masternodo siga activo."
+                "description": "Ejecutar un masternodo requiere exactamente 10,000 monedas FAIR como colateral. Estas monedas permanecen en tu billetera y no se gastan, pero deben permanecer allí para que el masternodo siga activo."
             }
         },
         "guide": {
@@ -428,12 +429,12 @@
                 {
                     "title": "Obtener Dirección de Depósito",
                     "description": "Genera tu dirección de depósito de masternodo",
-                    "details": "En la consola, ingresa: getaccountaddress 0. Copia el resultado - esta es tu DIRECCIÓN DE DEPÓSITO DE MASTERNODO donde depositarás exactamente 25,000 monedas FAIR."
+                    "details": "En la consola, ingresa: getaccountaddress 0. Copia el resultado - esta es tu DIRECCIÓN DE DEPÓSITO DE MASTERNODO donde depositarás exactamente 10,000 monedas FAIR."
                 },
                 {
                     "title": "Depositar Monedas",
-                    "description": "Envía exactamente 25,000 FAIR a la dirección de depósito",
-                    "details": "Paga exactamente 25,000 monedas FAIR (ni más ni menos) a tu dirección de depósito de masternodo. Espera 15 confirmaciones de la transacción."
+                    "description": "Envía exactamente 10,000 FAIR a la dirección de depósito",
+                    "details": "Paga exactamente 10,000 monedas FAIR (ni más ni menos) a tu dirección de depósito de masternodo. Espera 15 confirmaciones de la transacción."
                 },
                 {
                     "title": "Generar Clave Privada",
@@ -475,7 +476,7 @@
                     "title": "Notas Importantes:",
                     "note1": "Reemplaza YOURIP con tu dirección IP externa real",
                     "note2": "Reemplaza PRIVATEKEYREPLACETHIS con tu clave privada de masternodo generada",
-                    "note3": "Reemplaza INSERTYOURTXID con el ID de transacción de tu depósito de 25,000 FAIR",
+                    "note3": "Reemplaza INSERTYOURTXID con el ID de transacción de tu depósito de 10,000 FAIR",
                     "note4": "Todos los masternodos necesitan estar activos durante una cierta cantidad de bloques antes de ser reconocidos por la red y elegibles para recompensas"
                 }
             }
@@ -504,7 +505,7 @@
             "network": {
                 "title": "Requisitos de Red",
                 "items": [
-                    "25,000 monedas FAIR (cantidad exacta)",
+                    "10,000 monedas FAIR (cantidad exacta)",
                     "15 confirmaciones para activación",
                     "Conexión de red estable",
                     "Puerto 46372 abierto y accesible"
@@ -702,7 +703,7 @@
         "masternodeStaking": "Staking de Masternodo",
         "requirements": "Requisitos",
         "premium": "Premium",
-        "masternodeRequirement1": "25,000 FAIR de colateral requerido",
+        "masternodeRequirement1": "10,000 FAIR de colateral requerido",
         "masternodeRequirement2": "Proporciona servicios de red (FastSend, Mixing)",
         "masternodeRequirement3": "Mayores recompensas que staking de wallet",
         "masternodeRequirement4": "Permite votación de gobernanza",

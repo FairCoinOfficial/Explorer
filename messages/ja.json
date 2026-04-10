@@ -9,7 +9,8 @@
         "stats": "統計",
         "tools": "ツール",
         "addressValidator": "アドレス検証",
-        "feeCalculator": "手数料計算機"
+        "feeCalculator": "手数料計算機",
+        "peers": "ピア"
     },
     "common": {
         "loading": "読み込み中...",
@@ -335,7 +336,7 @@
         "expired": "期限切れ",
         "newStartRequired": "新規開始が必要",
         "watchdogExpired": "ウォッチドッグ期限切れ",
-        "collateralPerNode": "ノードあたり25K FAIR",
+        "collateralPerNode": "ノードあたり10K FAIR",
         "ofTotalSupplyLocked": "総供給量のロック分",
         "masternodeRequirements": "マスターノード要件",
         "collateralRequired": "必要担保",
@@ -386,7 +387,7 @@
             },
             "important": {
                 "title": "重要：",
-                "description": "マスターノードを実行するには、正確に25,000 FAIRコインを担保として必要とします。これらのコインはウォレットに残り、支出されませんが、マスターノードをアクティブに保つためにそこに留めておく必要があります。"
+                "description": "マスターノードを実行するには、正確に10,000 FAIRコインを担保として必要とします。これらのコインはウォレットに残り、支出されませんが、マスターノードをアクティブに保つためにそこに留めておく必要があります。"
             }
         },
         "guide": {
@@ -411,12 +412,12 @@
                 {
                     "title": "入金アドレスを取得",
                     "description": "マスターノード入金アドレスを生成",
-                    "details": "コンソールで入力：getaccountaddress 0。結果をコピー - これは正確に25,000 FAIRコインを入金するあなたのMASTERNODE DEPOSIT ADDRESSです。"
+                    "details": "コンソールで入力：getaccountaddress 0。結果をコピー - これは正確に10,000 FAIRコインを入金するあなたのMASTERNODE DEPOSIT ADDRESSです。"
                 },
                 {
                     "title": "コインを入金",
-                    "description": "入金アドレスに正確に25,000 FAIRを送信",
-                    "details": "マスターノード入金アドレスに正確に25,000 FAIRコイン（それ以上でもそれ以下でもない）を支払います。トランザクションの15確認を待ちます。"
+                    "description": "入金アドレスに正確に10,000 FAIRを送信",
+                    "details": "マスターノード入金アドレスに正確に10,000 FAIRコイン（それ以上でもそれ以下でもない）を支払います。トランザクションの15確認を待ちます。"
                 },
                 {
                     "title": "秘密鍵を生成",
@@ -458,7 +459,7 @@
                     "title": "重要な注意事項：",
                     "note1": "YOURIPを実際の外部IPアドレスに置き換え",
                     "note2": "PRIVATEKEYREPLACETHISを生成されたマスターノード秘密鍵に置き換え",
-                    "note3": "INSERTYOURTXIDを25,000 FAIR入金のトランザクションIDに置き換え",
+                    "note3": "INSERTYOURTXIDを10,000 FAIR入金のトランザクションIDに置き換え",
                     "note4": "すべてのマスターノードは、ネットワークに認識され報酬の対象となる前に、一定数のブロックでアクティブである必要があります"
                 }
             }
@@ -487,7 +488,7 @@
             "network": {
                 "title": "ネットワーク要件",
                 "items": [
-                    "25,000 FAIRコイン（正確な金額）",
+                    "10,000 FAIRコイン（正確な金額）",
                     "アクティベーションのための15確認",
                     "安定したネットワーク接続",
                     "ポート46372が開いていてアクセス可能"
@@ -617,7 +618,7 @@
         "masternodeStaking": "マスターノードステーキング",
         "requirements": "要件",
         "premium": "プレミアム",
-        "masternodeRequirement1": "25,000 FAIR担保が必要",
+        "masternodeRequirement1": "10,000 FAIR担保が必要",
         "masternodeRequirement2": "ネットワークサービス提供（FastSend、Mixing）",
         "masternodeRequirement3": "ウォレットステーキングより高い報酬",
         "masternodeRequirement4": "ガバナンス投票を有効化",

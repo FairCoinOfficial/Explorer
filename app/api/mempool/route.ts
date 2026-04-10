@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     
     // Get mempool information
     const [mempoolInfo, rawMempool] = await Promise.all([
-      rpcWithNetwork<any>('getmempoolinfo', [], network).catch(() => null),
+      rpcWithNetwork<Record<string, unknown>>('getmempoolinfo', [], network).catch(() => null),
       rpcWithNetwork<string[]>('getrawmempool', [], network).catch(() => [])
     ])
 
@@ -20,16 +20,18 @@ export async function GET(request: NextRequest) {
 
     for (const txid of recentTxs) {
       try {
-        const mempoolEntry = await rpcWithNetwork<any>('getmempoolentry', [txid], network)
+        const mempoolEntry = await rpcWithNetwork<Record<string, unknown>>('getmempoolentry', [txid], network)
         detailedTxs.push({
           txid,
-          size: mempoolEntry.size || 0,
-          fee: mempoolEntry.fee || 0,
-          feeRate: mempoolEntry.ancestorfees ? (mempoolEntry.ancestorfees / mempoolEntry.ancestorsize) : 0,
-          time: mempoolEntry.time || Date.now() / 1000,
-          depends: mempoolEntry.depends || []
+          size: Number(mempoolEntry.size ?? 0),
+          fee: Number(mempoolEntry.fee ?? 0),
+          feeRate: mempoolEntry.ancestorfees && mempoolEntry.ancestorsize
+            ? Number(mempoolEntry.ancestorfees) / Number(mempoolEntry.ancestorsize)
+            : 0,
+          time: Number(mempoolEntry.time ?? Date.now() / 1000),
+          depends: (mempoolEntry.depends as string[]) ?? []
         })
-      } catch (error) {
+      } catch {
         // If getmempoolentry fails, create a basic entry
         detailedTxs.push({
           txid,
@@ -42,12 +44,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // FairCoin v3.0.0 getmempoolinfo only returns {size, bytes}
+    // Do not fabricate fields that don't exist in the RPC response
     const formattedMempoolInfo = {
       size: rawMempool.length,
-      bytes: mempoolInfo?.bytes || rawMempool.length * 250, // Estimate if not available
-      usage: mempoolInfo?.usage || 0,
-      maxmempool: mempoolInfo?.maxmempool || 67108864, // 64MB default
-      mempoolminfee: mempoolInfo?.mempoolminfee || 0.00001,
+      bytes: Number(mempoolInfo?.bytes ?? rawMempool.length * 250),
       transactions: detailedTxs
     }
     
@@ -55,10 +56,11 @@ export async function GET(request: NextRequest) {
       mempoolInfo: formattedMempoolInfo,
       network 
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch mempool information'
     console.error('Error fetching mempool info:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch mempool information' },
+      { error: message },
       { status: 500 }
     )
   }

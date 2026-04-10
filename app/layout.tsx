@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   ],
   authors: [
     { name: 'FairCoin Team', url: 'https://fairco.in' },
-    { name: 'FairCoin Explorer', url: 'http://localhost:3000' }
+    { name: 'FairCoin Explorer', url: 'https://explorer.fairco.in' }
   ],
   creator: 'FairCoin Team',
   publisher: 'FairCoin',
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('http://localhost:3000'),
+  metadataBase: new URL('https://explorer.fairco.in'),
   alternates: {
     canonical: '/',
     languages: {
@@ -93,15 +93,10 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  verification: {
-    google: 'your-google-verification-code',
-    yandex: 'your-yandex-verification-code',
-    yahoo: 'your-yahoo-verification-code',
-  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'http://localhost:3000',
+    url: 'https://explorer.fairco.in',
     siteName: 'FairCoin Explorer',
     title: 'FairCoin Explorer - Blockchain Explorer & Analytics',
     description: 'Explore the FairCoin blockchain with our comprehensive explorer. View blocks, transactions, addresses, and network statistics in real-time.',
@@ -206,7 +201,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               "@type": "WebApplication",
               "name": "FairCoin Explorer",
               "description": "Explore the FairCoin blockchain with our comprehensive explorer. View blocks, transactions, addresses, and network statistics in real-time.",
-              "url": "http://localhost:3000",
+              "url": "https://explorer.fairco.in",
               "applicationCategory": "FinanceApplication",
               "operatingSystem": "Web Browser",
               "browserRequirements": "Requires JavaScript. Requires HTML5.",

@@ -36,7 +36,7 @@ Allow: /network-status
 Allow: /tools
 
 # Sitemap location
-Sitemap: http://localhost:3000/sitemap.xml
+Sitemap: https://explorer.fairco.in/sitemap.xml
 
 # Crawl delay (optional)
 Crawl-delay: 1

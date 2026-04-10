@@ -10,7 +10,8 @@ import {
     BarChart3,
     Shield,
     Clock,
-    Database
+    Database,
+    Users
 } from "lucide-react"
 import { useTranslations } from 'next-intl'
 
@@ -88,6 +89,14 @@ export function NavMain() {
                         <Link href="/mempool" onClick={handleNavigation}>
                             <Clock />
                             <span>{t('mempool')}</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip={t('peers')}>
+                        <Link href="/peers" onClick={handleNavigation}>
+                            <Users />
+                            <span>{t('peers')}</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>

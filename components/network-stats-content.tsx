@@ -273,7 +273,7 @@ export function StatsContent() {
                                 <div className="text-xs text-muted-foreground">Premine</div>
                             </div>
                             <div className="border rounded-lg p-3">
-                                <div className="text-lg font-bold">10 FAIR</div>
+                                <div className="text-lg font-bold">5 FAIR</div>
                                 <div className="text-xs text-muted-foreground">Per Block</div>
                             </div>
                         </div>
@@ -284,7 +284,7 @@ export function StatsContent() {
                             <div>
                                 <div className="flex justify-between text-sm mb-1">
                                     <span>Proof of Work Phase</span>
-                                    <span>Blocks 1-25,000</span>
+                                    <span>Blocks 1-10,000</span>
                                 </div>
                                 <div className="text-xs text-muted-foreground">
                                     Initial mining phase with Quark algorithm
@@ -294,7 +294,7 @@ export function StatsContent() {
                             <div>
                                 <div className="flex justify-between text-sm mb-1">
                                     <span>Proof of Stake Phase</span>
-                                    <span>Blocks 25,001+</span>
+                                    <span>Blocks 10,001+</span>
                                 </div>
                                 <div className="text-xs text-muted-foreground">
                                     Current phase: Energy-efficient staking
@@ -312,7 +312,7 @@ export function StatsContent() {
                             <div className="space-y-2">
                                 <div className="flex justify-between">
                                     <span className="text-sm">Block Reward</span>
-                                    <span className="text-sm font-mono">10 FAIR</span>
+                                    <span className="text-sm font-mono">5 FAIR</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm">Block Time</span>
@@ -344,7 +344,7 @@ export function StatsContent() {
                                 <Badge variant="default">Premium</Badge>
                             </div>
                             <div className="text-sm text-muted-foreground space-y-1">
-                                <p>• 25,000 FAIR collateral required</p>
+                                <p>• 10,000 FAIR collateral required</p>
                                 <p>• Provides network services (FastSend, Mixing)</p>
                                 <p>• Higher rewards than wallet staking</p>
                                 <p>• Enables governance voting</p>

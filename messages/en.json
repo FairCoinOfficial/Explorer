@@ -10,7 +10,8 @@
         "stats": "Statistics",
         "tools": "Tools",
         "addressValidator": "Address Validator",
-        "feeCalculator": "Fee Calculator"
+        "feeCalculator": "Fee Calculator",
+        "peers": "Peers"
     },
     "home": {
         "title": "FairCoin Explorer",
@@ -354,7 +355,7 @@
         "expired": "Expired",
         "newStartRequired": "New Start Required",
         "watchdogExpired": "Watchdog Expired",
-        "collateralPerNode": "25K FAIR per node",
+        "collateralPerNode": "10K FAIR per node",
         "ofTotalSupplyLocked": "Of total supply locked",
         "masternodeRequirements": "Masternode Requirements",
         "collateralRequired": "Collateral Required",
@@ -367,7 +368,7 @@
         "currentlyEnabled": "Currently enabled",
         "blockRewardsAndFees": "Block rewards + transaction fees",
         "enablesMixingAndFastSend": "Masternodes enable Coin Mixing and FastSend features",
-                "decentralizedVoting": "Decentralized blockchain voting for network decisions",
+        "decentralizedVoting": "Decentralized blockchain voting for network decisions",
         "tabs": {
             "overview": "Overview",
             "guide": "Windows Guide",
@@ -405,7 +406,7 @@
             },
             "important": {
                 "title": "Important:",
-                "description": "Running a masternode requires exactly 25,000 FAIR coins as collateral. These coins remain in your wallet and are not spent, but they must stay there for the masternode to remain active."
+                "description": "Running a masternode requires exactly 10,000 FAIR coins as collateral. These coins remain in your wallet and are not spent, but they must stay there for the masternode to remain active."
             }
         },
         "guide": {
@@ -430,12 +431,12 @@
                 {
                     "title": "Get Deposit Address",
                     "description": "Generate your masternode deposit address",
-                    "details": "In the console, enter: getaccountaddress 0. Copy the result - this is your MASTERNODE DEPOSIT ADDRESS where you'll deposit exactly 25,000 FAIR coins."
+                    "details": "In the console, enter: getaccountaddress 0. Copy the result - this is your MASTERNODE DEPOSIT ADDRESS where you'll deposit exactly 10,000 FAIR coins."
                 },
                 {
                     "title": "Deposit Coins",
-                    "description": "Send exactly 25,000 FAIR to deposit address",
-                    "details": "Pay exactly 25,000 FAIR coins (no more, no less) to your masternode deposit address. Wait for 15 confirmations of the transaction."
+                    "description": "Send exactly 10,000 FAIR to deposit address",
+                    "details": "Pay exactly 10,000 FAIR coins (no more, no less) to your masternode deposit address. Wait for 15 confirmations of the transaction."
                 },
                 {
                     "title": "Generate Private Key",
@@ -477,7 +478,7 @@
                     "title": "Important Notes:",
                     "note1": "Replace YOURIP with your actual external IP address",
                     "note2": "Replace PRIVATEKEYREPLACETHIS with your generated masternode private key",
-                    "note3": "Replace INSERTYOURTXID with the transaction ID of your 25,000 FAIR deposit",
+                    "note3": "Replace INSERTYOURTXID with the transaction ID of your 10,000 FAIR deposit",
                     "note4": "All masternodes need to be active for a certain amount of blocks before they are recognized by the network and eligible for rewards"
                 }
             }
@@ -506,7 +507,7 @@
             "network": {
                 "title": "Network Requirements",
                 "items": [
-                    "25,000 FAIR coins (exact amount)",
+                    "10,000 FAIR coins (exact amount)",
                     "15 confirmations for activation",
                     "Stable network connection",
                     "Port 46372 open and accessible"
@@ -704,7 +705,7 @@
         "masternodeStaking": "Masternode Staking",
         "requirements": "Requirements",
         "premium": "Premium",
-        "masternodeRequirement1": "25,000 FAIR collateral required",
+        "masternodeRequirement1": "10,000 FAIR collateral required",
         "masternodeRequirement2": "Provides network services (FastSend, Mixing)",
         "masternodeRequirement3": "Higher rewards than wallet staking",
         "masternodeRequirement4": "Enables governance voting",

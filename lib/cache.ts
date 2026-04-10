@@ -163,7 +163,12 @@ export class BlockCache extends BlockchainCache {
   }
 
   async getStakingInfo(network: NetworkType): Promise<any> {
-    return this.get('getstakinginfo', [], { network, ttl: 300 }) // 5 minute TTL for staking info
+    try {
+      return await this.get('getstakinginfo', [], { network, ttl: 300 })
+    } catch {
+      // getstakinginfo does not exist on FairCoin v3.0.0 (PIVX-based)
+      return null
+    }
   }
 
   async getRawMempool(network: NetworkType): Promise<any> {

@@ -4,6 +4,9 @@ import { blockCache } from '@/lib/cache'
 
 export const dynamic = 'force-dynamic'
 
+// FairCoin v3.0.0 block reward is 5 FAIR per block
+const BLOCK_REWARD = 5
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -29,9 +32,10 @@ export async function GET(request: NextRequest) {
     // Get latest block info from cache
     const latestBlock = blockHeight > 0 ? await blockCache.getBlock(blockHeight, network, true).catch(() => null) : null
 
-    // FairCoin-specific calculations
-    const totalSupply = blockchainInfo?.moneysupply || 33000000 // Max supply if not available
-    const circulatingSupply = totalSupply * 0.9 // 90% premine is circulating
+    // FairCoin v3.0.0: moneysupply not available in getblockchaininfo
+    // Estimate total supply as blockHeight * blockReward
+    const totalSupply = blockHeight > 0 ? blockHeight * BLOCK_REWARD : 0
+    const circulatingSupply = totalSupply
     const masternodeCount = typeof masternodeList === 'object' ? Object.keys(masternodeList).length : 0
     const avgBlockTime = 120 // FairCoin target block time (2 minutes)
     
@@ -44,9 +48,9 @@ export async function GET(request: NextRequest) {
       ? (miningInfo?.networkhashps || difficulty * Math.pow(2, 32) / avgBlockTime)
       : 0 // PoS doesn't have traditional hashrate
 
-    // Staking information (for PoS phase)
-    const stakingRewards = 5.0 // FairCoin PoS rewards estimate
-    const stakePercentage = 0 // Will need getstakinginfo RPC command
+    // Staking information - getstakinginfo does not exist on v3.0.0
+    const stakingRewards = BLOCK_REWARD
+    const stakePercentage = 0
 
     // Calculate some derived statistics
     const stats = {
@@ -57,8 +61,8 @@ export async function GET(request: NextRequest) {
       circulatingSupply,
       avgBlockTime,
       memPoolSize: mempoolInfo?.size || 0,
-      totalTransactions: blockHeight * (latestBlock?.nTx || 1), // Better estimate based on actual transactions
-      networkWeight: 0, // Will need getstakinginfo
+      totalTransactions: blockHeight * (latestBlock?.nTx || 1),
+      networkWeight: 0,
       avgTransactionsPerBlock: latestBlock?.nTx || 1,
       masternodeCount,
       stakingRewards,
@@ -77,10 +81,11 @@ export async function GET(request: NextRequest) {
       stats,
       network 
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch network statistics'
     console.error('Error fetching network stats:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch network statistics' },
+      { error: message },
       { status: 500 }
     )
   }

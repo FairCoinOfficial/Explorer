@@ -325,7 +325,7 @@ export function StatsContent() {
                                     <div className="text-xs text-muted-foreground">{t('premine')}</div>
                                 </div>
                                 <div className="border rounded-lg p-4 text-center">
-                                    <div className="text-lg font-bold">10 FAIR</div>
+                                    <div className="text-lg font-bold">5 FAIR</div>
                                     <div className="text-xs text-muted-foreground">{t('perBlock')}</div>
                                 </div>
                             </div>
@@ -363,7 +363,7 @@ export function StatsContent() {
                                     <div className="border rounded-lg p-4 space-y-3">
                                         <div className="flex justify-between items-center">
                                             <span className="text-sm">{t('blockReward')}</span>
-                                            <span className="text-sm font-mono font-semibold">10 FAIR</span>
+                                             <span className="text-sm font-mono font-semibold">5 FAIR</span>
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <span className="text-sm">{t('blockTime')}</span>

@@ -10,7 +10,8 @@
         "stats": "Statistiken",
         "tools": "Werkzeuge",
         "addressValidator": "Adressvalidator",
-        "feeCalculator": "Gebührenrechner"
+        "feeCalculator": "Gebührenrechner",
+        "peers": "Peers"
     },
     "common": {
         "loading": "Laden...",
@@ -354,7 +355,7 @@
         "expired": "Abgelaufen",
         "newStartRequired": "Neuer Start Erforderlich",
         "watchdogExpired": "Watchdog Abgelaufen",
-        "collateralPerNode": "25K FAIR pro Knoten",
+        "collateralPerNode": "10K FAIR pro Knoten",
         "ofTotalSupplyLocked": "Des Gesamtangebots gesperrt",
         "masternodeRequirements": "Masternode-Anforderungen",
         "collateralRequired": "Erforderliche Sicherheit",
@@ -405,7 +406,7 @@
             },
             "important": {
                 "title": "Wichtig:",
-                "description": "Der Betrieb eines Masternodes erfordert genau 25.000 FAIR-Münzen als Sicherheit. Diese Münzen bleiben in Ihrer Wallet und werden nicht ausgegeben, müssen aber dort bleiben, damit der Masternode aktiv bleibt."
+                "description": "Der Betrieb eines Masternodes erfordert genau 10.000 FAIR-Münzen als Sicherheit. Diese Münzen bleiben in Ihrer Wallet und werden nicht ausgegeben, müssen aber dort bleiben, damit der Masternode aktiv bleibt."
             }
         },
         "guide": {
@@ -430,12 +431,12 @@
                 {
                     "title": "Einzahlungsadresse abrufen",
                     "description": "Generieren Sie Ihre Masternode-Einzahlungsadresse",
-                    "details": "Geben Sie in der Konsole ein: getaccountaddress 0. Kopieren Sie das Ergebnis - dies ist Ihre MASTERNODE DEPOSIT ADDRESS, wohin Sie genau 25.000 FAIR-Münzen einzahlen werden."
+                    "details": "Geben Sie in der Konsole ein: getaccountaddress 0. Kopieren Sie das Ergebnis - dies ist Ihre MASTERNODE DEPOSIT ADDRESS, wohin Sie genau 10.000 FAIR-Münzen einzahlen werden."
                 },
                 {
                     "title": "Münzen einzahlen",
-                    "description": "Senden Sie genau 25.000 FAIR an die Einzahlungsadresse",
-                    "details": "Zahlen Sie genau 25.000 FAIR-Münzen (weder mehr noch weniger) auf Ihre Masternode-Einzahlungsadresse ein. Warten Sie auf 15 Bestätigungen der Transaktion."
+                    "description": "Senden Sie genau 10.000 FAIR an die Einzahlungsadresse",
+                    "details": "Zahlen Sie genau 10.000 FAIR-Münzen (weder mehr noch weniger) auf Ihre Masternode-Einzahlungsadresse ein. Warten Sie auf 15 Bestätigungen der Transaktion."
                 },
                 {
                     "title": "Privaten Schlüssel generieren",
@@ -477,7 +478,7 @@
                     "title": "Wichtige Hinweise:",
                     "note1": "Ersetzen Sie YOURIP durch Ihre tatsächliche externe IP-Adresse",
                     "note2": "Ersetzen Sie PRIVATEKEYREPLACETHIS durch Ihren generierten Masternode-privaten Schlüssel",
-                    "note3": "Ersetzen Sie INSERTYOURTXID durch die Transaktions-ID Ihrer 25.000 FAIR-Einzahlung",
+                    "note3": "Ersetzen Sie INSERTYOURTXID durch die Transaktions-ID Ihrer 10.000 FAIR-Einzahlung",
                     "note4": "Alle Masternodes müssen für eine bestimmte Anzahl von Blöcken aktiv sein, bevor sie vom Netzwerk erkannt werden und für Belohnungen berechtigt sind"
                 }
             }
@@ -506,7 +507,7 @@
             "network": {
                 "title": "Netzwerk-Anforderungen",
                 "items": [
-                    "25.000 FAIR-Münzen (genauer Betrag)",
+                    "10.000 FAIR-Münzen (genauer Betrag)",
                     "15 Bestätigungen für Aktivierung",
                     "Stabile Netzwerkverbindung",
                     "Port 46372 offen und zugänglich"
@@ -703,7 +704,7 @@
         "masternodeStaking": "Masternode Staking",
         "requirements": "Anforderungen",
         "premium": "Premium",
-        "masternodeRequirement1": "25,000 FAIR Sicherheit erforderlich",
+        "masternodeRequirement1": "10,000 FAIR Sicherheit erforderlich",
         "masternodeRequirement2": "Bietet Netzwerkdienste (FastSend, Mixing)",
         "masternodeRequirement3": "Höhere Belohnungen als Wallet-Staking",
         "masternodeRequirement4": "Ermöglicht Governance-Abstimmung",

@@ -10,7 +10,8 @@
         "stats": "Statistiques",
         "tools": "Outils",
         "addressValidator": "Validateur d'Adresse",
-        "feeCalculator": "Calculateur de Frais"
+        "feeCalculator": "Calculateur de Frais",
+        "peers": "Pairs"
     },
     "common": {
         "loading": "Chargement...",
@@ -354,7 +355,7 @@
         "expired": "Expiré",
         "newStartRequired": "Nouveau Démarrage Requis",
         "watchdogExpired": "Watchdog Expiré",
-        "collateralPerNode": "25K FAIR par nœud",
+        "collateralPerNode": "10K FAIR par nœud",
         "ofTotalSupplyLocked": "De l'offre totale verrouillée",
         "masternodeRequirements": "Exigences des Masternodes",
         "collateralRequired": "Garantie Requise",
@@ -704,7 +705,7 @@
         "masternodeStaking": "Mise en Jeu Masternode",
         "requirements": "Exigences",
         "premium": "Premium",
-        "masternodeRequirement1": "25,000 FAIR de collatéral requis",
+        "masternodeRequirement1": "10,000 FAIR de collatéral requis",
         "masternodeRequirement2": "Fournit des services réseau (FastSend, Mixing)",
         "masternodeRequirement3": "Récompenses plus élevées que le staking de portefeuille",
         "masternodeRequirement4": "Permet le vote de gouvernance",
