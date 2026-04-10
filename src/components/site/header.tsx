@@ -210,6 +210,16 @@ export function SiteHeader() {
 
         {/* Right side actions */}
         <div className="flex items-center gap-1.5 ml-auto">
+          {/* Buy button */}
+          <a
+            href="https://buy.fairco.in/"
+            target="_blank"
+            rel="noreferrer"
+            className="hidden sm:flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            Buy FAIR
+          </a>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl" aria-label="Resources">
