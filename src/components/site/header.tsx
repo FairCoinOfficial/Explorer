@@ -13,7 +13,6 @@ import {
 import { Search, X, Globe, Code, Github, ExternalLink, Users, Blocks, Receipt, Wallet, Hash } from 'lucide-react'
 import { useState, useRef, useCallback } from 'react'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
 import { useTranslations } from '@/lib/i18n'
 
 interface SearchResult {
@@ -145,12 +144,8 @@ export function SiteHeader() {
 
         {/* Search bar with autocomplete - desktop */}
         <div className="hidden md:flex flex-1 max-w-xl mx-auto relative z-50">
-          <div className={cn(
-            "w-full transition-[border-radius,background-color,box-shadow] duration-200",
-            showDropdown && hasContent
-              ? "bg-muted rounded-t-3xl shadow-lg"
-              : "bg-muted/60 rounded-full hover:bg-muted focus-within:bg-muted",
-          )} style={showDropdown && hasContent ? { boxShadow: '0 4px 24px rgba(0,0,0,0.15)' } : undefined}>
+          <div className="w-full bg-muted/60 rounded-[20px] hover:bg-muted focus-within:bg-muted transition-colors duration-150 overflow-hidden">
+            {/* Input row */}
             <form onSubmit={handleSubmit} className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <input
@@ -166,22 +161,26 @@ export function SiteHeader() {
                 autoComplete="off"
               />
             </form>
-          </div>
 
-          {/* Results dropdown - absolutely positioned, visually continues the box */}
-          {showDropdown && hasContent && (
-            <div className="absolute top-full left-0 right-0 bg-muted rounded-b-3xl overflow-hidden" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
-              <div className="mx-4 mb-1" style={{ borderTop: '1px solid hsl(var(--border))' }} />
-              <div className="pb-2">
+            {/* Results - slides down inside the same container */}
+            <div
+              className="transition-[max-height,opacity] duration-200 ease-out"
+              style={{
+                maxHeight: showDropdown && hasContent ? '300px' : '0',
+                opacity: showDropdown && hasContent ? 1 : 0,
+              }}
+            >
+              <div className="mx-4" style={{ borderTop: '1px solid hsl(var(--border))' }} />
+              <div className="py-1">
                 {isSearching ? (
-                  <div className="flex items-center gap-3 px-4 py-2">
+                  <div className="flex items-center gap-3 px-4 py-2.5">
                     <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                     <span className="text-sm text-muted-foreground">{t('searching')}</span>
                   </div>
                 ) : results && results.type !== 'not_found' && ResultIcon ? (
                   <button
                     type="button"
-                    className="flex items-center gap-3 w-full px-4 py-2 hover:bg-background/50 text-left transition-colors cursor-pointer"
+                    className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-background/40 rounded-lg mx-0 text-left transition-colors cursor-pointer"
                     onMouseDown={(e) => { e.preventDefault(); navigateToResult(results) }}
                   >
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
@@ -194,7 +193,7 @@ export function SiteHeader() {
                     <Hash className="h-3 w-3 text-muted-foreground shrink-0" />
                   </button>
                 ) : results?.type === 'not_found' ? (
-                  <div className="flex items-center gap-3 px-4 py-2">
+                  <div className="flex items-center gap-3 px-4 py-2.5">
                     <Search className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="text-sm text-muted-foreground">{t('noResults', { query: searchQuery })}</span>
                   </div>
@@ -202,7 +201,7 @@ export function SiteHeader() {
 
                 <button
                   type="button"
-                  className="flex items-center gap-3 w-full px-4 py-2 hover:bg-background/50 text-left transition-colors cursor-pointer"
+                  className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-background/40 rounded-lg text-left transition-colors cursor-pointer"
                   onMouseDown={(e) => {
                     e.preventDefault()
                     navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
@@ -216,7 +215,7 @@ export function SiteHeader() {
                 </button>
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Right side actions */}

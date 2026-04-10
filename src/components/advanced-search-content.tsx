@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { useNetwork } from "@/contexts/network-context"
 import { Search, Hash, Clock, Wallet, FileText, TrendingUp, History, X, ExternalLink, AlertCircle, CheckCircle, Info, Eye, Copy } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -215,9 +216,9 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text).then(() => {
-            console.log('Copied to clipboard:', text)
-        }).catch(err => {
-            console.error('Failed to copy text: ', err)
+            toast.success('Copied to clipboard')
+        }).catch(() => {
+            toast.error('Failed to copy')
         })
     }
 
