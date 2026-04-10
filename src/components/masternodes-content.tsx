@@ -30,12 +30,12 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-// Translation stub (i18n removed during Vite migration)
-const t = (key: string, _params?: Record<string, unknown>): string => key
+import { useTranslations } from "@/lib/i18n"
 
 export function MasternodesContent() {
     const { currentNetwork } = useNetwork()
     const [activeTab, setActiveTab] = useState("overview")
+    const t = useTranslations('masternodes')
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text).then(() => {

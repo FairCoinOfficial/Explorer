@@ -7,9 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { SectionHeader, InfoGrid } from "@/components/ui"
-const tCommon = (key: string, _params?: Record<string, unknown>): string => key
-// Translation stub (i18n removed during Vite migration)
-const t = (key: string, _params?: Record<string, unknown>): string => key
+import { useTranslations } from "@/lib/i18n"
 
 interface ValidationResult {
     isValid: boolean
@@ -23,7 +21,9 @@ export function AddressValidatorContent() {
     const [address, setAddress] = useState("")
     const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
     const [isValidating, setIsValidating] = useState(false)
-    const [networkValidation, setNetworkValidation] = useState<any>(null)
+    const [networkValidation, setNetworkValidation] = useState<Record<string, unknown> | null>(null)
+    const t = useTranslations('tools.addressValidator')
+    const tCommon = useTranslations('common')
 
     // FairCoin address validation
     const validateAddress = (address: string): ValidationResult => {
@@ -157,7 +157,7 @@ export function AddressValidatorContent() {
         <div className="space-y-6">
             <div className="flex items-center gap-2">
                 <Wallet className="h-5 w-5" />
-                <h1 className="text-2xl font-bold">{"Title"}</h1>
+                <h1 className="text-2xl font-bold">{t('title')}</h1>
                 <Badge variant="outline">{currentNetwork.toUpperCase()}</Badge>
             </div>
 

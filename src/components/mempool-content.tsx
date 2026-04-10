@@ -9,9 +9,7 @@ import { Clock, Zap, RefreshCw, Home, Hash, Database } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { SectionHeader, StatsCard, StatsGrid, LoadingState, EmptyState } from '@/components/ui'
-const tCommon = (key: string, _params?: Record<string, unknown>): string => key
-// Translation stub (i18n removed during Vite migration)
-const t = (key: string, _params?: Record<string, unknown>): string => key
+import { useTranslations } from '@/lib/i18n'
 
 interface MempoolTransaction {
     txid: string
@@ -34,6 +32,8 @@ export default function MempoolContent() {
     const [mempoolInfo, setMempoolInfo] = useState<MempoolInfo | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const t = useTranslations('mempool')
+    const tCommon = useTranslations('common')
 
     const fetchMempool = async () => {
         try {
@@ -117,7 +117,7 @@ export default function MempoolContent() {
             {/* Header */}
             <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{"Title"}</h2>
+                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{t('title')}</h2>
                     <p className="text-sm text-muted-foreground sm:text-base">
                         {t('description')}
                     </p>

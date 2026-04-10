@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-// Translation stub (i18n removed during Vite migration)
-const t = (key: string, _params?: Record<string, unknown>): string => key
+import { useTranslations } from "@/lib/i18n"
 
 interface AdvancedSearchContentProps {
     initialQuery?: string
@@ -21,15 +20,36 @@ interface SearchSuggestion {
     value: string
     label: string
     description: string
-    icon: any
+    icon: typeof Search
     color: string
+}
+
+interface SearchResultData {
+    height?: number
+    hash?: string
+    time?: number
+    nTx?: number
+    size?: number
+    difficulty?: number
+    tx?: string[]
+    txid?: string
+    confirmations?: number
+    vin?: unknown[]
+    vout?: unknown[]
+    address?: string
+    balance?: number
+    totalReceived?: number
+    totalSent?: number
+    txCount?: number
+    network?: string
+    length?: number
 }
 
 interface SearchResult {
     query: string
     network: string
     type: string
-    results: any
+    results: SearchResultData | null
     timestamp: string
     message?: string
 }
@@ -37,6 +57,7 @@ interface SearchResult {
 export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mainnet" }: AdvancedSearchContentProps) {
     const { currentNetwork } = useNetwork()
     const navigate = useNavigate()
+    const t = useTranslations('search')
     const [searchQuery, setSearchQuery] = useState(initialQuery)
     const [isSearching, setIsSearching] = useState(false)
     const [searchHistory, setSearchHistory] = useState<string[]>([])
@@ -567,10 +588,10 @@ export function AdvancedSearchContent({ initialQuery = "", initialNetwork = "mai
                     </div>
                     <div>
                         <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                            {"Title"}
+                            {t('title')}
                         </h1>
                         <p className="text-muted-foreground mt-1">
-                            Search the FairCoin blockchain for blocks, transactions, and addresses
+                            {t('subtitle')}
                         </p>
                     </div>
                 </div>

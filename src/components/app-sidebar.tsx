@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { useNetwork } from "@/contexts/network-context"
+import { useTranslations } from "@/lib/i18n"
+import { LanguageSelector } from "@/components/language-selector"
 
 interface NavItemProps {
   icon: LucideIcon
@@ -43,13 +45,16 @@ function NavItem({ icon: Icon, label, to, collapsed }: NavItemProps) {
         title={label}
         onClick={() => setOpenMobile(false)}
         className={cn(
-          "group/nav-icon flex w-10 h-10 rounded-xl items-center justify-center",
-          isActive ? "bg-muted" : "hover:bg-muted active:bg-muted/80",
+          "group/nav-icon flex w-10 h-10 rounded-full items-center justify-center transition-colors",
+          isActive ? "bg-primary/15 text-primary" : "hover:bg-muted active:bg-muted/80",
         )}
       >
         <Icon
           size={20}
-          className="text-foreground transition-transform group-hover/nav-icon:scale-110"
+          className={cn(
+            "transition-transform group-hover/nav-icon:scale-110",
+            isActive ? "text-primary" : "text-foreground",
+          )}
         />
       </Link>
     )
@@ -63,16 +68,19 @@ function NavItem({ icon: Icon, label, to, collapsed }: NavItemProps) {
             to={to}
             onClick={() => setOpenMobile(false)}
             className={cn(
-              "flex flex-row items-center gap-2 overflow-hidden rounded-xl text-left h-[36px] w-full p-1.5",
+              "flex flex-row items-center gap-2 overflow-hidden rounded-full text-left h-[36px] w-full px-3 transition-colors",
               isActive
-                ? "bg-muted"
+                ? "bg-primary/15 text-primary"
                 : "hover:bg-muted active:bg-muted/80",
             )}
           >
             <div className="w-6 h-6 flex items-center justify-center shrink-0">
-              <Icon size={18} className="text-foreground" />
+              <Icon size={18} className={isActive ? "text-primary" : "text-foreground"} />
             </div>
-            <span className="text-sm text-foreground select-none font-semibold">
+            <span className={cn(
+              "text-sm select-none font-semibold",
+              isActive ? "text-primary" : "text-foreground",
+            )}>
               {label}
             </span>
           </Link>
@@ -82,29 +90,31 @@ function NavItem({ icon: Icon, label, to, collapsed }: NavItemProps) {
   )
 }
 
-const mainNav = [
-  { icon: Home, label: 'Home', to: '/' },
-  { icon: Search, label: 'Search', to: '/search' },
-  { icon: Blocks, label: 'Blocks', to: '/blocks' },
-  { icon: Receipt, label: 'Transactions', to: '/tx' },
-]
-
-const networkNav = [
-  { icon: BarChart3, label: 'Stats', to: '/stats' },
-  { icon: Shield, label: 'Masternodes', to: '/masternodes' },
-  { icon: Clock, label: 'Mempool', to: '/mempool' },
-  { icon: Users, label: 'Peers', to: '/peers' },
-  { icon: Network, label: 'Network', to: '/network-status' },
-]
-
-const toolsNav = [
-  { icon: Wrench, label: 'Tools', to: '/tools/fee-calculator' },
-]
-
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { state, isMobile, toggleSidebar } = useSidebar()
   const { currentNetwork, setNetwork } = useNetwork()
   const collapsed = state === 'collapsed' && !isMobile
+  const t = useTranslations('nav')
+  const tSidebar = useTranslations('sidebar')
+
+  const mainNav = [
+    { icon: Home, label: t('home'), to: '/' },
+    { icon: Search, label: t('search'), to: '/search' },
+    { icon: Blocks, label: t('blocks'), to: '/blocks' },
+    { icon: Receipt, label: t('transactions'), to: '/tx' },
+  ]
+
+  const networkNav = [
+    { icon: BarChart3, label: t('stats'), to: '/stats' },
+    { icon: Shield, label: t('masternodes'), to: '/masternodes' },
+    { icon: Clock, label: t('mempool'), to: '/mempool' },
+    { icon: Users, label: t('peers'), to: '/peers' },
+    { icon: Network, label: t('network'), to: '/network-status' },
+  ]
+
+  const toolsNav = [
+    { icon: Wrench, label: t('tools'), to: '/tools/fee-calculator' },
+  ]
 
   return (
     <Sidebar {...props}>
@@ -127,7 +137,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
               <button
                 onClick={toggleSidebar}
                 className="h-10 w-10 rounded-xl flex items-center justify-center hover:bg-muted cursor-pointer"
-                aria-label="Collapse sidebar"
+                aria-label={tSidebar('collapseSidebar')}
               >
                 <ChevronsLeft size={18} className="text-muted-foreground" />
               </button>
@@ -142,7 +152,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <button
             onClick={() => setNetwork(currentNetwork === 'mainnet' ? 'testnet' : 'mainnet')}
             className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-muted cursor-pointer"
-            title={currentNetwork === 'mainnet' ? 'Mainnet (click to switch)' : 'Testnet (click to switch)'}
+            title={currentNetwork === 'mainnet' ? tSidebar('mainnetSwitch') : tSidebar('testnetSwitch')}
           >
             <span
               className={cn(
@@ -154,7 +164,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         </div>
       ) : (
         <div className="shrink-0 px-3 pb-1">
-          <div className="flex flex-col rounded-xl bg-muted p-1 gap-0.5">
+          <div className="flex flex-col rounded-xl bg-muted/60 p-1 gap-0.5">
             <button
               onClick={() => setNetwork('mainnet')}
               className={cn(
@@ -165,7 +175,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
               )}
             >
               <span className="w-2 h-2 rounded-full bg-green-500" />
-              Mainnet
+              {tSidebar('mainnet')}
             </button>
             <button
               onClick={() => setNetwork('testnet')}
@@ -177,7 +187,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
               )}
             >
               <span className="w-2 h-2 rounded-full bg-orange-500" />
-              Testnet
+              {tSidebar('testnet')}
             </button>
           </div>
         </div>
@@ -232,11 +242,12 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
 
       {/* Footer */}
       <SidebarFooter className={cn(collapsed && "items-center")}>
+        <LanguageSelector collapsed={collapsed} />
         {collapsed && (
           <button
             onClick={toggleSidebar}
             className="h-10 w-10 rounded-xl flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
-            aria-label="Expand sidebar"
+            aria-label={tSidebar('expandSidebar')}
           >
             <ChevronsRight size={18} />
           </button>

@@ -33,7 +33,7 @@ export function NetworkStatus() {
     }, [currentNetwork])
 
     return (
-        <Badge variant="outline" className={`bg-secondary/10 text-secondary-foreground border-secondary/20 ${isConnected ? 'border-green-500/30' : 'border-red-500/30'}`}>
+        <Badge variant="outline" className={`rounded-full bg-secondary/10 text-secondary-foreground border-secondary/20 ${isConnected ? 'border-green-500/30' : 'border-red-500/30'}`}>
             {isConnected ? <Wifi className="w-3 h-3 mr-1" /> : <WifiOff className="w-3 h-3 mr-1" />}
             {networkConfig.displayName}
             {blockCount && (

@@ -13,6 +13,7 @@ import {
 import { Search, X, Globe, Code, Github, ExternalLink, Users, Blocks, Receipt, Wallet, Hash } from 'lucide-react'
 import { useState, useRef, useCallback } from 'react'
 import { cn } from '@/lib/utils'
+import { useTranslations } from '@/lib/i18n'
 
 interface SearchResult {
   type: 'block' | 'transaction' | 'address' | 'not_found'
@@ -26,14 +27,15 @@ const RESULT_ICONS: Record<string, typeof Blocks> = {
   address: Wallet,
 }
 
-const RESULT_LABELS: Record<string, string> = {
-  block: 'Block',
-  transaction: 'Transaction',
-  address: 'Address',
-}
+  const RESULT_LABELS: Record<string, string> = {
+    block: 'Block',
+    transaction: 'Transaction',
+    address: 'Address',
+  }
 
 export function SiteHeader() {
   const navigate = useNavigate()
+  const t = useTranslations('header')
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchExpanded, setIsSearchExpanded] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
@@ -121,10 +123,10 @@ export function SiteHeader() {
   const ResultIcon = results ? RESULT_ICONS[results.type] : null
 
   const externalLinks = [
-    { label: 'FairCoin Website', href: 'https://fairco.in', icon: ExternalLink, description: 'Official project website' },
-    { label: 'GitHub', href: 'https://github.com/FairCoinOfficial', icon: Github, description: 'View source code' },
-    { label: 'Documentation', href: 'https://docs.fairco.in', icon: Code, description: 'Guides and tutorials' },
-    { label: 'Community', href: 'https://community.fairco.in', icon: Users, description: 'Join discussions' },
+    { label: t('fairCoinWebsite'), href: 'https://fairco.in', icon: ExternalLink, description: t('fairCoinWebsiteDesc') },
+    { label: t('github'), href: 'https://github.com/FairCoinOfficial', icon: Github, description: t('githubDesc') },
+    { label: t('documentation'), href: 'https://docs.fairco.in', icon: Code, description: t('documentationDesc') },
+    { label: t('community'), href: 'https://community.fairco.in', icon: Users, description: t('communityDesc') },
   ]
 
   return (
@@ -146,13 +148,13 @@ export function SiteHeader() {
               <input
                 ref={inputRef}
                 type="text"
-                placeholder="Search blocks, transactions, addresses..."
+                placeholder={t('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => handleInputChange(e.target.value)}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setTimeout(() => setIsFocused(false), 200)}
                 className="w-full h-10 pl-11 pr-4 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
-                aria-label="Search blockchain"
+                aria-label={t('searchBlockchain')}
                 autoComplete="off"
               />
             </form>
@@ -164,7 +166,7 @@ export function SiteHeader() {
                 {isSearching ? (
                   <div className="flex items-center gap-3 px-4 py-2">
                     <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    <span className="text-sm text-muted-foreground">Searching...</span>
+                     <span className="text-sm text-muted-foreground">{t('searching')}</span>
                   </div>
                 ) : results && results.type !== 'not_found' && ResultIcon ? (
                   <button
@@ -184,7 +186,7 @@ export function SiteHeader() {
                 ) : results?.type === 'not_found' ? (
                   <div className="flex items-center gap-3 px-4 py-2">
                     <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="text-sm text-muted-foreground">No results for "{searchQuery}"</span>
+                    <span className="text-sm text-muted-foreground">{t('noResults', { query: searchQuery })}</span>
                   </div>
                 ) : null}
 
@@ -209,7 +211,7 @@ export function SiteHeader() {
         </div>
 
         {/* Right side actions */}
-        <div className="flex items-center gap-1.5 ml-auto">
+        <div className="flex items-center gap-2 ml-auto">
           {/* Buy button */}
           <a
             href="https://buy.fairco.in/"
@@ -222,14 +224,14 @@ export function SiteHeader() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl" aria-label="Resources">
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" aria-label={t('resources')}>
                 <Globe className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 p-1.5">
               <DropdownMenuLabel className="flex items-center gap-2 px-2 py-1.5 text-xs font-semibold">
                 <Globe className="h-3 w-3 text-primary" />
-                Resources
+                {t('resources')}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <div className="grid gap-0.5">
@@ -258,9 +260,9 @@ export function SiteHeader() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden h-9 w-9 rounded-xl"
+            className="md:hidden h-9 w-9 rounded-full"
             onClick={() => setIsSearchExpanded(!isSearchExpanded)}
-            aria-label="Toggle search"
+            aria-label={t('toggleSearch')}
           >
             {isSearchExpanded ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
           </Button>
@@ -275,11 +277,11 @@ export function SiteHeader() {
             <input
               ref={mobileInputRef}
               type="text"
-              placeholder="Search blocks, transactions, addresses..."
+              placeholder={t('searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => handleInputChange(e.target.value)}
               className="w-full h-10 pl-11 pr-4 rounded-full bg-muted/60 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/20"
-              aria-label="Search blockchain"
+              aria-label={t('searchBlockchain')}
               autoFocus
               autoComplete="off"
             />
@@ -291,7 +293,7 @@ export function SiteHeader() {
               {isSearching ? (
                 <div className="flex items-center gap-3 px-2 py-2">
                   <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  <span className="text-sm text-muted-foreground">Searching...</span>
+                   <span className="text-sm text-muted-foreground">{t('searching')}</span>
                 </div>
               ) : results && results.type !== 'not_found' && ResultIcon ? (
                 <button
@@ -309,7 +311,7 @@ export function SiteHeader() {
                 </button>
               ) : results?.type === 'not_found' ? (
                 <div className="flex items-center gap-3 px-2 py-2">
-                  <span className="text-sm text-muted-foreground">No results found</span>
+                  <span className="text-sm text-muted-foreground">{t('noResultsFound')}</span>
                 </div>
               ) : null}
             </div>

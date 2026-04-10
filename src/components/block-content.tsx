@@ -9,9 +9,7 @@ import { CopyButton } from '@/components/copy-button'
 import { Hash, Clock, Database, ArrowLeft, ArrowRight, RefreshCw, Home, Receipt } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-const common = (key: string): string => key
-// Translation stub (i18n removed during Vite migration)
-const t = (key: string, _params?: Record<string, unknown>): string => key
+import { useTranslations } from '@/lib/i18n'
 
 interface Block {
     hash: string
@@ -37,6 +35,8 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
     const [block, setBlock] = useState<Block | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const t = useTranslations('block')
+    const common = useTranslations('common')
 
     const fetchBlock = async () => {
         try {

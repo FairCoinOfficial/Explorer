@@ -6,8 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { SectionHeader, EmptyState, InfoGrid } from "@/components/ui"
-// Translation stub (i18n removed during Vite migration)
-const t = (key: string, _params?: Record<string, unknown>): string => key
+import { useTranslations } from "@/lib/i18n"
 
 export function FeeCalculatorContent() {
     const { currentNetwork } = useNetwork()
@@ -15,6 +14,7 @@ export function FeeCalculatorContent() {
     const [priority, setPriority] = useState("standard")
     const [estimatedFee, setEstimatedFee] = useState(0)
     const [totalCost, setTotalCost] = useState(0)
+    const t = useTranslations('tools.feeCalculator')
 
     // FairCoin fee structure
     const feeRates = useMemo(() => ({
@@ -83,7 +83,7 @@ export function FeeCalculatorContent() {
         <div className="space-y-6">
             <div className="flex items-center gap-2">
                 <Calculator className="h-5 w-5" />
-                <h1 className="text-2xl font-bold">{"Title"}</h1>
+                <h1 className="text-2xl font-bold">{t('title')}</h1>
                 <Badge variant="outline">{currentNetwork.toUpperCase()}</Badge>
             </div>
 

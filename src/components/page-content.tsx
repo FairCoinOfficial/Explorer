@@ -8,9 +8,7 @@ import { NetworkStatus } from '@/components/network-status';
 import { BlocksTable } from '@/components/ui/blocks-table';
 import { Activity, Blocks, TrendingUp, Clock, Hash, Users, ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-const nav = (key: string): string => key
-// Translation stub (i18n removed during Vite migration)
-const t = (key: string, _params?: Record<string, unknown>): string => key
+import { useTranslations } from '@/lib/i18n'
 
 interface PageContentProps {
     height: number;
@@ -21,6 +19,8 @@ interface PageContentProps {
 export function PageContent({ height, blocks, txFeed }: PageContentProps) {
 
     const latest = blocks[0] ?? null;
+    const t = useTranslations('home');
+    const nav = useTranslations('nav');
 
     return (
         <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">

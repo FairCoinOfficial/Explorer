@@ -11,9 +11,7 @@ import { Hash, Clock, CheckCircle, XCircle, Database, LinkIcon, FileText, AlertT
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-const common = (key: string): string => key
-// Translation stub (i18n removed during Vite migration)
-const t = (key: string, _params?: Record<string, unknown>): string => key
+import { useTranslations } from '@/lib/i18n'
 
 interface TransactionInput {
     txid: string
@@ -62,6 +60,8 @@ export function TransactionContent({ txid }: { txid: string }) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [isBlockHashError, setIsBlockHashError] = useState(false)
+    const t = useTranslations('tx')
+    const common = useTranslations('common')
 
     const fetchTransaction = async () => {
         try {

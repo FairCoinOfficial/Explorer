@@ -22,9 +22,7 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-const common = (key: string): string => key
-// Translation stub (i18n removed during Vite migration)
-const t = (key: string, _params?: Record<string, unknown>): string => key
+import { useTranslations } from '@/lib/i18n'
 
 interface NetworkStats {
     blockHeight: number
@@ -55,6 +53,8 @@ export function StatsContent() {
     const [stats, setStats] = useState<NetworkStats | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const t = useTranslations('stats')
+    const common = useTranslations('common')
 
     const fetchStats = async () => {
         try {
@@ -100,7 +100,7 @@ export function StatsContent() {
     if (loading) {
         return (
             <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-                <LoadingState message={t('loadingMessage')} />
+                <LoadingState message={t('loading')} />
             </div>
         )
     }
@@ -110,7 +110,7 @@ export function StatsContent() {
             <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
                 <EmptyState
                     icon={AlertTriangle}
-                    title={t('errorTitle')}
+                    title={t('error')}
                     description={error}
                     action={{
                         label: t('tryAgain'),
@@ -126,7 +126,7 @@ export function StatsContent() {
         return (
             <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
                 <div className="flex items-center justify-center h-64">
-                    <p className="text-lg text-muted-foreground">{t('noStatsAvailable')}</p>
+                    <p className="text-lg text-muted-foreground">{t('noStats')}</p>
                 </div>
             </div>
         )
@@ -140,9 +140,9 @@ export function StatsContent() {
             {/* Header */}
             <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{"Title"}</h2>
+                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{t('title')}</h2>
                     <p className="text-sm text-muted-foreground sm:text-base">
-                        {"Subtitle"}
+                        {t('subtitle')}
                     </p>
                 </div>
                 <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">

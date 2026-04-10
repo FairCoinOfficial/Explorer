@@ -5,9 +5,7 @@ import { Activity, Wifi, WifiOff, CheckCircle, XCircle, Clock, TrendingUp } from
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-const tCommon = (key: string, _params?: Record<string, unknown>): string => key
-// Translation stub (i18n removed during Vite migration)
-const t = (key: string, _params?: Record<string, unknown>): string => key
+import { useTranslations } from "@/lib/i18n"
 
 interface NetworkStatus {
     isOnline: boolean
@@ -27,6 +25,8 @@ export function NetworkStatusContent() {
     const [status, setStatus] = useState<NetworkStatus | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
+    const t = useTranslations('network')
+    const tCommon = useTranslations('common')
 
     const fetchNetworkStatus = useCallback(async () => {
         try {
@@ -95,7 +95,7 @@ export function NetworkStatusContent() {
             setIsLoading(false)
             setLastUpdate(new Date())
         }
-    }, [currentNetwork, t])
+    }, [currentNetwork])
 
     // Initial fetch
     useEffect(() => {
@@ -160,7 +160,7 @@ export function NetworkStatusContent() {
             }))
             setIsLoading(false)
         }
-    }, [blockHeight, mempoolSize, networkStats, isConnected, t])
+    }, [blockHeight, mempoolSize, networkStats, isConnected])
 
     const getStatusColor = (isOnline: boolean) => {
         return isOnline
@@ -196,12 +196,12 @@ export function NetworkStatusContent() {
             <div className="space-y-6">
                 <div className="flex items-center gap-2">
                     <Activity className="h-5 w-5" />
-                    <h1 className="text-2xl font-bold">{"Title"}</h1>
+                    <h1 className="text-2xl font-bold">{t('title')}</h1>
                     <Badge variant="outline">{currentNetwork.toUpperCase()}</Badge>
                 </div>
                 <div className="text-center py-8">
                     <Activity className="h-8 w-8 mx-auto mb-2 opacity-50 animate-spin" />
-                    <p className="text-muted-foreground">{"Loading..."}</p>
+                    <p className="text-muted-foreground">{t('loading')}</p>
                 </div>
             </div>
         )
@@ -211,7 +211,7 @@ export function NetworkStatusContent() {
         <div className="space-y-6">
             <div className="flex items-center gap-2">
                 <Activity className="h-5 w-5" />
-                <h1 className="text-2xl font-bold">{"Title"}</h1>
+                <h1 className="text-2xl font-bold">{t('title')}</h1>
                 <Badge variant="outline">{currentNetwork.toUpperCase()}</Badge>
             </div>
 
