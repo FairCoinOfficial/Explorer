@@ -10,69 +10,210 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Search, X, Globe, Code, Github, ExternalLink, Users } from 'lucide-react'
-import { useState } from 'react'
+import { Search, X, Globe, Code, Github, ExternalLink, Users, Blocks, Receipt, Wallet, Hash } from 'lucide-react'
+import { useState, useRef, useCallback } from 'react'
+import { cn } from '@/lib/utils'
+
+interface SearchResult {
+  type: 'block' | 'transaction' | 'address' | 'not_found'
+  query: string
+  results: Record<string, unknown> | null
+}
+
+const RESULT_ICONS: Record<string, typeof Blocks> = {
+  block: Blocks,
+  transaction: Receipt,
+  address: Wallet,
+}
+
+const RESULT_LABELS: Record<string, string> = {
+  block: 'Block',
+  transaction: 'Transaction',
+  address: 'Address',
+}
 
 export function SiteHeader() {
   const navigate = useNavigate()
-  const [isSearchExpanded, setIsSearchExpanded] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false)
+  const [isFocused, setIsFocused] = useState(false)
+  const [results, setResults] = useState<SearchResult | null>(null)
+  const [isSearching, setIsSearching] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const mobileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-      setSearchQuery('')
+  const doSearch = useCallback((query: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!query.trim() || query.trim().length < 2) {
+      setResults(null)
+      setIsSearching(false)
+      return
+    }
+    setIsSearching(true)
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}`)
+        if (res.ok) {
+          const data = await res.json()
+          setResults(data)
+        }
+      } catch {
+        setResults(null)
+      } finally {
+        setIsSearching(false)
+      }
+    }, 300)
+  }, [])
+
+  const handleInputChange = (value: string) => {
+    setSearchQuery(value)
+    doSearch(value)
+  }
+
+  const navigateToResult = (result: SearchResult) => {
+    setSearchQuery('')
+    setResults(null)
+    setIsFocused(false)
+    setIsSearchExpanded(false)
+    inputRef.current?.blur()
+    mobileInputRef.current?.blur()
+
+    if (result.type === 'block') {
+      navigate(`/block/${result.query}`)
+    } else if (result.type === 'transaction') {
+      navigate(`/tx/${result.query}`)
+    } else if (result.type === 'address') {
+      navigate(`/address/${result.query}`)
+    } else {
+      navigate(`/search?q=${encodeURIComponent(result.query)}`)
     }
   }
 
-  const handleMobileSearch = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (searchQuery.trim()) {
+    if (!searchQuery.trim()) return
+    if (results && results.type !== 'not_found') {
+      navigateToResult(results)
+    } else {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      setSearchQuery('')
+      setResults(null)
+      setIsFocused(false)
+      inputRef.current?.blur()
+    }
+  }
+
+  const handleMobileSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!searchQuery.trim()) return
+    if (results && results.type !== 'not_found') {
+      navigateToResult(results)
+    } else {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      setSearchQuery('')
+      setResults(null)
       setIsSearchExpanded(false)
-      setSearchQuery('')
     }
   }
+
+  const showDropdown = isFocused && searchQuery.trim().length >= 2
+  const ResultIcon = results ? RESULT_ICONS[results.type] : null
 
   const externalLinks = [
     { label: 'FairCoin Website', href: 'https://fairco.in', icon: ExternalLink, description: 'Official project website' },
-    { label: 'GitHub Repository', href: 'https://github.com/FairCoinOfficial', icon: Github, description: 'View source code' },
-    { label: 'Documentation', href: 'https://docs.fairco.in', icon: Code, description: 'User guides and tutorials' },
+    { label: 'GitHub', href: 'https://github.com/FairCoinOfficial', icon: Github, description: 'View source code' },
+    { label: 'Documentation', href: 'https://docs.fairco.in', icon: Code, description: 'Guides and tutorials' },
     { label: 'Community', href: 'https://community.fairco.in', icon: Users, description: 'Join discussions' },
   ]
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2">
+    <header className="flex h-14 shrink-0 items-center gap-2 relative">
       <div className="flex w-full items-center gap-2 px-4">
         {/* Sidebar trigger (mobile) */}
         <SidebarTrigger className="-ml-1 md:hidden" />
 
-        {/* Search bar - fully rounded like Google Photos */}
-        <div className="hidden md:flex flex-1 max-w-xl mx-auto">
-          <form onSubmit={handleSearch} className="relative w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none transition-colors group-focus-within:text-foreground" />
+        {/* Search bar with autocomplete - desktop */}
+        <div className="hidden md:flex flex-1 max-w-xl mx-auto relative">
+          <form onSubmit={handleSubmit} className="relative w-full">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <input
+              ref={inputRef}
               type="text"
               placeholder="Search blocks, transactions, addresses..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 pl-11 pr-4 rounded-full bg-muted/60 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all duration-200 hover:bg-muted focus:bg-muted focus:ring-2 focus:ring-primary/20"
+              onChange={(e) => handleInputChange(e.target.value)}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+              className={cn(
+                "w-full h-10 pl-11 pr-4 bg-muted/60 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all duration-200 hover:bg-muted focus:bg-muted focus:ring-2 focus:ring-primary/20",
+                showDropdown ? "rounded-t-2xl rounded-b-none" : "rounded-full",
+              )}
               aria-label="Search blockchain"
+              autoComplete="off"
             />
           </form>
+
+          {/* Autocomplete dropdown */}
+          {showDropdown && (
+            <div className="absolute top-full left-0 right-0 z-50 bg-muted rounded-b-2xl shadow-lg overflow-hidden">
+              <div className="border-t" style={{ borderColor: 'hsl(var(--border))' }} />
+              {isSearching ? (
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm text-muted-foreground">Searching...</span>
+                </div>
+              ) : results && results.type !== 'not_found' && ResultIcon ? (
+                <button
+                  type="button"
+                  className="flex items-center gap-3 w-full px-4 py-3 hover:bg-accent/50 text-left transition-colors cursor-pointer"
+                  onMouseDown={(e) => { e.preventDefault(); navigateToResult(results) }}
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                    <ResultIcon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{results.query}</div>
+                    <div className="text-xs text-muted-foreground">{RESULT_LABELS[results.type]}</div>
+                  </div>
+                  <Hash className="h-3 w-3 text-muted-foreground shrink-0" />
+                </button>
+              ) : results?.type === 'not_found' ? (
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm text-muted-foreground">No results for "{searchQuery}"</span>
+                </div>
+              ) : null}
+
+              {/* Quick search suggestion */}
+              <button
+                type="button"
+                className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-accent/50 text-left transition-colors cursor-pointer"
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+                  setSearchQuery('')
+                  setResults(null)
+                  setIsFocused(false)
+                }}
+              >
+                <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="text-sm text-muted-foreground">Search for "<span className="text-foreground font-medium">{searchQuery}</span>"</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right side actions */}
         <div className="flex items-center gap-1.5 ml-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl" aria-label="External resources">
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl" aria-label="Resources">
                 <Globe className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72 p-1.5">
-              <DropdownMenuLabel className="flex items-center gap-2 px-2 py-1.5 text-xs font-semibold text-foreground">
+            <DropdownMenuContent align="end" className="w-64 p-1.5">
+              <DropdownMenuLabel className="flex items-center gap-2 px-2 py-1.5 text-xs font-semibold">
                 <Globe className="h-3 w-3 text-primary" />
                 Resources
               </DropdownMenuLabel>
@@ -112,21 +253,53 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {/* Mobile search expanded */}
+      {/* Mobile search expanded with autocomplete */}
       {isSearchExpanded && (
-        <div className="md:hidden absolute top-14 left-0 right-0 z-20 bg-background px-4 py-3 border-b border-border">
-          <form onSubmit={handleMobileSearch} className="relative">
+        <div className="md:hidden absolute top-14 left-0 right-0 z-20 bg-background px-4 py-3" style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+          <form onSubmit={handleMobileSubmit} className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <input
+              ref={mobileInputRef}
               type="text"
               placeholder="Search blocks, transactions, addresses..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleInputChange(e.target.value)}
               className="w-full h-10 pl-11 pr-4 rounded-full bg-muted/60 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/20"
               aria-label="Search blockchain"
               autoFocus
+              autoComplete="off"
             />
           </form>
+
+          {/* Mobile autocomplete results */}
+          {searchQuery.trim().length >= 2 && (
+            <div className="mt-2">
+              {isSearching ? (
+                <div className="flex items-center gap-3 px-2 py-2">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm text-muted-foreground">Searching...</span>
+                </div>
+              ) : results && results.type !== 'not_found' && ResultIcon ? (
+                <button
+                  type="button"
+                  className="flex items-center gap-3 w-full px-2 py-2 rounded-xl hover:bg-muted text-left transition-colors cursor-pointer"
+                  onClick={() => navigateToResult(results)}
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                    <ResultIcon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{results.query}</div>
+                    <div className="text-xs text-muted-foreground">{RESULT_LABELS[results.type]}</div>
+                  </div>
+                </button>
+              ) : results?.type === 'not_found' ? (
+                <div className="flex items-center gap-3 px-2 py-2">
+                  <span className="text-sm text-muted-foreground">No results found</span>
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
       )}
     </header>

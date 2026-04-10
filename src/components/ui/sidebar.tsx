@@ -184,12 +184,13 @@ function Sidebar({
         data-state={state}
         className={cn(
           "fixed inset-y-0 left-0 z-10 hidden md:flex flex-col",
-          "bg-background border-r border-border",
+          "bg-background",
           "transition-[width] duration-200 ease-out overflow-hidden",
           className,
         )}
         style={{
           width: state === "expanded" ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_COLLAPSED,
+          borderRight: '1px solid hsl(var(--border))',
         }}
         {...props}
       >
