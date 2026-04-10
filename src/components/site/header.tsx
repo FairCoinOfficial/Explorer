@@ -135,73 +135,77 @@ export function SiteHeader() {
 
         {/* Search bar with autocomplete - desktop */}
         <div className="hidden md:flex flex-1 max-w-xl mx-auto relative">
-          <form onSubmit={handleSubmit} className="relative w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder="Search blocks, transactions, addresses..."
-              value={searchQuery}
-              onChange={(e) => handleInputChange(e.target.value)}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-              className={cn(
-                "w-full h-10 pl-11 pr-4 bg-muted/60 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all duration-200 hover:bg-muted focus:bg-muted focus:ring-2 focus:ring-primary/20",
-                showDropdown ? "rounded-t-2xl rounded-b-none" : "rounded-full",
-              )}
-              aria-label="Search blockchain"
-              autoComplete="off"
-            />
-          </form>
+          <div className={cn(
+            "w-full transition-all duration-200",
+            showDropdown
+              ? "bg-muted rounded-3xl shadow-lg ring-2 ring-primary/20"
+              : "bg-muted/60 rounded-full hover:bg-muted focus-within:bg-muted focus-within:ring-2 focus-within:ring-primary/20",
+          )}>
+            <form onSubmit={handleSubmit} className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Search blocks, transactions, addresses..."
+                value={searchQuery}
+                onChange={(e) => handleInputChange(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+                className="w-full h-10 pl-11 pr-4 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+                aria-label="Search blockchain"
+                autoComplete="off"
+              />
+            </form>
 
-          {/* Autocomplete dropdown */}
-          {showDropdown && (
-            <div className="absolute top-full left-0 right-0 z-50 bg-muted rounded-b-2xl shadow-lg overflow-hidden">
-              <div className="border-t" style={{ borderColor: 'hsl(var(--border))' }} />
-              {isSearching ? (
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  <span className="text-sm text-muted-foreground">Searching...</span>
-                </div>
-              ) : results && results.type !== 'not_found' && ResultIcon ? (
+            {/* Autocomplete results - same box */}
+            {showDropdown && (
+              <div className="pb-2">
+                <div className="mx-3 mb-2" style={{ borderTop: '1px solid hsl(var(--border))' }} />
+                {isSearching ? (
+                  <div className="flex items-center gap-3 px-4 py-2">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm text-muted-foreground">Searching...</span>
+                  </div>
+                ) : results && results.type !== 'not_found' && ResultIcon ? (
+                  <button
+                    type="button"
+                    className="flex items-center gap-3 w-full px-4 py-2 hover:bg-accent/50 text-left transition-colors cursor-pointer"
+                    onMouseDown={(e) => { e.preventDefault(); navigateToResult(results) }}
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                      <ResultIcon className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{results.query}</div>
+                      <div className="text-xs text-muted-foreground">{RESULT_LABELS[results.type]}</div>
+                    </div>
+                    <Hash className="h-3 w-3 text-muted-foreground shrink-0" />
+                  </button>
+                ) : results?.type === 'not_found' ? (
+                  <div className="flex items-center gap-3 px-4 py-2">
+                    <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm text-muted-foreground">No results for "{searchQuery}"</span>
+                  </div>
+                ) : null}
+
+                {/* Quick search suggestion */}
                 <button
                   type="button"
-                  className="flex items-center gap-3 w-full px-4 py-3 hover:bg-accent/50 text-left transition-colors cursor-pointer"
-                  onMouseDown={(e) => { e.preventDefault(); navigateToResult(results) }}
+                  className="flex items-center gap-3 w-full px-4 py-2 hover:bg-accent/50 text-left transition-colors cursor-pointer"
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+                    setSearchQuery('')
+                    setResults(null)
+                    setIsFocused(false)
+                  }}
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                    <ResultIcon className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{results.query}</div>
-                    <div className="text-xs text-muted-foreground">{RESULT_LABELS[results.type]}</div>
-                  </div>
-                  <Hash className="h-3 w-3 text-muted-foreground shrink-0" />
-                </button>
-              ) : results?.type === 'not_found' ? (
-                <div className="flex items-center gap-3 px-4 py-3">
                   <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm text-muted-foreground">No results for "{searchQuery}"</span>
-                </div>
-              ) : null}
-
-              {/* Quick search suggestion */}
-              <button
-                type="button"
-                className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-accent/50 text-left transition-colors cursor-pointer"
-                onMouseDown={(e) => {
-                  e.preventDefault()
-                  navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-                  setSearchQuery('')
-                  setResults(null)
-                  setIsFocused(false)
-                }}
-              >
-                <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-sm text-muted-foreground">Search for "<span className="text-foreground font-medium">{searchQuery}</span>"</span>
-              </button>
-            </div>
-          )}
+                  <span className="text-sm text-muted-foreground">Search for "<span className="text-foreground font-medium">{searchQuery}</span>"</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right side actions */}

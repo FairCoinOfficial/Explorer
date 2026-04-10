@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { NetworkStatus } from '@/components/network-status'
 import { BlocksTable } from '@/components/ui/blocks-table'
 import { Activity, Blocks, TrendingUp, Clock, Hash, ArrowUpRight } from 'lucide-react'
+import { useNetwork } from '@/contexts/network-context'
 
 interface Block {
   height: number
@@ -22,10 +23,11 @@ export default function HomePage() {
   const [blocks, setBlocks] = useState<Block[]>([])
   const [height, setHeight] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
+  const { currentNetwork } = useNetwork()
 
   const fetchData = useCallback(async () => {
     try {
-      const response = await fetch('/api/blocks?network=mainnet&limit=10')
+      const response = await fetch(`/api/blocks?network=${currentNetwork}&limit=10`)
       if (response.ok) {
         const data = await response.json()
         setBlocks(data.blocks || [])
@@ -36,7 +38,7 @@ export default function HomePage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [currentNetwork])
 
   useEffect(() => {
     fetchData()
