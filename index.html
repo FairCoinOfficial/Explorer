@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>FairCoin Explorer - Blockchain Explorer &amp; Analytics</title>
+    <meta name="description" content="Explore the FairCoin blockchain with our comprehensive explorer. View blocks, transactions, addresses, and network statistics in real-time." />
+    <meta name="keywords" content="blockchain explorer, faircoin, cryptocurrency, blockchain analytics, crypto explorer" />
+    <meta name="author" content="FairCoin Team" />
+
+    <meta name="application-name" content="FairCoin Explorer" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="FairCoin Explorer" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    <meta name="msapplication-TileColor" content="#6366f1" />
+    <meta name="msapplication-tap-highlight" content="no" />
+
+    <meta name="theme-color" content="#0f0f23" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-192x192.png" />
+    <link rel="shortcut icon" href="/icons/icon-192x192.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- FOUC prevention: apply dark class before render -->
+    <script>
+      (function() {
+        var theme = localStorage.getItem('faircoin-theme');
+        if (theme === 'light') {
+          document.documentElement.classList.remove('dark');
+        } else {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://explorer.fairco.in" />
+    <meta property="og:title" content="FairCoin Explorer - Blockchain Explorer & Analytics" />
+    <meta property="og:description" content="Explore the FairCoin blockchain with our comprehensive explorer." />
+    <meta property="og:site_name" content="FairCoin Explorer" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@faircoin" />
+    <meta name="twitter:title" content="FairCoin Explorer - Blockchain Explorer & Analytics" />
+    <meta name="twitter:description" content="Explore the FairCoin blockchain with our comprehensive explorer." />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "FairCoin Explorer",
+        "description": "Explore the FairCoin blockchain with our comprehensive explorer.",
+        "url": "https://explorer.fairco.in",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Web Browser",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "author": { "@type": "Organization", "name": "FairCoin Team", "url": "https://fairco.in" }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <!-- Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(r) { console.log('SW registered:', r); })
+            .catch(function(e) { console.log('SW registration failed:', e); });
+        });
+      }
+    </script>
+  </body>
+</html>
