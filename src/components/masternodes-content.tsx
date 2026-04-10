@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useTranslations } from "@/lib/i18n"
+import { toast } from 'sonner'
 
 export function MasternodesContent() {
     const { currentNetwork } = useNetwork()
@@ -39,9 +40,9 @@ export function MasternodesContent() {
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text).then(() => {
-            console.log('Copied to clipboard:', text)
-        }).catch(err => {
-            console.error('Failed to copy text: ', err)
+            toast.success('Copied to clipboard')
+        }).catch(() => {
+            toast.error('Failed to copy')
         })
     }
 

@@ -10,6 +10,7 @@ import { SectionHeader, StatsGrid, StatsCard, EmptyState, LoadingState, SimpleDa
 import { Wallet, TrendingUp, TrendingDown, RefreshCw, Home, Hash, Clock, AlertTriangle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 interface AddressTransaction {
     txid: string
@@ -50,6 +51,7 @@ export function AddressContent({ address }: { address: string }) {
             setAddressInfo(data.addressInfo)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred')
+            toast.error('Failed to load address')
         } finally {
             setLoading(false)
         }

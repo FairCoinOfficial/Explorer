@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface LanguageSelectorProps {
   collapsed?: boolean
@@ -37,7 +38,10 @@ export function LanguageSelector({ collapsed }: LanguageSelectorProps) {
         {SUPPORTED_LOCALES.map((loc) => (
           <DropdownMenuItem
             key={loc.code}
-            onClick={() => setLocale(loc.code)}
+            onClick={() => {
+              setLocale(loc.code)
+              toast.success(`Language changed to ${loc.name}`)
+            }}
             className={cn(
               'cursor-pointer',
               locale === loc.code && 'bg-muted font-medium',

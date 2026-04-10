@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { SectionHeader, InfoGrid } from "@/components/ui"
+import { toast } from 'sonner'
 import { useTranslations } from "@/lib/i18n"
 
 interface ValidationResult {
@@ -109,6 +110,12 @@ export function AddressValidatorContent() {
         // Local validation first
         const localResult = validateAddress(address)
         setValidationResult(localResult)
+
+        if (localResult.isValid) {
+            toast.success('Valid FairCoin address')
+        } else {
+            toast.error('Invalid address')
+        }
 
         // Network validation if locally valid
         if (localResult.isValid) {

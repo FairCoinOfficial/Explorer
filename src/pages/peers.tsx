@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Users, RefreshCw, ArrowDownLeft, ArrowUpRight, AlertTriangle } from 'lucide-react'
 import { LoadingState, EmptyState } from '@/components/ui'
+import { toast } from 'sonner'
 
 interface Peer {
   addr: string; version: number; subver: string; pingtime: number; conntime: number
@@ -55,6 +56,7 @@ export default function PeersPage() {
       setPeers(data.peers ?? [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
+      toast.error('Failed to load peers')
     } finally {
       setLoading(false)
     }

@@ -9,6 +9,7 @@ import { NetworkStatus } from '@/components/network-status'
 import { BlocksTable } from '@/components/ui/blocks-table'
 import { Activity, Blocks, TrendingUp, Clock, Hash, ArrowUpRight } from 'lucide-react'
 import { useNetwork } from '@/contexts/network-context'
+import { toast } from 'sonner'
 
 interface Block {
   height: number
@@ -34,7 +35,7 @@ export default function HomePage() {
         setHeight(data.height || null)
       }
     } catch (err) {
-      // silently fail on home page
+      toast.error('Failed to load data')
     } finally {
       setLoading(false)
     }

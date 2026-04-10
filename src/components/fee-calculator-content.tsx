@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { SectionHeader, EmptyState, InfoGrid } from "@/components/ui"
+import { toast } from 'sonner'
 import { useTranslations } from "@/lib/i18n"
 
 export function FeeCalculatorContent() {

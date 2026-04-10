@@ -3,6 +3,7 @@ import { AppSidebar } from './app-sidebar'
 import { SidebarInset, SidebarProvider } from './ui/sidebar'
 import { SiteHeader } from './site/header'
 import { PWAInstallPrompt } from './pwa-install-prompt'
+import { Toaster } from './ui/sonner'
 
 export function Layout() {
   return (
@@ -17,6 +18,7 @@ export function Layout() {
         </SidebarInset>
       </SidebarProvider>
       <PWAInstallPrompt />
+      <Toaster />
     </>
   )
 }

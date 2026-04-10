@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Check, Copy } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function CopyButton({ text, className }: { text: string; className?: string }) {
   const [copied, setCopied] = React.useState(false);
@@ -8,8 +9,11 @@ export function CopyButton({ text, className }: { text: string; className?: stri
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
+      toast.success('Copied to clipboard');
       setTimeout(() => setCopied(false), 1500);
-    } catch {}
+    } catch {
+      toast.error('Failed to copy');
+    }
   }
 
   return (

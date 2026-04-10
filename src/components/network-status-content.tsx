@@ -5,6 +5,7 @@ import { Activity, Wifi, WifiOff, CheckCircle, XCircle, Clock, TrendingUp } from
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { toast } from 'sonner'
 import { useTranslations } from "@/lib/i18n"
 
 interface NetworkStatus {
@@ -80,6 +81,7 @@ export function NetworkStatusContent() {
             }
         } catch (error) {
             console.error("Failed to fetch network status:", error)
+            toast.error('Failed to load network status')
             setStatus({
                 isOnline: false,
                 latency: 0,

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Database, Search, Home, Hash, Clock, RefreshCw, Filter, Calendar } from 'lucide-react'
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'sonner'
 import { SectionHeader, StatsCard, StatsGrid, LoadingState, EmptyState } from '@/components/ui'
 import { BlocksTable } from '@/components/ui/blocks-table'
 
@@ -40,7 +41,9 @@ export function BlocksContent() {
             setBlocks(data.blocks || [])
             setHeight(data.height || 0)
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred')
+            const message = err instanceof Error ? err.message : 'An error occurred'
+            setError(message)
+            toast.error('Failed to load blocks')
         } finally {
             setLoading(false)
         }

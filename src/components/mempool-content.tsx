@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Clock, Zap, RefreshCw, Home, Hash, Database } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { SectionHeader, StatsCard, StatsGrid, LoadingState, EmptyState } from '@/components/ui'
 import { useTranslations } from '@/lib/i18n'
 
@@ -50,6 +51,7 @@ export default function MempoolContent() {
             setMempoolInfo(data.mempoolInfo)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred')
+            toast.error('Failed to load mempool')
         } finally {
             setLoading(false)
         }

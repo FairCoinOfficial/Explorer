@@ -11,6 +11,7 @@ import { Hash, Clock, CheckCircle, XCircle, Database, LinkIcon, FileText, AlertT
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { useTranslations } from '@/lib/i18n'
 
 interface TransactionInput {
@@ -92,6 +93,7 @@ export function TransactionContent({ txid }: { txid: string }) {
             setTransaction(data.transaction)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred')
+            toast.error('Failed to load transaction')
         } finally {
             setLoading(false)
         }

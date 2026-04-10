@@ -9,6 +9,7 @@ import { CopyButton } from '@/components/copy-button'
 import { Hash, Clock, Database, ArrowLeft, ArrowRight, RefreshCw, Home, Receipt } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { useTranslations } from '@/lib/i18n'
 
 interface Block {
@@ -53,6 +54,7 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
             setBlock(data.block)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred')
+            toast.error('Failed to load block details')
         } finally {
             setLoading(false)
         }

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { useTranslations } from '@/lib/i18n'
 
 interface NetworkStats {
@@ -84,6 +85,7 @@ export function StatsContent() {
             setStats(data.stats)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred')
+            toast.error('Failed to load statistics')
         } finally {
             setLoading(false)
         }

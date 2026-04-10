@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { X, Download, Smartphone } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -45,9 +46,7 @@ export function PWAInstallPrompt() {
     const { outcome } = await deferredPrompt.userChoice;
     
     if (outcome === 'accepted') {
-      console.log('User accepted the install prompt');
-    } else {
-      console.log('User dismissed the install prompt');
+      toast.success('App installed successfully');
     }
     
     setDeferredPrompt(null);

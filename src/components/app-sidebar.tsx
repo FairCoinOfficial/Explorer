@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils"
 import { useNetwork } from "@/contexts/network-context"
 import { useTranslations } from "@/lib/i18n"
 import { LanguageSelector } from "@/components/language-selector"
+import { toast } from 'sonner'
 
 interface NavItemProps {
   icon: LucideIcon
@@ -150,7 +151,11 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       {collapsed ? (
         <div className="shrink-0 flex justify-center py-1">
           <button
-            onClick={() => setNetwork(currentNetwork === 'mainnet' ? 'testnet' : 'mainnet')}
+            onClick={() => {
+              const next = currentNetwork === 'mainnet' ? 'testnet' : 'mainnet'
+              setNetwork(next)
+              toast.success(`Switched to ${next === 'mainnet' ? 'Mainnet' : 'Testnet'}`)
+            }}
             className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-muted cursor-pointer"
             title={currentNetwork === 'mainnet' ? tSidebar('mainnetSwitch') : tSidebar('testnetSwitch')}
           >
@@ -166,7 +171,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         <div className="shrink-0 px-3 pb-1">
           <div className="flex flex-col rounded-xl bg-muted/60 p-1 gap-0.5">
             <button
-              onClick={() => setNetwork('mainnet')}
+              onClick={() => { setNetwork('mainnet'); toast.success('Switched to Mainnet') }}
               className={cn(
                 "flex items-center gap-2 rounded-lg px-2 h-8 text-sm transition-colors cursor-pointer",
                 currentNetwork === 'mainnet'
@@ -178,7 +183,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
               {tSidebar('mainnet')}
             </button>
             <button
-              onClick={() => setNetwork('testnet')}
+              onClick={() => { setNetwork('testnet'); toast.success('Switched to Testnet') }}
               className={cn(
                 "flex items-center gap-2 rounded-lg px-2 h-8 text-sm transition-colors cursor-pointer",
                 currentNetwork === 'testnet'
