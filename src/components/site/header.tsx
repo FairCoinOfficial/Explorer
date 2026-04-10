@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Search, X, Globe, Code, Github, ExternalLink, Users, Blocks, Receipt, Wallet, Hash } from 'lucide-react'
 import { useState, useRef, useCallback } from 'react'
-import { cn } from '@/lib/utils'
+
 import { useTranslations } from '@/lib/i18n'
 
 interface SearchResult {
@@ -137,13 +137,8 @@ export function SiteHeader() {
 
         {/* Search bar with autocomplete - desktop */}
         <div className="hidden md:flex flex-1 max-w-xl mx-auto relative z-50">
-          {/* Input container - always in flow */}
-          <div className={cn(
-            "w-full transition-all duration-200",
-            showDropdown
-              ? "bg-muted rounded-t-3xl shadow-lg ring-1 ring-border"
-              : "bg-muted/60 rounded-full hover:bg-muted focus-within:bg-muted focus-within:ring-1 focus-within:ring-border",
-          )}>
+          {/* Input - always rounded-full, never changes shape */}
+          <div className="w-full bg-muted/60 rounded-full hover:bg-muted focus-within:bg-muted focus-within:ring-1 focus-within:ring-border transition-colors duration-200">
             <form onSubmit={handleSubmit} className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <input
@@ -154,18 +149,17 @@ export function SiteHeader() {
                 onChange={(e) => handleInputChange(e.target.value)}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-                className="w-full h-10 pl-11 pr-4 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+                className="w-full h-10 pl-11 pr-4 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none rounded-full"
                 aria-label={t('searchBlockchain')}
                 autoComplete="off"
               />
             </form>
           </div>
 
-          {/* Floating dropdown - absolutely positioned */}
+          {/* Floating dropdown - separate card below input */}
           {showDropdown && (
-            <div className="absolute top-full left-0 right-0 bg-muted rounded-b-3xl shadow-lg ring-1 ring-border overflow-hidden">
-              <div className="mx-3" style={{ borderTop: '1px solid hsl(var(--border))' }} />
-              <div className="pb-2">
+            <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-popover rounded-2xl shadow-lg ring-1 ring-border overflow-hidden">
+              <div className="py-1">
                 {isSearching ? (
                   <div className="flex items-center gap-3 px-4 py-2">
                     <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -174,7 +168,7 @@ export function SiteHeader() {
                 ) : results && results.type !== 'not_found' && ResultIcon ? (
                   <button
                     type="button"
-                    className="flex items-center gap-3 w-full px-4 py-2 hover:bg-accent/50 text-left transition-colors cursor-pointer"
+                    className="flex items-center gap-3 w-full px-4 py-2 hover:bg-muted text-left transition-colors cursor-pointer"
                     onMouseDown={(e) => { e.preventDefault(); navigateToResult(results) }}
                   >
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
@@ -196,7 +190,7 @@ export function SiteHeader() {
                 {/* Quick search suggestion */}
                 <button
                   type="button"
-                  className="flex items-center gap-3 w-full px-4 py-2 hover:bg-accent/50 text-left transition-colors cursor-pointer"
+                  className="flex items-center gap-3 w-full px-4 py-2 hover:bg-muted text-left transition-colors cursor-pointer"
                   onMouseDown={(e) => {
                     e.preventDefault()
                     navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
