@@ -4,11 +4,13 @@ import cors from 'cors'
 import { createServer } from 'http'
 import { parse } from 'url'
 import { WebSocketServer } from 'ws'
+import path from 'path'
 import { blockCache } from './lib/cache'
 import { rpcWithNetwork, type NetworkType } from './lib/rpc'
 
 const app = express()
 const PORT = parseInt(process.env.PORT || '4000', 10)
+const DIST_DIR = path.join(import.meta.dirname, '..', 'dist')
 
 app.use(cors())
 app.use(express.json())
@@ -297,6 +299,12 @@ app.get('/api/search', async (req, res) => {
     console.error('Search API error:', error)
     res.status(500).json({ error: 'Search failed', timestamp: new Date().toISOString() })
   }
+})
+
+// ---- Static Files + SPA Fallback ----
+app.use(express.static(DIST_DIR))
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(DIST_DIR, 'index.html'))
 })
 
 // ---- WebSocket + HTTP Server ----
