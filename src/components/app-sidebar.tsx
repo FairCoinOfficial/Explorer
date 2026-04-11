@@ -169,16 +169,16 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         </div>
       ) : (
         <div className="shrink-0 px-3 pb-1">
-          <div className="relative flex flex-col rounded-full bg-muted/60 p-1 gap-0">
+          <div className="relative flex flex-col rounded-xl bg-muted/60 p-1 gap-0">
             {/* Sliding indicator */}
             <div
-              className="absolute left-1 right-1 h-8 rounded-full bg-background shadow-sm transition-transform duration-200 ease-out"
-              style={{ transform: currentNetwork === 'mainnet' ? 'translateY(0)' : 'translateY(calc(100% + 0px))' }}
+              className="absolute left-1 right-1 h-8 rounded-lg bg-background shadow-sm transition-transform duration-200 ease-out"
+              style={{ transform: currentNetwork === 'mainnet' ? 'translateY(0)' : 'translateY(100%)' }}
             />
             <button
               onClick={() => { setNetwork('mainnet'); toast.success('Switched to Mainnet') }}
               className={cn(
-                "relative z-10 flex items-center gap-2 rounded-full px-2 h-8 text-sm transition-colors duration-200 cursor-pointer",
+                "relative z-10 flex items-center gap-2 rounded-lg px-2 h-8 text-sm transition-colors duration-200 cursor-pointer",
                 currentNetwork === 'mainnet'
                   ? "text-foreground font-medium"
                   : "text-muted-foreground hover:text-foreground"
@@ -190,7 +190,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             <button
               onClick={() => { setNetwork('testnet'); toast.success('Switched to Testnet') }}
               className={cn(
-                "relative z-10 flex items-center gap-2 rounded-full px-2 h-8 text-sm transition-colors duration-200 cursor-pointer",
+                "relative z-10 flex items-center gap-2 rounded-lg px-2 h-8 text-sm transition-colors duration-200 cursor-pointer",
                 currentNetwork === 'testnet'
                   ? "text-foreground font-medium"
                   : "text-muted-foreground hover:text-foreground"
