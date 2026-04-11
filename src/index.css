@@ -196,3 +196,11 @@ html::-webkit-scrollbar-corner, body::-webkit-scrollbar-corner {
   font-family: var(--font-mono);
   font-size: 0.875rem;
 }
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

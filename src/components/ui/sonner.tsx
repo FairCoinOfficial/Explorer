@@ -8,16 +8,16 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme={isDark ? 'dark' : 'light'}
       className="toaster group"
       style={{
-        "--normal-bg": "hsl(var(--popover))",
-        "--normal-text": "hsl(var(--popover-foreground))",
+        "--normal-bg": "hsl(var(--card))",
+        "--normal-text": "hsl(var(--card-foreground))",
         "--normal-border": "hsl(var(--border))",
-        "--success-bg": "hsl(var(--primary))",
-        "--success-text": "hsl(var(--primary-foreground))",
-        "--success-border": "hsl(var(--primary))",
-        "--error-bg": "hsl(var(--destructive))",
-        "--error-text": "hsl(var(--destructive-foreground))",
-        "--error-border": "hsl(var(--destructive))",
-        "--border-radius": "var(--radius)",
+        "--success-bg": isDark ? "hsl(90 40% 15%)" : "hsl(90 40% 95%)",
+        "--success-text": isDark ? "hsl(90 80% 70%)" : "hsl(90 80% 30%)",
+        "--success-border": isDark ? "hsl(90 40% 25%)" : "hsl(90 30% 80%)",
+        "--error-bg": isDark ? "hsl(0 40% 15%)" : "hsl(0 40% 95%)",
+        "--error-text": isDark ? "hsl(0 80% 70%)" : "hsl(0 80% 40%)",
+        "--error-border": isDark ? "hsl(0 40% 25%)" : "hsl(0 30% 80%)",
+        "--border-radius": "0.75rem",
       } as React.CSSProperties}
       toastOptions={{
         classNames: {

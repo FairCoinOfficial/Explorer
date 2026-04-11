@@ -204,7 +204,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       )}
 
       {/* Nav items */}
-      <SidebarContent>
+      <SidebarContent className="pt-2">
         {collapsed ? (
           <>
             {/* Collapsed: icon columns */}
