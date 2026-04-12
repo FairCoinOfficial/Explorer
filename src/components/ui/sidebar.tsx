@@ -210,7 +210,7 @@ function SidebarInset({
 }: React.ComponentProps<"main">) {
   return (
     <main
-      className={cn("flex flex-1 flex-col min-w-0 bg-background", className)}
+      className={cn("flex flex-1 flex-col min-w-0 min-h-0 bg-background", className)}
       {...props}
     />
   )

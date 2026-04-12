@@ -126,7 +126,13 @@ a {
   border-width: 0;
 }
 
+html {
+  height: 100%;
+  overflow-y: auto;
+}
+
 body {
+  min-height: 100%;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: var(--font-sans);
