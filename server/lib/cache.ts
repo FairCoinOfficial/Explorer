@@ -1,5 +1,5 @@
 import { MongoClient, Db } from 'mongodb'
-import { rpcWithNetwork, NetworkType } from './rpc'
+import { rpcWithNetwork, type NetworkType } from '@fairco.in/rpc-client'
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/faircoin-explorer'
 

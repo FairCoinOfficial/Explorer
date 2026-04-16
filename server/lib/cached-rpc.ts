@@ -1,5 +1,5 @@
 import { BlockCache } from './cache';
-import { NetworkType } from './rpc';
+import type { NetworkType } from '@fairco.in/rpc-client';
 
 // Create a singleton cache instance
 const blockCache = new BlockCache();

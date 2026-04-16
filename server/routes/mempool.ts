@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { rpcWithNetwork, NetworkType } from '../lib/rpc'
+import { rpcWithNetwork, type NetworkType } from '@fairco.in/rpc-client'
 
 export default async function mempoolRoute(req: Request, res: Response) {
   try {

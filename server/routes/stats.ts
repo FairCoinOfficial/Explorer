@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { NetworkType } from '../lib/rpc'
+import type { NetworkType } from '@fairco.in/rpc-client'
 import { blockCache } from '../lib/cache'
 
 // FairCoin v3.0.0: block reward is 10 FAIR (halving every 525600 blocks, min 1.25 FAIR)

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { NetworkType } from '../lib/rpc'
+import type { NetworkType } from '@fairco.in/rpc-client'
 import { blockCache } from '../lib/cache'
 
 export default async function miningInfoRoute(req: Request, res: Response) {

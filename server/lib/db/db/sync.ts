@@ -1,7 +1,7 @@
 import connectToDatabase from './connect';
 import Block from './models/Block';
 import Transaction from './models/Transaction';
-import { getBlockCount, getBlockHash, getBlock, getRawTransactionVerbose } from '../rpc';
+import { getBlockCount, getBlockHash, getBlock, getRawTransactionVerbose } from '@fairco.in/rpc-client';
 
 export async function syncBlock(height: number): Promise<void> {
   try {

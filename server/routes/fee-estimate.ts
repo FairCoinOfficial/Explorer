@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from "express";
-import { rpcWithNetwork, type NetworkType } from "../lib/rpc";
+import { rpcWithNetwork, type NetworkType } from "@fairco.in/rpc-client";
 
 const router = Router();
 

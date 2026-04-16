@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import { blockCache } from '../lib/cache'
-import { NetworkType } from '../lib/rpc'
+import type { NetworkType } from '@fairco.in/rpc-client'
 
 export default async function searchRoute(req: Request, res: Response) {
   try {

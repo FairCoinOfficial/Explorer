@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { rpcWithNetwork, NetworkType } from '../lib/rpc'
+import { rpcWithNetwork, type NetworkType } from '@fairco.in/rpc-client'
 import { blockCache } from '../lib/cache'
 
 // FairCoin v3.0.0 masternode collateral (MASTER_NODE_AMOUNT in protocol.h)
