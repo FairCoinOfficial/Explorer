@@ -10,6 +10,7 @@ import {
   Users,
   Network,
   Wrench,
+  Waypoints,
   ChevronsLeft,
   ChevronsRight,
   type LucideIcon,
@@ -111,6 +112,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     { icon: Clock, label: t('mempool'), to: '/mempool' },
     { icon: Users, label: t('peers'), to: '/peers' },
     { icon: Network, label: t('network'), to: '/network-status' },
+    { icon: Waypoints, label: t('bridge'), to: '/bridge' },
   ]
 
   const toolsNav = [

@@ -9,6 +9,7 @@
   "nav.peers": "Pairs",
   "nav.network": "Réseau",
   "nav.tools": "Outils",
+  "nav.bridge": "Pont",
   "sidebar.mainnet": "Réseau principal",
   "sidebar.testnet": "Réseau de test",
   "sidebar.mainnetSwitch": "Réseau principal (cliquez pour changer)",

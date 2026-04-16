@@ -9,6 +9,7 @@
   "nav.peers": "Пиры",
   "nav.network": "Сеть",
   "nav.tools": "Инструменты",
+  "nav.bridge": "Мост",
   "sidebar.mainnet": "Основная сеть",
   "sidebar.testnet": "Тестовая сеть",
   "sidebar.mainnetSwitch": "Mainnet (click to switch)",

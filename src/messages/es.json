@@ -9,6 +9,7 @@
   "nav.peers": "Pares",
   "nav.network": "Red",
   "nav.tools": "Herramientas",
+  "nav.bridge": "Puente",
   "sidebar.mainnet": "Red principal",
   "sidebar.testnet": "Red de prueba",
   "sidebar.mainnetSwitch": "Red principal (clic para cambiar)",

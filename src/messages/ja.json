@@ -9,6 +9,7 @@
   "nav.peers": "ピア",
   "nav.network": "ネットワーク",
   "nav.tools": "ツール",
+  "nav.bridge": "ブリッジ",
   "sidebar.mainnet": "メインネット",
   "sidebar.testnet": "テストネット",
   "sidebar.mainnetSwitch": "Mainnet (click to switch)",

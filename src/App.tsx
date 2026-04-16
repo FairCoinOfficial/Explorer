@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { NetworkProvider } from './contexts/network-context'
 import { BlockchainProvider } from './contexts/blockchain-context'
 import { ErrorBoundary } from './components/error-boundary'
 import { Layout } from './components/layout'
+import { queryClient } from './lib/query-client'
 import HomePage from './pages/home'
 import BlocksPage from './pages/blocks'
 import BlockPage from './pages/block'
@@ -17,36 +19,40 @@ import PeersPage from './pages/peers'
 import SearchPage from './pages/search'
 import FeeCalculatorPage from './pages/fee-calculator'
 import AddressValidatorPage from './pages/address-validator'
+import BridgePage from './pages/bridge'
 import NotFoundPage from './pages/not-found'
 
 export default function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <NetworkProvider>
-          <BlockchainProvider>
-            <Routes>
-              <Route element={<Layout />}>
-                <Route index element={<HomePage />} />
-                <Route path="blocks" element={<BlocksPage />} />
-                <Route path="block/:hashOrHeight" element={<BlockPage />} />
-                <Route path="tx" element={<TxIndexPage />} />
-                <Route path="tx/:txid" element={<TxPage />} />
-                <Route path="address/:address" element={<AddressPage />} />
-                <Route path="mempool" element={<MempoolPage />} />
-                <Route path="masternodes" element={<MasternodesPage />} />
-                <Route path="network-status" element={<NetworkStatusPage />} />
-                <Route path="stats" element={<StatsPage />} />
-                <Route path="peers" element={<PeersPage />} />
-                <Route path="search" element={<SearchPage />} />
-                <Route path="tools/fee-calculator" element={<FeeCalculatorPage />} />
-                <Route path="tools/address-validator" element={<AddressValidatorPage />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Route>
-            </Routes>
-          </BlockchainProvider>
-        </NetworkProvider>
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <NetworkProvider>
+            <BlockchainProvider>
+              <Routes>
+                <Route element={<Layout />}>
+                  <Route index element={<HomePage />} />
+                  <Route path="blocks" element={<BlocksPage />} />
+                  <Route path="block/:hashOrHeight" element={<BlockPage />} />
+                  <Route path="tx" element={<TxIndexPage />} />
+                  <Route path="tx/:txid" element={<TxPage />} />
+                  <Route path="address/:address" element={<AddressPage />} />
+                  <Route path="mempool" element={<MempoolPage />} />
+                  <Route path="masternodes" element={<MasternodesPage />} />
+                  <Route path="network-status" element={<NetworkStatusPage />} />
+                  <Route path="stats" element={<StatsPage />} />
+                  <Route path="peers" element={<PeersPage />} />
+                  <Route path="search" element={<SearchPage />} />
+                  <Route path="tools/fee-calculator" element={<FeeCalculatorPage />} />
+                  <Route path="tools/address-validator" element={<AddressValidatorPage />} />
+                  <Route path="bridge" element={<BridgePage />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Route>
+              </Routes>
+            </BlockchainProvider>
+          </NetworkProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
     </ErrorBoundary>
   )
 }

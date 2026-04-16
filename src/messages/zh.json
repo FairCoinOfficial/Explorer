@@ -9,6 +9,7 @@
   "nav.peers": "节点",
   "nav.network": "网络",
   "nav.tools": "工具",
+  "nav.bridge": "跨链桥",
   "sidebar.mainnet": "主网",
   "sidebar.testnet": "测试网",
   "sidebar.mainnetSwitch": "Mainnet (click to switch)",
