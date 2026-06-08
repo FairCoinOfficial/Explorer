@@ -36,6 +36,9 @@ interface CachedData {
 /** Extra seconds past a document's logical TTL before Mongo physically removes it. */
 const TTL_INDEX_GRACE_SECONDS = 3600
 
+/** All-zero outpoint hash used by coinbase-style inputs that reference no parent. */
+const ZERO_HASH = '0000000000000000000000000000000000000000000000000000000000000000'
+
 /**
  * Shape returned by the FairCoin `masternode count` RPC. Fields beyond `total`
  * and `enabled` (e.g. `inqueue`, `ipv4`) vary by build and are not relied upon.
@@ -228,6 +231,56 @@ interface RawTransactionConfirmationFields {
   blocktime?: number
 }
 
+/**
+ * The subset of a verbose transaction output the explorer needs to resolve an
+ * input's previous output (address + value). FairCoin's `getrawtransaction
+ * verbose` returns much more on each vout; only these fields are read here.
+ */
+interface RawVout {
+  value?: number
+  n?: number
+  scriptPubKey?: {
+    type?: string
+    addresses?: string[]
+  }
+}
+
+/**
+ * The subset of a verbose transaction input the explorer reads/writes. FairCoin's
+ * `getrawtransaction verbose` does NOT include the spent output's address or value
+ * on the input — only the outpoint (`txid` + `vout`). {@link BlockCache.enrichInputPrevouts}
+ * resolves each outpoint to its `prevout` so the frontend can tell a real
+ * recipient from change returned to the sender.
+ */
+interface RawVin {
+  txid?: string
+  vout?: number
+  coinbase?: string
+  prevout?: ResolvedPrevout
+}
+
+/**
+ * The previous output a non-coinbase input spends, resolved from the referenced
+ * transaction's vout. Attached to each input as `prevout` so input addresses and
+ * the transaction fee can be computed client-side. Absent when the prevout cannot
+ * be resolved (e.g. the parent tx is unavailable), so consumers degrade gracefully.
+ */
+export interface ResolvedPrevout {
+  value: number
+  addresses?: string[]
+  type?: string
+}
+
+/**
+ * Per-request cap on how many distinct previous transactions are fetched to
+ * resolve input prevouts. Resolution reuses the long-lived `getrawtransaction`
+ * cache, so steady-state cost is low; this bound only guards the cold-cache cost
+ * of a pathological many-input transaction and keeps the endpoint responsive.
+ * Inputs beyond the cap are returned without a `prevout` and the frontend
+ * degrades gracefully (it falls back to the unenriched display).
+ */
+const MAX_PREVOUT_LOOKUPS = 60
+
 // Block-specific caching with different TTLs
 export class BlockCache extends BlockchainCache {
   async getBlock(hashOrHeight: string | number, network: NetworkType, verbose: boolean = true) {
@@ -330,7 +383,101 @@ export class BlockCache extends BlockchainCache {
       }
     }
 
-    return await this.withLiveConfirmations(tx, network)
+    const withConfirmations = await this.withLiveConfirmations(tx, network)
+    return await this.enrichInputPrevouts(withConfirmations, network)
+  }
+
+  /**
+   * Resolve each non-coinbase input's previous output (address + value) and attach
+   * it as `vin[i].prevout`.
+   *
+   * FairCoin's `getrawtransaction verbose` returns only the outpoint (`txid` +
+   * `vout`) on each input — never the spent output's address or value. Without
+   * those, the frontend cannot distinguish a real recipient from change returned
+   * to the sender, nor compute the fee. We resolve them here by reading each
+   * referenced parent transaction (reusing the long-lived `getrawtransaction`
+   * cache) and copying the matching vout's `value`/`addresses`/`type`.
+   *
+   * Operates on a shallow copy (vin array and touched input objects are cloned)
+   * so the cached body is never mutated. Resolution is:
+   *  - skipped for coinbase inputs (no prevout exists);
+   *  - de-duplicated by parent txid (a tx spending several outputs of one parent
+   *    fetches that parent once);
+   *  - bounded by {@link MAX_PREVOUT_LOOKUPS} distinct parents per request;
+   *  - best-effort: any parent that fails to load leaves its inputs without a
+   *    `prevout`, so the endpoint never fails because a prevout was unavailable.
+   */
+  private async enrichInputPrevouts(
+    tx: Record<string, unknown> | null,
+    network: NetworkType,
+  ): Promise<Record<string, unknown> | null> {
+    if (!tx || !Array.isArray(tx.vin)) {
+      return tx
+    }
+
+    const vin = tx.vin as RawVin[]
+
+    // Collect the distinct parent txids we need (skipping coinbase inputs), in
+    // first-seen order, capped so a pathological many-input tx cannot fan out
+    // into an unbounded number of cold-cache RPC calls.
+    const parentTxids: string[] = []
+    const seen = new Set<string>()
+    for (const input of vin) {
+      if (typeof input.coinbase === 'string') continue
+      const parentTxid = input.txid
+      if (!parentTxid || parentTxid === ZERO_HASH || seen.has(parentTxid)) continue
+      seen.add(parentTxid)
+      if (parentTxids.length >= MAX_PREVOUT_LOOKUPS) break
+      parentTxids.push(parentTxid)
+    }
+
+    if (parentTxids.length === 0) {
+      return tx
+    }
+
+    // Fetch every needed parent transaction once, in parallel. A failed lookup
+    // resolves to null and simply yields no prevout for the affected inputs.
+    const parents = new Map<string, RawVout[] | null>()
+    await Promise.all(
+      parentTxids.map(async (parentTxid) => {
+        try {
+          const parent = await this.get<{ vout?: RawVout[] }>(
+            'getrawtransaction',
+            [parentTxid, true],
+            { network, ttl: CONFIRMED_TX_TTL_SECONDS },
+          )
+          parents.set(parentTxid, Array.isArray(parent?.vout) ? parent.vout : null)
+        } catch (error) {
+          console.error(`Error resolving prevout parent ${parentTxid}:`, error)
+          parents.set(parentTxid, null)
+        }
+      }),
+    )
+
+    // Clone only the inputs we annotate; leave coinbase/unresolved inputs as-is.
+    const enrichedVin = vin.map((input) => {
+      if (typeof input.coinbase === 'string') return input
+      const parentTxid = input.txid
+      if (!parentTxid) return input
+      const parentVout = parents.get(parentTxid)
+      if (!parentVout) return input
+
+      const spent = parentVout.find((out) => out.n === input.vout)
+      if (!spent || typeof spent.value !== 'number') return input
+
+      const prevout: ResolvedPrevout = { value: spent.value }
+      const addresses = spent.scriptPubKey?.addresses
+      if (Array.isArray(addresses) && addresses.length > 0) {
+        prevout.addresses = addresses
+      }
+      if (typeof spent.scriptPubKey?.type === 'string') {
+        prevout.type = spent.scriptPubKey.type
+      }
+
+      return { ...input, prevout }
+    })
+
+    return { ...tx, vin: enrichedVin }
   }
 
   /**
