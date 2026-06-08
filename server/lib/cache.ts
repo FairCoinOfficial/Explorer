@@ -282,7 +282,7 @@ export class BlockCache extends BlockchainCache {
 
     try {
       const cached = await collection.findOne({ _id: cacheKey } as any)
-      if (cached && !this.isExpired(cached as any)) {
+      if (cached && !this.isExpired(cached as any) && !this.isStaleUnconfirmed(cached as any)) {
         tx = cached.data
       }
     } catch (error) {
@@ -331,6 +331,28 @@ export class BlockCache extends BlockchainCache {
     }
 
     return await this.withLiveConfirmations(tx, network)
+  }
+
+  /**
+   * Read-side self-heal for poisoned tx cache entries.
+   *
+   * A cached tx whose body has no `blockhash` was stored while the tx was in the
+   * mempool. Such an entry is only trustworthy briefly: a genuinely confirmed tx
+   * always comes back from RPC with a `blockhash`, so any unconfirmed body older
+   * than {@link UNCONFIRMED_TX_TTL_SECONDS} must be re-fetched — regardless of its
+   * stored TTL. This immediately heals entries written before the short-TTL fix
+   * (which were saved with `ttl: 3600`) and still serves real mempool txs from
+   * cache for up to the short window (no infinite refetch).
+   *
+   * Confirmed entries (with a `blockhash`) are never considered stale here; their
+   * volatile `confirmations` is recomputed live in {@link withLiveConfirmations}.
+   */
+  private isStaleUnconfirmed(cached: { data?: { blockhash?: string }; timestamp?: number }): boolean {
+    if (cached.data?.blockhash) {
+      return false
+    }
+    const age = Date.now() - (cached.timestamp ?? 0)
+    return age > UNCONFIRMED_TX_TTL_SECONDS * 1000
   }
 
   /**
