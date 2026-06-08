@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
 import { useNetwork } from './network-context'
 import { useBlockchainWebSocket } from '@/hooks/use-blockchain-websocket'
+import { useRealtimeSync } from '@/hooks/use-realtime-sync'
 import {
   WebSocketEvent,
   BlockData,
@@ -75,6 +76,13 @@ export function BlockchainProvider({ children }: BlockchainProviderProps) {
     autoConnect: true,
     reconnectOnNetworkChange: true
   })
+
+  // Real-time React Query cache sync: drives the home dashboard (recent blocks,
+  // latest-tx feed, network stats, header pill, stat-strip) off this single
+  // WebSocket connection. Falls back to the hooks' 30s polling when the socket
+  // is unavailable (e.g. local dev, where the Vite proxy does not forward
+  // `/api/ws`). Mounted here once, high in the tree, alongside the only socket.
+  useRealtimeSync(lastMessage)
 
   /**
    * Subscribe to an event
