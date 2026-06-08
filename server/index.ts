@@ -14,6 +14,7 @@ import { blockCache } from './lib/cache'
 import { handleRouteError, parseNetwork, parseLimit, ValidationError } from './lib/http'
 import { rpcWithNetwork } from '@fairco.in/rpc-client'
 import priceRouter from './routes/price'
+import statsHistoryRouter from './routes/stats-history'
 import addressRouter from './routes/address'
 import broadcastRouter from './routes/broadcast'
 import feeEstimateRouter from './routes/fee-estimate'
@@ -161,6 +162,9 @@ app.use('/api/address', addressRouter)
 
 // Price routes (DB-defined prices with history)
 app.use('/api/price', priceRouter)
+
+// Stats history (sampled difficulty/connections/height series for home sparklines)
+app.use('/api/stats/history', statsHistoryRouter)
 
 // Broadcast route (send raw transactions)
 app.use('/api/tx', broadcastRouter)
