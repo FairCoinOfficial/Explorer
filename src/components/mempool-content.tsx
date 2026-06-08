@@ -1,294 +1,208 @@
-import { useNetwork } from '@/contexts/network-context'
-import { useBlockchain } from '@/contexts/blockchain-context'
-import { NetworkStatus } from '@/components/network-status'
-import { ConnectionIndicator } from '@/components/realtime/connection-indicator'
-import { Button } from '@/components/ui/button'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { Clock, Zap, RefreshCw, Home, Hash, Database } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
-import { SectionHeader, StatsCard, StatsGrid, LoadingState, EmptyState } from '@/components/ui'
+import {
+  AlertTriangle,
+  Clock,
+  Coins,
+  Database,
+  Hash,
+  Inbox,
+  Layers,
+} from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
 import { useTranslations } from '@/lib/i18n'
+import { useMempool, type MempoolTransaction } from '@/hooks/use-mempool'
+import { formatBytes, formatNumber } from '@/lib/format'
+import { DetailHeader } from '@/components/detail/detail-header'
+import { SectionCard } from '@/components/detail/section-card'
+import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
+import { HashCell } from '@/components/detail/hash-cell'
+import { RelativeTime } from '@/components/detail/relative-time'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 
-interface MempoolTransaction {
-    txid: string
-    size: number
-    fee: number
-    feeRate: number
-    time: number
-    depends: string[]
-}
-
-interface MempoolInfo {
-    size: number
-    bytes: number
-    transactions: MempoolTransaction[]
-}
+const MAX_VISIBLE_TX = 25
+const SATOSHIS_PER_FAIR = 100_000_000
+const TIP_KEYS = ['tip1', 'tip3', 'tip4'] as const
 
 export default function MempoolContent() {
-    const { currentNetwork } = useNetwork()
-    const { mempoolSize, mempoolBytes, subscribe, unsubscribe, isConnected } = useBlockchain()
-    const [mempoolInfo, setMempoolInfo] = useState<MempoolInfo | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-    const t = useTranslations('mempool')
-    const tCommon = useTranslations('common')
+  const t = useTranslations('mempool')
+  const common = useTranslations('common')
+  const { data, isLoading, isError, error, refetch, isFetching } = useMempool()
 
-    const fetchMempool = async () => {
-        try {
-            setLoading(true)
-            setError(null)
+  if (isLoading) {
+    return <MempoolSkeleton />
+  }
 
-            const response = await fetch(`/api/mempool?network=${currentNetwork}`)
-            if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.error || 'Failed to fetch mempool information')
-            }
-
-            const data = await response.json()
-            setMempoolInfo(data.mempoolInfo)
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred')
-            toast.error('Failed to load mempool')
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    // Initial fetch
-    useEffect(() => {
-        fetchMempool()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentNetwork])
-
-    // Subscribe to WebSocket mempool updates
-    useEffect(() => {
-        const handleMempoolUpdate = (event: any) => {
-            if (event.type === 'mempool-update' && event.network === currentNetwork) {
-                setMempoolInfo(prevInfo => ({
-                    size: event.data.size,
-                    bytes: event.data.bytes,
-                    transactions: event.data.transactions || prevInfo?.transactions || []
-                }))
-                setLoading(false)
-            }
-        }
-
-        subscribe('mempool-update', handleMempoolUpdate)
-        return () => unsubscribe('mempool-update', handleMempoolUpdate)
-    }, [currentNetwork, subscribe, unsubscribe])
-
-    if (loading) {
-        return (
-            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-                <LoadingState message={"Loading..."} />
-            </div>
-        )
-    }
-
-    if (error) {
-        return (
-            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-                <EmptyState
-                    icon={Database}
-                    title={t('error_loading')}
-                    description={error}
-                    action={{
-                        label: tCommon('try_again'),
-                        onClick: fetchMempool
-                    }}
-                />
-            </div>
-        )
-    }
-
-    if (!mempoolInfo) {
-        return (
-            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-                <div className="flex items-center justify-center h-64">
-                    <p className="text-lg text-muted-foreground">{t('no_mempool_info')}</p>
-                </div>
-            </div>
-        )
-    }
-
+  if (isError || !data) {
     return (
-        <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-            {/* Header */}
-            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-                <div className="space-y-1">
-                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{t('title')}</h2>
-                    <p className="text-sm text-muted-foreground sm:text-base">
-                        {t('description')}
-                    </p>
-                </div>
-                <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
-                    <div className="flex items-center space-x-2">
-                        <NetworkStatus />
-                        <ConnectionIndicator />
-                    </div>
-                    <Button onClick={fetchMempool} variant="outline" size="sm" className="w-full sm:w-auto">
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Refresh
-                    </Button>
-                </div>
-            </div>
-
-            {/* Mempool Stats */}
-            <div className="space-y-4">
-                <SectionHeader
-                    icon={Database}
-                    title={t('statistics')}
-                />
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <div className="border rounded-lg p-4">
-                        <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <h4 className="text-sm font-medium">{t('pending_transactions')}</h4>
-                            <Hash className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className="text-2xl font-bold">{mempoolInfo.size.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">{t('unconfirmed_transactions')}</p>
-                    </div>
-
-                    <div className="border rounded-lg p-4">
-                        <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <h4 className="text-sm font-medium">{t('memory_usage')}</h4>
-                            <Database className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className="text-2xl font-bold">
-                            {mempoolInfo.bytes >= 1024 * 1024
-                                ? `${(mempoolInfo.bytes / 1024 / 1024).toFixed(1)} MB`
-                                : `${(mempoolInfo.bytes / 1024).toFixed(1)} KB`}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            {t('bytes_per_transaction')}
-                        </p>
-                    </div>
-
-                    <div className="border rounded-lg p-4">
-                        <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <h4 className="text-sm font-medium">{t('avg_tx_size')}</h4>
-                            <Database className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className="text-2xl font-bold">
-                            {mempoolInfo.size > 0 ? Math.round(mempoolInfo.bytes / mempoolInfo.size) : 0}
-                        </div>
-                        <p className="text-xs text-muted-foreground">{t('bytes_per_transaction')}</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Transactions Table */}
-            <div className="space-y-4">
-                <SectionHeader
-                    icon={Clock}
-                    title={t('recent_transactions')}
-                    badge={{
-                        text: t('pending_count', { count: mempoolInfo.transactions.length }),
-                        variant: 'secondary'
-                    }}
-                />
-
-                {mempoolInfo.transactions.length > 0 ? (
-                    <div className="rounded-md border overflow-auto custom-scrollbar">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>{t('transaction_id')}</TableHead>
-                                    <TableHead>{tCommon('size')}</TableHead>
-                                    <TableHead>{tCommon('fee')}</TableHead>
-                                    <TableHead>{t('fee_rate')}</TableHead>
-                                    <TableHead>{t('time_in_pool')}</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {mempoolInfo.transactions.slice(0, 20).map((tx) => (
-                                    <TableRow key={tx.txid}>
-                                        <TableCell className="font-mono text-sm">
-                                            <Link
-                                                to={`/tx/${tx.txid}`}
-                                                className="hover:underline break-all"
-                                            >
-                                                {tx.txid.substring(0, 16)}...
-                                            </Link>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">
-                                                {tx.size.toLocaleString()} bytes
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="font-mono">
-                                            {(tx.fee * 100000000).toFixed(0)} sat
-                                        </TableCell>
-                                        <TableCell className="font-mono">
-                                            {tx.feeRate.toFixed(1)} sat/vB
-                                        </TableCell>
-                                        <TableCell>
-                                            {t('time_ago', { minutes: Math.round((Date.now() / 1000 - tx.time) / 60) })}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                ) : (
-                    <div className="text-center py-8">
-                        <Clock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-medium">{t('mempool_empty')}</h3>
-                        <p className="text-muted-foreground">
-                            {t('mempool_empty_description')}
-                        </p>
-                    </div>
-                )}
-            </div>
-
-            {/* Quick Actions */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b">
-                    <Zap className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">{t('quick_actions')}</h3>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                    <div className="border rounded-lg p-4">
-                        <h4 className="text-sm font-medium mb-3">{tCommon('navigation')}</h4>
-                        <div className="space-y-3">
-                            <Button asChild variant="outline" className="w-full justify-start">
-                                <Link to="/blocks">
-                                    <Database className="h-4 w-4 mr-2" />
-                                    {tCommon('view_recent_blocks')}
-                                </Link>
-                            </Button>
-                            <Button asChild variant="outline" className="w-full justify-start">
-                                <Link to="/stats">
-                                    <Hash className="h-4 w-4 mr-2" />
-                                    {tCommon('network_statistics')}
-                                </Link>
-                            </Button>
-                        </div>
-                    </div>
-
-                    <div className="border rounded-lg p-4">
-                        <h4 className="text-sm font-medium mb-3">{t('mempool_tips')}</h4>
-                        <div className="space-y-2 text-sm text-muted-foreground">
-                            <p>• {t('tip_1')}</p>
-                            <p>• {t('tip_3')}</p>
-                            <p>• {t('tip_4')}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Navigation */}
-            <div className="flex justify-center">
-                <Button asChild variant="outline">
-                    <Link to="/">
-                        <Home className="h-4 w-4 mr-2" />
-                        {tCommon('back_to_home')}
-                    </Link>
-                </Button>
-            </div>
-        </div>
+      <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+        <DetailHeader
+          title={t('title')}
+          subtitle={t('description')}
+          onRefresh={() => void refetch()}
+          isRefreshing={isFetching}
+        />
+        <SectionCard>
+          <div className="flex flex-col items-center gap-3 py-8 text-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <AlertTriangle className="size-6" />
+            </span>
+            <p className="text-sm text-muted-foreground">
+              {error instanceof Error ? error.message : t('errorLoading')}
+            </p>
+            <Button variant="outline" onClick={() => void refetch()}>
+              {common('tryAgain')}
+            </Button>
+          </div>
+        </SectionCard>
+      </div>
     )
+  }
+
+  const avgTxSize = data.size > 0 ? Math.round(data.bytes / data.size) : 0
+  const transactions = data.transactions.slice(0, MAX_VISIBLE_TX)
+
+  return (
+    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <DetailHeader
+        title={t('title')}
+        subtitle={t('description')}
+        onRefresh={() => void refetch()}
+        isRefreshing={isFetching}
+      />
+
+      {/* Stats */}
+      <StatTileGrid className="lg:grid-cols-3">
+        <StatTile
+          icon={Hash}
+          label={t('pendingTransactions')}
+          value={formatNumber(data.size)}
+          hint={t('unconfirmedTransactions')}
+          accent
+        />
+        <StatTile
+          icon={Database}
+          label={t('memoryUsage')}
+          value={formatBytes(data.bytes)}
+          hint={t('bytesValue', { bytes: formatNumber(data.bytes) })}
+        />
+        <StatTile
+          icon={Layers}
+          label={t('avgTxSize')}
+          value={formatBytes(avgTxSize)}
+          hint={t('bytesPerTransaction')}
+        />
+      </StatTileGrid>
+
+      {/* Pending transactions */}
+      <SectionCard
+        title={t('recentTransactions')}
+        icon={Clock}
+        flush
+        action={
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+            {t('pendingCount', { count: data.transactions.length })}
+          </span>
+        }
+      >
+        {transactions.length > 0 ? (
+          <ul className="divide-y">
+            {transactions.map((tx) => (
+              <MempoolRow key={tx.txid} tx={tx} t={t} />
+            ))}
+          </ul>
+        ) : (
+          <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <Inbox className="size-6" />
+            </span>
+            <div>
+              <p className="text-sm font-medium">{t('empty')}</p>
+              <p className="text-sm text-muted-foreground">{t('emptyDescription')}</p>
+            </div>
+          </div>
+        )}
+      </SectionCard>
+
+      {/* Tips */}
+      <SectionCard title={t('mempoolTips')} icon={Coins}>
+        <ul className="space-y-2 text-sm text-muted-foreground">
+          {TIP_KEYS.map((key) => (
+            <li key={key} className="flex gap-2">
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
+              <span>{t(key)}</span>
+            </li>
+          ))}
+        </ul>
+      </SectionCard>
+    </div>
+  )
+}
+
+function MempoolRow({
+  tx,
+  t,
+}: {
+  tx: MempoolTransaction
+  t: (key: string, params?: Record<string, string | number>) => string
+}) {
+  const satoshis = Math.round(tx.fee * SATOSHIS_PER_FAIR)
+  const waiting =
+    Number.isFinite(tx.time) && tx.time > 0
+      ? formatDistanceToNow(new Date(tx.time * 1000), { addSuffix: true })
+      : '—'
+
+  return (
+    <li className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <HashCell value={tx.txid} to="tx" textClassName="font-medium" />
+        <span className="text-xs text-muted-foreground tabular-nums" title={waiting}>
+          {waiting}
+        </span>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-3 text-xs tabular-nums sm:gap-5">
+        <span className="hidden w-16 text-right text-muted-foreground sm:inline">
+          {formatBytes(tx.size)}
+        </span>
+        <span className="hidden w-20 text-right text-muted-foreground sm:inline">
+          {t('satValue', { value: formatNumber(satoshis) })}
+        </span>
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
+          {t('feeRateValue', { rate: tx.feeRate.toFixed(1) })}
+        </span>
+      </div>
+    </li>
+  )
+}
+
+function MempoolSkeleton() {
+  return (
+    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <div className="flex items-center justify-between gap-2">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+        <Skeleton className="h-9 w-28 rounded-lg" />
+      </div>
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-20 rounded-xl" />
+        ))}
+      </div>
+      <div className="rounded-xl border bg-muted/40">
+        <ul className="divide-y">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <li key={i} className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <div className="space-y-1">
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <Skeleton className="h-4 w-16" />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
 }

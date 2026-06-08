@@ -1,135 +1,233 @@
-import { useState, useCallback, useEffect } from 'react'
-import { useNetwork } from '@/contexts/network-context'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
+import {
+  AlertTriangle,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Network,
+  Users,
+} from 'lucide-react'
+import { useTranslations } from '@/lib/i18n'
+import { usePeers, type Peer } from '@/hooks/use-peers'
+import { formatNumber } from '@/lib/format'
+import { ListHeader } from '@/components/detail/list-header'
+import { SectionCard } from '@/components/detail/section-card'
+import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
+import { RelativeTime } from '@/components/detail/relative-time'
 import { Button } from '@/components/ui/button'
-import { Users, RefreshCw, ArrowDownLeft, ArrowUpRight, AlertTriangle } from 'lucide-react'
-import { LoadingState, EmptyState } from '@/components/ui'
-import { toast } from 'sonner'
+import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 
-interface Peer {
-  addr: string; version: number; subver: string; pingtime: number; conntime: number
-  startingheight: number; banscore: number; bytessent: number; bytesrecv: number
-  inbound: boolean; synced_headers: number; synced_blocks: number
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
-  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`
-}
-
-function formatDuration(conntime: number): string {
-  const now = Math.floor(Date.now() / 1000)
-  const seconds = now - conntime
-  if (seconds < 0) return 'just now'
-  if (seconds < 60) return `${seconds}s`
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ${minutes % 60}m`
-  const days = Math.floor(hours / 24)
-  return `${days}d ${hours % 24}h`
-}
+type Translate = (key: string, params?: Record<string, string | number>) => string
 
 function cleanSubver(subver: string): string {
   return subver.replace(/^\/(.*)\/$/, '$1')
 }
 
+function formatLatency(pingtime: number): string {
+  return pingtime > 0 ? `${(pingtime * 1000).toFixed(0)} ms` : '—'
+}
+
 export default function PeersPage() {
-  const { currentNetwork } = useNetwork()
-  const [peers, setPeers] = useState<Peer[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const t = useTranslations('peers')
+  const common = useTranslations('common')
+  const { data, isLoading, isError, error, refetch, isFetching } = usePeers()
 
-  const fetchPeers = useCallback(async () => {
-    try {
-      setLoading(true); setError(null)
-      const response = await fetch(`/api/peers?network=${currentNetwork}`)
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(errorData.error || `HTTP ${response.status}`)
-      }
-      const data = await response.json()
-      setPeers(data.peers ?? [])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-      toast.error('Failed to load peers')
-    } finally {
-      setLoading(false)
-    }
-  }, [currentNetwork])
-
-  useEffect(() => {
-    fetchPeers()
-    const interval = setInterval(fetchPeers, 30_000)
-    return () => clearInterval(interval)
-  }, [fetchPeers])
-
-  if (loading && peers.length === 0) {
-    return <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8"><LoadingState message="Loading peer information..." /></div>
-  }
-  if (error && peers.length === 0) {
-    return <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8"><EmptyState icon={AlertTriangle} title="Error Loading Peers" description={error} action={{ label: 'Try Again', onClick: fetchPeers }} /></div>
+  if (isLoading) {
+    return <PeersSkeleton />
   }
 
-  const inboundCount = peers.filter(p => p.inbound).length
-  const outboundCount = peers.filter(p => !p.inbound).length
+  if (isError || !data) {
+    return (
+      <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+        <ListHeader
+          title={t('title')}
+          subtitle={t('subtitle')}
+          onRefresh={() => void refetch()}
+          isRefreshing={isFetching}
+        />
+        <SectionCard>
+          <div className="flex flex-col items-center gap-3 py-8 text-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <AlertTriangle className="size-6" />
+            </span>
+            <p className="text-sm text-muted-foreground">
+              {error instanceof Error ? error.message : t('error')}
+            </p>
+            <Button variant="outline" onClick={() => void refetch()}>
+              {common('tryAgain')}
+            </Button>
+          </div>
+        </SectionCard>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Connected Peers</h2>
-          <p className="text-sm text-muted-foreground sm:text-base">Live view of nodes connected to the FairCoin network</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="text-sm">{currentNetwork.toUpperCase()}</Badge>
-          <Button onClick={fetchPeers} variant="outline" size="sm"><RefreshCw className="h-4 w-4 mr-2" />Refresh</Button>
-        </div>
-      </div>
-      <div className="grid grid-cols-3 gap-6">
-        <div>
-          <p className="text-xs text-muted-foreground mb-1">Total Peers</p>
-          <p className="text-2xl font-bold tabular-nums">{peers.length}</p>
-          <p className="text-xs text-muted-foreground mt-1">Connected nodes</p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground mb-1">Inbound</p>
-          <p className="text-2xl font-bold tabular-nums">{inboundCount}</p>
-          <p className="text-xs text-muted-foreground mt-1">Peers connecting to us</p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground mb-1">Outbound</p>
-          <p className="text-2xl font-bold tabular-nums">{outboundCount}</p>
-          <p className="text-xs text-muted-foreground mt-1">Peers we connect to</p>
-        </div>
-      </div>
-      {peers.length > 0 ? (
-        <div className="rounded-md border overflow-auto custom-scrollbar">
-          <Table>
-            <TableHeader><TableRow><TableHead>Address</TableHead><TableHead>Client</TableHead><TableHead>Direction</TableHead><TableHead>Latency</TableHead><TableHead>Connected</TableHead><TableHead>Start Height</TableHead><TableHead>Ban Score</TableHead><TableHead>Data</TableHead><TableHead>Synced</TableHead></TableRow></TableHeader>
-            <TableBody>
-              {peers.map(peer => (
-                <TableRow key={peer.addr}>
-                  <TableCell className="font-mono text-sm whitespace-nowrap">{peer.addr}</TableCell>
-                  <TableCell className="text-sm whitespace-nowrap">{cleanSubver(peer.subver) || 'Unknown'}</TableCell>
-                  <TableCell><Badge variant={peer.inbound ? 'secondary' : 'outline'} className="whitespace-nowrap">{peer.inbound ? <><ArrowDownLeft className="h-3 w-3 mr-1" />Inbound</> : <><ArrowUpRight className="h-3 w-3 mr-1" />Outbound</>}</Badge></TableCell>
-                  <TableCell className="font-mono text-sm whitespace-nowrap">{peer.pingtime > 0 ? `${(peer.pingtime * 1000).toFixed(0)} ms` : 'N/A'}</TableCell>
-                  <TableCell className="text-sm whitespace-nowrap">{peer.conntime > 0 ? formatDuration(peer.conntime) : 'N/A'}</TableCell>
-                  <TableCell className="font-mono text-sm">{peer.startingheight.toLocaleString()}</TableCell>
-                  <TableCell className="text-sm"><Badge variant={peer.banscore > 0 ? 'destructive' : 'outline'}>{peer.banscore}</Badge></TableCell>
-                  <TableCell className="text-sm whitespace-nowrap">{formatBytes(peer.bytessent + peer.bytesrecv)}</TableCell>
-                  <TableCell className="text-sm whitespace-nowrap font-mono">{peer.synced_headers} / {peer.synced_blocks}</TableCell>
-                </TableRow>
+    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <ListHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        onRefresh={() => void refetch()}
+        isRefreshing={isFetching}
+        badge={
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+            <Network className="size-3" />
+            {t('totalPeers')}: {formatNumber(data.total)}
+          </span>
+        }
+      />
+
+      <StatTileGrid className="grid-cols-3 lg:grid-cols-3">
+        <StatTile
+          icon={Users}
+          label={t('totalPeers')}
+          value={formatNumber(data.total)}
+          hint={t('connectedNodes')}
+          accent
+        />
+        <StatTile
+          icon={ArrowDownLeft}
+          label={t('inbound')}
+          value={formatNumber(data.inbound)}
+          hint={t('peersConnectingToUs')}
+        />
+        <StatTile
+          icon={ArrowUpRight}
+          label={t('outbound')}
+          value={formatNumber(data.outbound)}
+          hint={t('peersWeConnectTo')}
+        />
+      </StatTileGrid>
+
+      <SectionCard
+        title={t('title')}
+        icon={Network}
+        flush
+        action={
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+            {formatNumber(data.total)}
+          </span>
+        }
+      >
+        {data.peers.length > 0 ? (
+          <>
+            {/* Mobile: stacked cards */}
+            <ul className="divide-y lg:hidden">
+              {data.peers.map((peer) => (
+                <PeerCard key={peer.addr} peer={peer} t={t} />
               ))}
-            </TableBody>
-          </Table>
-        </div>
-      ) : (
-        <div className="text-center py-8"><Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" /><h3 className="text-lg font-medium">No Peers Connected</h3></div>
+            </ul>
+
+            {/* Desktop: table */}
+            <div className="hidden overflow-x-auto lg:block">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <th className="px-4 py-2.5 font-medium">{t('tableAddress')}</th>
+                    <th className="px-4 py-2.5 font-medium">{t('tableClient')}</th>
+                    <th className="px-4 py-2.5 font-medium">{t('tableDirection')}</th>
+                    <th className="px-4 py-2.5 text-right font-medium">{t('tableLatency')}</th>
+                    <th className="px-4 py-2.5 font-medium">{t('tableConnected')}</th>
+                    <th className="px-4 py-2.5 text-right font-medium">{t('tableHeight')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {data.peers.map((peer) => (
+                    <tr key={peer.addr} className="transition-colors hover:bg-muted/40">
+                      <td className="whitespace-nowrap px-4 py-2.5 font-mono text-foreground">
+                        {peer.addr}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-muted-foreground">
+                        {cleanSubver(peer.subver) || t('unknown')}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <DirectionBadge inbound={peer.inbound} t={t} />
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-2.5 text-right font-mono tabular-nums text-muted-foreground">
+                        {formatLatency(peer.pingtime)}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
+                        <RelativeTime timestamp={peer.conntime} />
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-2.5 text-right font-mono tabular-nums text-muted-foreground">
+                        {formatNumber(peer.synced_headers)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <Users className="size-6" />
+            </span>
+            <p className="text-sm font-medium">{t('noPeers')}</p>
+          </div>
+        )}
+      </SectionCard>
+    </div>
+  )
+}
+
+function DirectionBadge({ inbound, t }: { inbound: boolean; t: Translate }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+        inbound ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
       )}
+    >
+      {inbound ? <ArrowDownLeft className="size-3" /> : <ArrowUpRight className="size-3" />}
+      {inbound ? t('inboundBadge') : t('outboundBadge')}
+    </span>
+  )
+}
+
+function PeerCard({ peer, t }: { peer: Peer; t: Translate }) {
+  return (
+    <li className="flex flex-col gap-2 px-4 py-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate font-mono text-sm">{peer.addr}</span>
+        <DirectionBadge inbound={peer.inbound} t={t} />
+      </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span className="truncate font-mono">{cleanSubver(peer.subver) || t('unknown')}</span>
+        <span className="text-right tabular-nums">{formatLatency(peer.pingtime)}</span>
+        <RelativeTime timestamp={peer.conntime} />
+        <span className="text-right font-mono tabular-nums">
+          {t('tableHeight')}: {formatNumber(peer.synced_headers)}
+        </span>
+      </div>
+    </li>
+  )
+}
+
+function PeersSkeleton() {
+  return (
+    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <div className="flex items-center justify-between gap-2">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-44" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+        <Skeleton className="h-9 w-28 rounded-lg" />
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-20 rounded-xl" />
+        ))}
+      </div>
+      <div className="rounded-xl border bg-muted/40">
+        <ul className="divide-y">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <li key={i} className="flex items-center justify-between gap-3 px-4 py-3">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-4 w-20" />
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   )
 }

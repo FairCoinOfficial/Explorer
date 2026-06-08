@@ -1,10 +1,20 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Hash, Search, Home } from 'lucide-react'
 
 export default function TxIndexPage() {
+  const navigate = useNavigate()
+  const [txid, setTxid] = useState('')
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const value = txid.trim()
+    if (value) navigate(`/tx/${value}`)
+  }
+
   return (
     <div className="flex-1 space-y-4 p-3 pt-4 md:p-6 lg:p-8">
       <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
@@ -19,10 +29,10 @@ export default function TxIndexPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="max-w-md mx-auto">
-            <form action="/search" className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="txid" className="text-sm font-medium">Transaction ID</label>
-                <Input id="txid" name="q" placeholder="Enter a transaction ID..." className="font-mono" />
+                <Input id="txid" value={txid} onChange={(e) => setTxid(e.target.value)} placeholder="Enter a transaction ID..." className="font-mono" />
               </div>
               <Button type="submit" className="w-full"><Search className="w-4 h-4 mr-2" />Search Transaction</Button>
             </form>

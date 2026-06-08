@@ -16,7 +16,6 @@ import MasternodesPage from './pages/masternodes'
 import NetworkStatusPage from './pages/network-status'
 import StatsPage from './pages/stats'
 import PeersPage from './pages/peers'
-import SearchPage from './pages/search'
 import FeeCalculatorPage from './pages/fee-calculator'
 import AddressValidatorPage from './pages/address-validator'
 import BridgePage from './pages/bridge'
@@ -42,7 +41,6 @@ export default function App() {
                   <Route path="network-status" element={<NetworkStatusPage />} />
                   <Route path="stats" element={<StatsPage />} />
                   <Route path="peers" element={<PeersPage />} />
-                  <Route path="search" element={<SearchPage />} />
                   <Route path="tools/fee-calculator" element={<FeeCalculatorPage />} />
                   <Route path="tools/address-validator" element={<AddressValidatorPage />} />
                   <Route path="bridge" element={<BridgePage />} />

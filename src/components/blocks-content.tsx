@@ -1,152 +1,271 @@
-import { useNetwork } from '@/contexts/network-context'
-import { NetworkStatus } from '@/components/network-status'
+import { useMemo, useState } from 'react'
+import {
+  AlertTriangle,
+  Blocks as BlocksIcon,
+  Calendar,
+  Database,
+  Receipt,
+  Search,
+} from 'lucide-react'
+import { useTranslations } from '@/lib/i18n'
+import { useRecentBlocks, type RecentBlock } from '@/hooks/use-recent-blocks'
+import { formatBytes, formatNumber } from '@/lib/format'
+import { ListHeader } from '@/components/detail/list-header'
+import { SectionCard } from '@/components/detail/section-card'
+import { HashCell } from '@/components/detail/hash-cell'
+import { RelativeTime } from '@/components/detail/relative-time'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Database, Search, Home, Hash, Clock, RefreshCw, Filter, Calendar } from 'lucide-react'
-import { useEffect, useState, useCallback, useMemo } from 'react'
-import { Link } from 'react-router-dom'
-import { toast } from 'sonner'
-import { SectionHeader, StatsCard, StatsGrid, LoadingState, EmptyState } from '@/components/ui'
-import { BlocksTable } from '@/components/ui/blocks-table'
+import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 
-interface Block {
-    height: number
-    hash: string
-    time: number
-    nTx: number
-    size: number
-    tx: string[]
+const BLOCKS_LIMIT = 100
+const BLOCKS_PER_PAGE = 20
+
+type TimeFilter = 'all' | '1h' | '24h' | '7d'
+
+const TIME_FILTERS: { key: TimeFilter; labelKey: string }[] = [
+  { key: 'all', labelKey: 'all' },
+  { key: '1h', labelKey: 'filter1h' },
+  { key: '24h', labelKey: 'filter24h' },
+  { key: '7d', labelKey: 'filter7d' },
+]
+
+const FILTER_WINDOW_SECONDS: Record<Exclude<TimeFilter, 'all'>, number> = {
+  '1h': 3_600,
+  '24h': 86_400,
+  '7d': 604_800,
 }
 
 export function BlocksContent() {
-    const { currentNetwork } = useNetwork()
-    const [blocks, setBlocks] = useState<Block[]>([])
-    const [height, setHeight] = useState<number>(0)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-    const [searchQuery, setSearchQuery] = useState('')
-    const [timeFilter, setTimeFilter] = useState<'all' | '1h' | '24h' | '7d'>('all')
-    const [currentPage, setCurrentPage] = useState(1)
-    const [totalPages, setTotalPages] = useState(1)
-    const blocksPerPage = 20
+  const t = useTranslations('blocks')
+  const common = useTranslations('common')
+  const { data, isLoading, isError, error, refetch, isFetching } = useRecentBlocks(BLOCKS_LIMIT)
 
-    const fetchBlocks = useCallback(async () => {
-        try {
-            setLoading(true)
-            setError(null)
-            const response = await fetch(`/api/blocks?network=${currentNetwork}&limit=100`)
-            if (!response.ok) throw new Error('Failed to fetch blocks')
-            const data = await response.json()
-            setBlocks(data.blocks || [])
-            setHeight(data.height || 0)
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'An error occurred'
-            setError(message)
-            toast.error('Failed to load blocks')
-        } finally {
-            setLoading(false)
-        }
-    }, [currentNetwork])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('all')
+  const [page, setPage] = useState(1)
 
-    useEffect(() => { fetchBlocks() }, [currentNetwork, fetchBlocks])
+  const blocks = data?.blocks
+  const height = data?.height ?? 0
 
-    const filteredBlocks = useMemo(() => {
-        let filtered = blocks
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase()
-            filtered = filtered.filter(b => b.height.toString().includes(q) || b.hash.toLowerCase().includes(q))
-        }
-        if (timeFilter !== 'all') {
-            const now = Date.now() / 1000
-            const timeLimit = timeFilter === '1h' ? 3600 : timeFilter === '24h' ? 86400 : 604800
-            filtered = filtered.filter(b => (now - b.time) <= timeLimit)
-        }
-        return filtered
-    }, [blocks, searchQuery, timeFilter])
+  const filteredBlocks = useMemo(() => {
+    if (!blocks) return []
+    const query = searchQuery.trim().toLowerCase()
+    const nowSeconds = Date.now() / 1000
+    return blocks.filter((block) => {
+      if (query) {
+        const matches =
+          block.height.toString().includes(query) || block.hash.toLowerCase().includes(query)
+        if (!matches) return false
+      }
+      if (timeFilter !== 'all') {
+        if (nowSeconds - block.time > FILTER_WINDOW_SECONDS[timeFilter]) return false
+      }
+      return true
+    })
+  }, [blocks, searchQuery, timeFilter])
 
-    const paginatedBlocks = useMemo(() => {
-        const start = (currentPage - 1) * blocksPerPage
-        return filteredBlocks.slice(start, start + blocksPerPage)
-    }, [filteredBlocks, currentPage, blocksPerPage])
+  const totalPages = Math.max(1, Math.ceil(filteredBlocks.length / BLOCKS_PER_PAGE))
+  // Derive the effective page in render so we never need an effect to clamp it.
+  const currentPage = Math.min(page, totalPages)
+  const pageBlocks = useMemo(() => {
+    const start = (currentPage - 1) * BLOCKS_PER_PAGE
+    return filteredBlocks.slice(start, start + BLOCKS_PER_PAGE)
+  }, [filteredBlocks, currentPage])
 
-    useEffect(() => {
-        setTotalPages(Math.max(1, Math.ceil(filteredBlocks.length / blocksPerPage)))
-        if (currentPage > Math.ceil(filteredBlocks.length / blocksPerPage) && currentPage > 1) setCurrentPage(1)
-    }, [filteredBlocks.length, blocksPerPage, currentPage])
+  if (isLoading) {
+    return <BlocksSkeleton />
+  }
 
-    const handleSearch = useCallback((q: string) => { setSearchQuery(q); setCurrentPage(1) }, [])
-    const handleTimeFilter = useCallback((f: 'all' | '1h' | '24h' | '7d') => { setTimeFilter(f); setCurrentPage(1) }, [])
-    const handlePageChange = useCallback((p: number) => setCurrentPage(p), [])
-
-    if (loading) return (
-        <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-            <LoadingState message="Loading blocks..." />
-        </div>
-    )
-
-    if (error) return (
-        <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-            <EmptyState icon={Database} title="Error" description={error} action={{ label: 'Try Again', onClick: fetchBlocks }} />
-        </div>
-    )
-
+  if (isError) {
     return (
-        <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8 w-full">
-            <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
-                <div className="flex-1">
-                    <h2 className="text-xl font-bold tracking-tight sm:text-2xl lg:text-3xl">Blocks</h2>
-                    <p className="text-muted-foreground text-sm sm:text-base mt-1">Browse the FairCoin blockchain block by block</p>
-                </div>
-                <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0 sm:flex-shrink-0">
-                    <NetworkStatus />
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 self-start sm:self-auto text-xs sm:text-sm px-2 py-1"><Database className="w-3 h-3 mr-1" />Height: {height?.toLocaleString() ?? 'N/A'}</Badge>
-                    <Button onClick={() => fetchBlocks()} variant="outline" size="sm" className="self-start sm:self-auto px-3"><RefreshCw className="h-4 w-4" /></Button>
-                </div>
-            </div>
-
-            <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-                <div className="flex-1 w-full sm:max-w-md">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                        <Input placeholder="Search by height or hash..." value={searchQuery} onChange={(e) => handleSearch(e.target.value)} className="pl-10 w-full" />
-                    </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <div className="flex items-center space-x-1">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground hidden sm:inline">Filter:</span>
-                    </div>
-                    <div className="flex space-x-1">
-                        {([
-                            { key: 'all' as const, label: 'All' },
-                            { key: '1h' as const, label: '1h' },
-                            { key: '24h' as const, label: '24h' },
-                            { key: '7d' as const, label: '7d' }
-                        ]).map(({ key, label }) => (
-                            <Button key={key} variant={timeFilter === key ? 'default' : 'outline'} size="sm" onClick={() => handleTimeFilter(key)} className="px-3 py-1 h-8 text-xs">{label}</Button>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            <StatsGrid>
-                <StatsCard title="Current Height" value={height?.toLocaleString() ?? 'N/A'} description="Latest block height" icon={Hash} />
-                <StatsCard title="Blocks Shown" value={paginatedBlocks.length} description={`Page ${currentPage} of ${totalPages} (${filteredBlocks.length} total)`} icon={Database} />
-                <StatsCard title="Network" value={currentNetwork} description="Active network" icon={Clock} />
-                <StatsCard title="Time Filter" value={timeFilter === 'all' ? 'All Time' : `Last ${timeFilter}`} description="Current filter" icon={Filter} />
-            </StatsGrid>
-
-            <div className="space-y-4 w-full">
-                <SectionHeader icon={Database} title="Recent Blocks" badge={{ text: `${filteredBlocks.length} blocks`, variant: 'secondary' }} />
-                <BlocksTable blocks={paginatedBlocks} currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} loading={loading} className="w-full" />
-            </div>
-
-            <div className="flex justify-center pt-2 sm:pt-4">
-                <Button asChild variant="outline" className="w-full sm:w-auto px-4 sm:px-6 py-2">
-                    <Link to="/"><Home className="h-4 w-4 mr-2" />Back to Home</Link>
-                </Button>
-            </div>
-        </div>
+      <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+        <ListHeader
+          title={t('title')}
+          subtitle={t('subtitle')}
+          onRefresh={() => void refetch()}
+          isRefreshing={isFetching}
+        />
+        <SectionCard>
+          <div className="flex flex-col items-center gap-3 py-8 text-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <AlertTriangle className="size-6" />
+            </span>
+            <p className="text-sm text-muted-foreground">
+              {error instanceof Error ? error.message : t('error')}
+            </p>
+            <Button variant="outline" onClick={() => void refetch()}>
+              {common('tryAgain')}
+            </Button>
+          </div>
+        </SectionCard>
+      </div>
     )
+  }
+
+  return (
+    <div className="w-full flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <ListHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        onRefresh={() => void refetch()}
+        isRefreshing={isFetching}
+        badge={
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+            <Database className="size-3" />
+            {t('height', { height: formatNumber(height) })}
+          </span>
+        }
+      />
+
+      {/* Search + time filter */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:max-w-md">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder={t('searchPlaceholder')}
+            value={searchQuery}
+            onChange={(event) => {
+              setSearchQuery(event.target.value)
+              setPage(1)
+            }}
+            className="w-full pl-10"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Calendar className="size-4 shrink-0 text-muted-foreground" />
+          <span className="hidden text-sm text-muted-foreground sm:inline">{t('filter')}</span>
+          <div className="flex gap-1">
+            {TIME_FILTERS.map(({ key, labelKey }) => (
+              <Button
+                key={key}
+                variant={timeFilter === key ? 'default' : 'outline'}
+                size="sm"
+                className="h-8 px-3 text-xs"
+                onClick={() => {
+                  setTimeFilter(key)
+                  setPage(1)
+                }}
+              >
+                {t(labelKey)}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Blocks list */}
+      <SectionCard
+        title={t('recentBlocks')}
+        icon={BlocksIcon}
+        flush
+        action={
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+            {t('blocksCount', { count: filteredBlocks.length })}
+          </span>
+        }
+      >
+        {pageBlocks.length > 0 ? (
+          <ul className="divide-y">
+            {pageBlocks.map((block) => (
+              <BlockRow key={block.height} block={block} t={t} />
+            ))}
+          </ul>
+        ) : (
+          <div className="flex min-h-[160px] items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
+            {common('noResults')}
+          </div>
+        )}
+
+        {totalPages > 1 ? (
+          <div className="flex items-center justify-between gap-2 border-t px-4 py-3">
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {t('pageOf', {
+                current: currentPage,
+                total: totalPages,
+                count: filteredBlocks.length,
+              })}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage <= 1}
+                onClick={() => setPage(currentPage - 1)}
+              >
+                {common('previous')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage >= totalPages}
+                onClick={() => setPage(currentPage + 1)}
+              >
+                {common('next')}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </SectionCard>
+    </div>
+  )
+}
+
+function BlockRow({
+  block,
+  t,
+}: {
+  block: RecentBlock
+  t: (key: string, params?: Record<string, string | number>) => string
+}) {
+  const txCount = block.nTx ?? block.tx.length
+
+  return (
+    <li className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <HashCell value={String(block.height)} to="block" hideCopy textClassName="font-semibold" />
+        <HashCell value={block.hash} to="block" textClassName="text-xs text-muted-foreground" />
+      </div>
+
+      <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs">
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary tabular-nums">
+          {t('txCount', { count: txCount })}
+        </span>
+        <RelativeTime timestamp={block.time} className="text-muted-foreground" />
+      </div>
+
+      <span className="hidden w-16 shrink-0 text-right text-xs text-muted-foreground tabular-nums sm:inline">
+        {formatBytes(block.size)}
+      </span>
+    </li>
+  )
+}
+
+function BlocksSkeleton() {
+  return (
+    <div className="w-full flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <div className="flex items-center justify-between gap-2">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+        <Skeleton className="h-9 w-28 rounded-lg" />
+      </div>
+      <Skeleton className="h-10 w-full max-w-md rounded-lg" />
+      <div className={cn('rounded-xl border bg-muted/40')}>
+        <ul className="divide-y">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <li key={i} className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <div className="space-y-1">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+              <Skeleton className="h-4 w-16" />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
 }

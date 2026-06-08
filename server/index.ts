@@ -1,6 +1,9 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
+import compression from 'compression'
+import rateLimit from 'express-rate-limit'
 import { createServer } from 'http'
 import { parse } from 'url'
 import { WebSocketServer } from 'ws'
@@ -8,15 +11,59 @@ import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { blockCache } from './lib/cache'
-import { rpcWithNetwork, type NetworkType } from '@fairco.in/rpc-client'
+import { handleRouteError, parseNetwork, parseLimit, ValidationError } from './lib/http'
+import { rpcWithNetwork } from '@fairco.in/rpc-client'
 import priceRouter from './routes/price'
 import addressRouter from './routes/address'
 import broadcastRouter from './routes/broadcast'
 import feeEstimateRouter from './routes/fee-estimate'
+import githubRouter from './routes/github'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 const PORT = parseInt(process.env.PORT || '8080', 10)
+
+// Behind one reverse proxy (e.g. nginx/DO app platform): trust a single hop so
+// `req.ip` and the rate limiter use the real client IP, not a spoofable header.
+// The same hop count is used to resolve the WebSocket client IP (see resolveClientIp).
+const TRUST_PROXY_HOPS = 1
+app.set('trust proxy', TRUST_PROXY_HOPS)
+
+// ---- Security & performance middleware ----
+
+const DEFAULT_PUBLIC_ORIGIN = 'https://explorer.fairco.in'
+const CORS_ALLOWLIST = [
+  process.env.PUBLIC_BASE_URL || DEFAULT_PUBLIC_ORIGIN,
+  'http://localhost:5180',
+  'http://localhost:5173',
+]
+
+// Global API rate limit and a stricter one for sensitive/expensive endpoints.
+// The read-only GET endpoints are cached (low backend cost) and the explorer
+// frontend polls several of them every 30s, so an active user — or several
+// behind a shared/NAT IP — legitimately makes a few hundred requests per
+// window. Keep the global cap generous enough to never throttle real usage
+// while still bounding raw floods; node-hitting endpoints get the strict cap.
+const GLOBAL_RATE_WINDOW_MS = 15 * 60 * 1000
+const GLOBAL_RATE_MAX = 1500
+const STRICT_RATE_MAX = 60
+
+const globalLimiter = rateLimit({
+  windowMs: GLOBAL_RATE_WINDOW_MS,
+  max: GLOBAL_RATE_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+const strictLimiter = rateLimit({
+  windowMs: GLOBAL_RATE_WINDOW_MS,
+  max: STRICT_RATE_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+app.use(helmet())
+app.use(compression())
 
 // Resolve dist directory - try multiple possible locations
 const DIST_CANDIDATES = [
@@ -27,59 +74,59 @@ const DIST_CANDIDATES = [
 const DIST_DIR = DIST_CANDIDATES.find(d => fs.existsSync(d)) ?? path.resolve(process.cwd(), 'dist')
 console.log(`> Static files from: ${DIST_DIR} (exists: ${fs.existsSync(DIST_DIR)})`)
 
-app.use(cors())
-app.use(express.json())
+app.use(cors({ origin: CORS_ALLOWLIST }))
+app.use(express.json({ limit: '64kb' }))
+
+// Apply the global rate limit to the API surface only (static assets are exempt).
+app.use('/api', globalLimiter)
+
+// Stricter limits on the expensive search path and the broadcast write path.
+app.use('/api/search', strictLimiter)
+app.use('/api/tx/broadcast', strictLimiter)
 
 // ---- API Routes ----
 
 app.get('/api/blocks', async (req, res) => {
   try {
-    const network = (req.query.network as string || 'mainnet') as NetworkType
-    const limit = parseInt(req.query.limit as string || '20')
+    const network = parseNetwork(req.query.network)
+    const limit = parseLimit(req.query.limit)
     const blocks = await blockCache.getRecentBlocks(network, limit)
     const height = await blockCache.getBlockCount(network)
     res.json({ blocks, height, total: blocks.length, network })
   } catch (error) {
-    console.error('Error fetching blocks:', error)
-    res.status(500).json({ error: 'Failed to fetch blocks' })
+    handleRouteError(res, 'Error fetching blocks', error)
   }
 })
 
 app.get('/api/blockcount', async (req, res) => {
   try {
-    const network = (req.query.network as string || 'mainnet') as NetworkType
+    const network = parseNetwork(req.query.network)
     const blockcount = await blockCache.getBlockCount(network)
     res.json({ blockcount, network })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed'
-    console.error('Error getting block count:', error)
-    res.status(500).json({ error: message })
+    handleRouteError(res, 'Error getting block count', error)
   }
 })
 
 app.get('/api/block/:hashOrHeight', async (req, res) => {
   try {
-    const network = (req.query.network as string || 'mainnet') as NetworkType
+    const network = parseNetwork(req.query.network)
     const { hashOrHeight } = req.params
     const block = await blockCache.getBlock(hashOrHeight, network, true)
     res.json({ block, network })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch block'
-    console.error('Error fetching block:', error)
-    res.status(500).json({ error: message })
+    handleRouteError(res, 'Error fetching block', error)
   }
 })
 
 app.get('/api/transaction/:txid', async (req, res) => {
   try {
-    const network = (req.query.network as string || 'mainnet') as NetworkType
+    const network = parseNetwork(req.query.network)
     const { txid } = req.params
     const transaction = await blockCache.getTransaction(txid, network, true)
     res.json({ transaction, network })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch transaction'
-    console.error('Error fetching transaction:', error)
-    res.status(500).json({ error: message })
+    handleRouteError(res, 'Error fetching transaction', error)
   }
 })
 
@@ -95,9 +142,12 @@ app.use('/api/tx', broadcastRouter)
 // Fee estimate route
 app.use('/api/fee-estimate', feeEstimateRouter)
 
+// GitHub route (latest release + star count, server-side cached)
+app.use('/api/github', githubRouter)
+
 app.get('/api/mempool', async (req, res) => {
   try {
-    const network = (req.query.network as string || 'mainnet') as NetworkType
+    const network = parseNetwork(req.query.network)
     const [mempoolInfo, rawMempool] = await Promise.all([
       rpcWithNetwork<Record<string, unknown>>('getmempoolinfo', [], network).catch(() => null),
       rpcWithNetwork<string[]>('getrawmempool', [], network).catch(() => [])
@@ -123,15 +173,20 @@ app.get('/api/mempool', async (req, res) => {
     }
     res.json({ mempoolInfo: formattedMempoolInfo, network })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch mempool'
-    console.error('Error fetching mempool info:', error)
-    res.status(500).json({ error: message })
+    handleRouteError(res, 'Error fetching mempool info', error)
   }
 })
 
+// FairCoin v3.0.0 block-reward split. Source: FairCoin/src/main.cpp
+// `GetMasternodePayment` returns `blockValue / 2`, i.e. masternodes get 50% and
+// the staker keeps the other 50%; there is no budget allocation.
+const MASTERNODE_REWARD_PERCENT = 50
+const STAKING_REWARD_PERCENT = 50
+const BUDGET_REWARD_PERCENT = 0
+
 app.get('/api/masternodes', async (req, res) => {
   try {
-    const network = (req.query.network as string || 'mainnet') as NetworkType
+    const network = parseNetwork(req.query.network)
     const COLLATERAL_PER_MASTERNODE = 5000
     const BLOCK_REWARD = 10
 
@@ -170,20 +225,18 @@ app.get('/api/masternodes', async (req, res) => {
       newStartRequired: statusCounts.NEW_START_REQUIRED || 0, watchdogExpired: statusCounts.WATCHDOG_EXPIRED || 0,
       totalCollateral, collateralPercentage,
       averageActiveTime: masternodes.length > 0 ? masternodes.reduce((sum, mn) => sum + mn.activeTime, 0) / masternodes.length : 0,
-      networkSecurity: { masternodeRewards: 60, stakingRewards: 36, budgetRewards: 4 }
+      networkSecurity: { masternodeRewards: MASTERNODE_REWARD_PERCENT, stakingRewards: STAKING_REWARD_PERCENT, budgetRewards: BUDGET_REWARD_PERCENT }
     }
 
     res.json({ masternodes: masternodes.slice(0, 100), stats, network, pagination: { total: masternodes.length, limit: 100, offset: 0 } })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch masternode data'
-    console.error('Error fetching masternode data:', error)
-    res.status(500).json({ error: message })
+    handleRouteError(res, 'Error fetching masternode data', error)
   }
 })
 
 app.get('/api/peers', async (req, res) => {
   try {
-    const network = (req.query.network as string || 'mainnet') as NetworkType
+    const network = parseNetwork(req.query.network)
     interface PeerInfo { addr: string; version: number; subver: string; pingtime: number; conntime: number; startingheight: number; banscore: number; bytessent: number; bytesrecv: number; inbound: boolean; synced_headers: number; synced_blocks: number }
     const rawPeers = await rpcWithNetwork<PeerInfo[]>('getpeerinfo', [], network)
     const peers = rawPeers.map(p => ({
@@ -194,15 +247,13 @@ app.get('/api/peers', async (req, res) => {
     }))
     res.json({ peers, network })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch peer info'
-    console.error('Error fetching peer info:', error)
-    res.status(500).json({ error: message })
+    handleRouteError(res, 'Error fetching peer info', error)
   }
 })
 
 app.get('/api/stats', async (req, res) => {
   try {
-    const network = (req.query.network as string || 'mainnet') as NetworkType
+    const network = parseNetwork(req.query.network)
     const BLOCK_REWARD = 10
     const [blockHeight, blockchainInfo, miningInfo, mempoolInfo, networkInfo, masternodeList] = await Promise.all([
       blockCache.getBlockCount(network).catch(() => 0),
@@ -230,51 +281,46 @@ app.get('/api/stats', async (req, res) => {
     }
     res.json({ stats, network })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch stats'
-    console.error('Error fetching stats:', error)
-    res.status(500).json({ error: message })
+    handleRouteError(res, 'Error fetching stats', error)
   }
 })
 
 app.get('/api/network-info', async (req, res) => {
   try {
-    const network = (req.query.network as string || 'mainnet') as NetworkType
+    const network = parseNetwork(req.query.network)
     const networkInfo = await blockCache.getNetworkInfo(network)
     res.json(networkInfo)
   } catch (error) {
-    console.error('Failed to get network info:', error)
-    res.status(500).json({ error: 'Failed to fetch network information' })
+    handleRouteError(res, 'Failed to get network info', error)
   }
 })
 
 app.get('/api/mining-info', async (req, res) => {
   try {
-    const network = (req.query.network as string || 'mainnet') as NetworkType
+    const network = parseNetwork(req.query.network)
     const miningInfo = await blockCache.getMiningInfo(network)
     res.json(miningInfo)
   } catch (error) {
-    console.error('Failed to get mining info:', error)
-    res.status(500).json({ error: 'Failed to fetch mining information' })
+    handleRouteError(res, 'Failed to get mining info', error)
   }
 })
 
 app.get('/api/validate-address', async (req, res) => {
   try {
     const address = req.query.address as string
-    const network = (req.query.network as string || 'mainnet') as NetworkType
+    const network = parseNetwork(req.query.network)
     if (!address) { res.status(400).json({ error: 'Address parameter is required' }); return }
     const validation = await blockCache.validateAddress(address, network)
     res.json(validation)
   } catch (error) {
-    console.error('Failed to validate address:', error)
-    res.status(500).json({ error: 'Failed to validate address' })
+    handleRouteError(res, 'Failed to validate address', error)
   }
 })
 
 app.get('/api/search', async (req, res) => {
   try {
     const q = ((req.query.q as string) || '').trim()
-    const network = (req.query.network as string || 'mainnet') as NetworkType
+    const network = parseNetwork(req.query.network)
     if (!q) { res.status(400).json({ error: 'No search query provided' }); return }
 
     let searchResults: Record<string, unknown> | null = null
@@ -308,6 +354,10 @@ app.get('/api/search', async (req, res) => {
       res.json({ query: q, network, type: 'not_found', results: null, message: 'No results found', timestamp: new Date().toISOString() })
     }
   } catch (error) {
+    if (error instanceof ValidationError) {
+      res.status(400).json({ error: error.message, timestamp: new Date().toISOString() })
+      return
+    }
     console.error('Search API error:', error)
     res.status(500).json({ error: 'Search failed', timestamp: new Date().toISOString() })
   }
@@ -346,8 +396,35 @@ server.on('upgrade', (request, socket, head) => {
   }
 })
 
-let wsHandler: { handleConnection: (ws: unknown, request: unknown, ip?: string) => void } | null = null
+type WebSocketHandlerModule = typeof import('./lib/websocket-handler')
+let wsHandler: WebSocketHandlerModule | null = null
 let wsHandlerFailed = false
+
+/**
+ * Resolve the client IP for the per-IP WebSocket connection cap.
+ *
+ * A raw client can put any value in `X-Forwarded-For`, so trusting its left-most
+ * entry lets attackers bypass the per-IP limit. With one trusted proxy
+ * (`trust proxy = 1`), the authoritative client address is the entry our proxy
+ * appended — the right-most XFF value — falling back to the real TCP peer
+ * address (`socket.remoteAddress`) when there is no proxy header.
+ */
+function resolveClientIp(request: { headers: NodeJS.Dict<string | string[]>; socket: { remoteAddress?: string } }): string | undefined {
+  const socketAddress = request.socket.remoteAddress
+  if (!TRUST_PROXY_HOPS) {
+    return socketAddress
+  }
+  const forwarded = request.headers['x-forwarded-for']
+  const raw = Array.isArray(forwarded) ? forwarded.join(',') : forwarded
+  if (raw) {
+    const parts = raw.split(',').map(part => part.trim()).filter(Boolean)
+    const trusted = parts[parts.length - 1]
+    if (trusted) {
+      return trusted
+    }
+  }
+  return socketAddress
+}
 
 wss.on('connection', (ws, request) => {
   if (!wsHandler && !wsHandlerFailed) {
@@ -360,7 +437,7 @@ wss.on('connection', (ws, request) => {
   }
   if (!wsHandler) { ws.close(); return }
   try {
-    const ip = (request.headers['x-forwarded-for'] as string) || request.socket?.remoteAddress
+    const ip = resolveClientIp(request)
     wsHandler.handleConnection(ws, request, ip)
   } catch (error) {
     console.error('Error handling WebSocket connection:', error)

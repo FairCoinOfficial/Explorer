@@ -1,503 +1,264 @@
-import { useNetwork } from '@/contexts/network-context'
-import { NetworkStatus } from '@/components/network-status'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { SectionHeader, StatsGrid, StatsCard, EmptyState, LoadingState } from '@/components/ui'
 import {
-    Zap,
-    Clock,
-    Database,
-    Hash,
-    RefreshCw,
-    Home,
-    Coins,
-    Activity,
-    Shield,
-    AlertTriangle
+  Activity,
+  AlertTriangle,
+  Clock,
+  Coins,
+  Database,
+  Flame,
+  Hash,
+  Link2,
+  Shield,
+  TrendingUp,
+  Users,
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
 import { useTranslations } from '@/lib/i18n'
-
-interface NetworkStats {
-    blockHeight: number
-    difficulty: number
-    hashrate: number
-    totalSupply: number
-    circulatingSupply: number
-    avgBlockTime: number
-    memPoolSize: number
-    totalTransactions: number
-    networkWeight: number
-    avgTransactionsPerBlock: number
-    masternodeCount: number
-    stakingRewards: number
-    stakePercentage: number
-    connections: number
-    phase: 'PoW' | 'PoS'
-    lastBlock: {
-        height: number
-        hash: string
-        time: number
-        size: number
-    }
-}
+import { useStats } from '@/hooks/use-stats'
+import { computeSupplyInfo } from '@/lib/supply'
+import { formatBytes, formatNumber } from '@/lib/format'
+import { DetailHeader } from '@/components/detail/detail-header'
+import { SectionCard } from '@/components/detail/section-card'
+import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
+import { InfoGrid, InfoRow } from '@/components/detail/info-row'
+import { HashCell } from '@/components/detail/hash-cell'
+import { RelativeTime } from '@/components/detail/relative-time'
+import { ProgressBar } from '@/components/detail/progress-bar'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export function StatsContent() {
-    const { currentNetwork } = useNetwork()
-    const [stats, setStats] = useState<NetworkStats | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-    const t = useTranslations('stats')
-    const common = useTranslations('common')
+  const t = useTranslations('stats')
+  const common = useTranslations('common')
+  const { data: stats, isLoading, isError, error, refetch, isFetching } = useStats()
 
-    const fetchStats = async () => {
-        try {
-            setLoading(true)
-            setError(null)
+  if (isLoading) {
+    return <StatsSkeleton />
+  }
 
-            const response = await fetch(`/api/stats?network=${currentNetwork}`)
-            if (!response.ok) {
-                let errorMessage = `HTTP ${response.status}: ${response.statusText}`
-                try {
-                    const contentType = response.headers.get('content-type')
-                    if (contentType && contentType.includes('application/json')) {
-                        const errorData = await response.json()
-                        errorMessage = errorData.error || errorMessage
-                    } else {
-                        // If not JSON, read as text (likely HTML error page)
-                        const errorText = await response.text()
-                        errorMessage = `Server error: ${errorText.substring(0, 100)}...`
-                    }
-                } catch (parseError) {
-                    errorMessage = `Failed to parse error response: ${parseError}`
-                }
-                throw new Error(errorMessage)
-            }
-
-            const data = await response.json()
-            setStats(data.stats)
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred')
-            toast.error('Failed to load statistics')
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    useEffect(() => {
-        fetchStats()
-        // Auto-refresh every 30 seconds
-        const interval = setInterval(fetchStats, 30000)
-        return () => clearInterval(interval)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentNetwork])
-
-    if (loading) {
-        return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-                <LoadingState message={t('loading')} />
-            </div>
-        )
-    }
-
-    if (error) {
-        return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-                <EmptyState
-                    icon={AlertTriangle}
-                    title={t('error')}
-                    description={error}
-                    action={{
-                        label: t('tryAgain'),
-                        onClick: fetchStats,
-                        variant: "outline"
-                    }}
-                />
-            </div>
-        )
-    }
-
-    if (!stats) {
-        return (
-            <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-                <div className="flex items-center justify-center h-64">
-                    <p className="text-lg text-muted-foreground">{t('noStats')}</p>
-                </div>
-            </div>
-        )
-    }
-
-    const maxSupply = 33000000
-    const supplyProgress = (stats.totalSupply / maxSupply) * 100
-
+  if (isError || !stats) {
     return (
-        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-            {/* Header */}
-            <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
-                <div className="space-y-1">
-                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{t('title')}</h2>
-                    <p className="text-sm text-muted-foreground sm:text-base">
-                        {t('subtitle')}
-                    </p>
-                </div>
-                <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
-                    <div className="flex items-center space-x-2">
-                        <NetworkStatus />
-                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
-                            <Activity className="w-3 h-3 mr-1" />
-                            {t('phase', { phase: stats.phase || 'PoS' })}
-                        </Badge>
-                    </div>
-                    <Button onClick={fetchStats} variant="outline" size="sm" className="w-full sm:w-auto">
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        {common('refresh')}
-                    </Button>
-                </div>
-            </div>
-
-            {/* Main Stats Grid */}
-            <StatsGrid>
-                <StatsCard
-                    icon={Database}
-                    title={t('blockHeight')}
-                    value={stats.blockHeight.toLocaleString()}
-                    description={t('currentBlockchainHeight')}
-                />
-                <StatsCard
-                    icon={Coins}
-                    title={t('totalSupply')}
-                    value={`${stats.totalSupply.toLocaleString()} FAIR`}
-                    description={t('supplyProgress', { percentage: supplyProgress.toFixed(2) })}
-                />
-                <StatsCard
-                    icon={Clock}
-                    title={t('blockTime')}
-                    value={`${Math.round(stats.avgBlockTime)}s`}
-                    description={t('averageBlockTime')}
-                />
-                <StatsCard
-                    icon={Shield}
-                    title={t('masternodes')}
-                    value={stats.masternodeCount?.toLocaleString() || 'N/A'}
-                    description={t('securingNetwork')}
-                />
-            </StatsGrid>
-
-            {/* FairCoin Features Overview */}
-            <StatsGrid>
-                <StatsCard
-                    icon={Zap}
-                    title={t('fastSend')}
-                    value={t('zeroSeconds')}
-                    description={t('fastSendDescription')}
-                />
-                <StatsCard
-                    icon={Shield}
-                    title={t('coinMixing')}
-                    value={t('highPrivacy')}
-                    description={t('coinMixingDescription')}
-                />
-                <StatsCard
-                    icon={Activity}
-                    title={t('governance')}
-                    value={t('democratic')}
-                    description={t('governanceDescription')}
-                />
-            </StatsGrid>
-
-            {/* Detailed Statistics */}
-            <Tabs defaultValue="network" className="space-y-4">
-                <div className="overflow-x-auto custom-scrollbar">
-                    <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 lg:w-auto lg:inline-grid">
-                        <TabsTrigger value="network" className="text-xs sm:text-sm">{t('network')}</TabsTrigger>
-                        <TabsTrigger value="supply" className="text-xs sm:text-sm">{t('supply')}</TabsTrigger>
-                        <TabsTrigger value="staking" className="text-xs sm:text-sm">{t('staking')}</TabsTrigger>
-                        <TabsTrigger value="transactions" className="text-xs sm:text-sm">{t('transactions')}</TabsTrigger>
-                    </TabsList>
-                </div>
-
-                <TabsContent value="network" className="space-y-4">
-                    <div className="grid gap-4 lg:grid-cols-2">
-                        <div>
-                            <SectionHeader
-                                icon={Database}
-                                title={t('networkInformation')}
-                            />
-                            <div className="rounded-xl border p-4 mt-3 space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-sm font-medium text-muted-foreground">{t('networkWeight')}</label>
-                                        <p className="text-lg font-semibold break-all">{stats.networkWeight?.toLocaleString() || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-muted-foreground">{t('connections')}</label>
-                                        <p className="text-lg font-semibold">{stats.connections || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-muted-foreground">{t('difficulty')}</label>
-                                        <p className="text-lg font-semibold break-all">{stats.difficulty.toFixed(6)}</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-muted-foreground">{t('hashRate')}</label>
-                                        <p className="text-lg font-semibold break-all">{(stats.hashrate / 1000000).toFixed(2)} MH/s</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <SectionHeader
-                                icon={Hash}
-                                title={t('latestBlock')}
-                            />
-                            <div className="rounded-xl border p-4 mt-3 space-y-4">
-                                <div className="space-y-3">
-                                    <div>
-                                        <label className="text-sm font-medium text-muted-foreground">{t('height')}</label>
-                                        <p className="text-lg font-semibold">
-                                            <Link to={`/block/${stats.lastBlock.height}`} className="hover:underline break-all">
-                                                #{stats.lastBlock.height.toLocaleString()}
-                                            </Link>
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-muted-foreground">{t('hash')}</label>
-                                        <p className="font-mono text-sm break-all">
-                                            <Link to={`/block/${stats.lastBlock.hash}`} className="hover:underline">
-                                                {stats.lastBlock.hash.substring(0, 32)}...
-                                            </Link>
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-muted-foreground">{t('time')}</label>
-                                        <p className="text-sm break-words">{new Date(stats.lastBlock.time * 1000).toLocaleString()}</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-muted-foreground">{t('size')}</label>
-                                        <p className="text-sm">{(stats.lastBlock.size / 1024).toFixed(1)} KB</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </TabsContent>
-
-                <TabsContent value="supply" className="space-y-4">
-                    <div className="space-y-6">
-                        <SectionHeader
-                            icon={Coins}
-                            title={t('supplyEconomics')}
-                        />
-
-                        <div className="space-y-4">
-                            <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
-                                <span className="text-sm font-medium">{t('currentSupply')}</span>
-                                <span className="text-sm font-semibold">{stats.totalSupply.toLocaleString()} FAIR</span>
-                            </div>
-                            <div className="w-full bg-muted rounded-full h-3">
-                                <div
-                                    className="bg-primary h-3 rounded-full transition-all duration-300"
-                                    style={{ width: `${supplyProgress}%` }}
-                                ></div>
-                            </div>
-                            <div className="flex flex-col space-y-1 sm:flex-row sm:justify-between sm:space-y-0">
-                                <span className="text-xs text-muted-foreground">0 FAIR</span>
-                                <span className="text-xs text-muted-foreground">{maxSupply.toLocaleString()} FAIR ({t('max')})</span>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-6">
-                            <div>
-                                <p className="text-xs text-muted-foreground mb-1">{t('premine')}</p>
-                                <p className="text-2xl font-bold">90%</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-muted-foreground mb-1">{t('perBlock')}</p>
-                                <p className="text-2xl font-bold">5 FAIR</p>
-                            </div>
-                        </div>
-
-                        <div className="h-px bg-border" />
-
-                        <div className="grid gap-6 lg:grid-cols-2">
-                            <div className="space-y-4">
-                                <div className="border rounded-lg p-4">
-                                    <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
-                                        <span className="font-medium">{t('proofOfWorkPhase')}</span>
-                                        <span className="text-sm text-muted-foreground">{t('blocks1to10000')}</span>
-                                    </div>
-                                    <div className="text-xs text-muted-foreground mt-2">
-                                        {t('initialMiningPhase')}
-                                    </div>
-                                </div>
-
-                                <div className="border rounded-lg p-4">
-                                    <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
-                                        <span className="font-medium">{t('proofOfStakePhase')}</span>
-                                        <span className="text-sm text-muted-foreground">{t('blocks25001Plus')}</span>
-                                    </div>
-                                    <div className="text-xs text-muted-foreground mt-2">
-                                        {t('currentPhaseStaking')}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="flex justify-center">
-                                    <Badge variant={stats.phase === 'PoS' ? 'default' : 'secondary'} className="text-sm px-3 py-1">
-                                        {t('current', { phase: stats.phase || 'PoS' })}
-                                    </Badge>
-                                </div>
-
-                                <div className="border rounded-lg p-4 space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm">{t('blockReward')}</span>
-                                         <span className="text-sm font-mono font-semibold">5 FAIR</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm">{t('blockTime')}</span>
-                                        <span className="text-sm font-mono font-semibold">{t('seconds120')}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm">{t('dailyBlocks')}</span>
-                                        <span className="text-sm font-mono font-semibold">720</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </TabsContent>
-
-                <TabsContent value="staking" className="space-y-4">
-                    <div className="grid gap-4 lg:grid-cols-2">
-                        <div>
-                            <SectionHeader
-                                icon={Shield}
-                                title={t('masternodeStaking')}
-                            />
-                            <div className="rounded-xl border p-4 mt-3 space-y-4">
-                                <div className="border rounded-lg p-4">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <span className="font-medium">{t('requirements')}</span>
-                                        <Badge variant="default">{t('premium')}</Badge>
-                                    </div>
-                                    <div className="text-sm text-muted-foreground space-y-2">
-                                        <p>• {t('masternodeRequirement1')}</p>
-                                        <p>• {t('masternodeRequirement2')}</p>
-                                        <p>• {t('masternodeRequirement3')}</p>
-                                        <p>• {t('masternodeRequirement4')}</p>
-                                    </div>
-                                </div>
-
-                                <div className="text-center p-4 border rounded-lg">
-                                    <div className="text-3xl font-bold mb-1">{stats.masternodeCount || 'N/A'}</div>
-                                    <div className="text-sm text-muted-foreground">{t('activeMasternodes')}</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <SectionHeader
-                                icon={Coins}
-                                title={t('walletStaking')}
-                            />
-                            <div className="rounded-xl border p-4 mt-3 space-y-4">
-                                <div className="border rounded-lg p-4">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <span className="font-medium">{t('requirements')}</span>
-                                        <Badge variant="secondary">{t('accessible')}</Badge>
-                                    </div>
-                                    <div className="text-sm text-muted-foreground space-y-2">
-                                        <p>• {t('walletRequirement1')}</p>
-                                        <p>• {t('walletRequirement2')}</p>
-                                        <p>• {t('walletRequirement3')}</p>
-                                        <p>• {t('walletRequirement4')}</p>
-                                    </div>
-                                </div>
-
-                                <div className="text-center p-4 border rounded-lg">
-                                    <div className="text-3xl font-bold mb-1">
-                                        {stats.stakingRewards?.toFixed(2) || 'N/A'}%
-                                    </div>
-                                    <div className="text-sm text-muted-foreground">
-                                        {t('estimatedAnnualReturn')}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </TabsContent>
-
-                <TabsContent value="transactions" className="space-y-4">
-                    <div className="grid gap-4 lg:grid-cols-2">
-                        <div>
-                            <SectionHeader
-                                icon={Hash}
-                                title={t('transactionStatistics')}
-                            />
-                            <div className="rounded-xl border p-4 mt-3 space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-sm font-medium text-muted-foreground">{t('totalTransactions')}</label>
-                                        <p className="text-2xl font-bold break-all">{stats.totalTransactions.toLocaleString()}</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-muted-foreground">{t('avgTxPerBlock')}</label>
-                                        <p className="text-2xl font-bold">{stats.avgTransactionsPerBlock.toFixed(1)}</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-muted-foreground">{t('mempool')}</label>
-                                        <p className="text-lg font-semibold break-all">{stats.memPoolSize.toLocaleString()}</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-muted-foreground">{t('tps24hAvg')}</label>
-                                        <p className="text-lg font-semibold break-all">
-                                            {(stats.avgTransactionsPerBlock / (stats.avgBlockTime / 60)).toFixed(2)}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t('quickActions')}</h3>
-                            <div className="space-y-3">
-                                <Button asChild variant="outline" className="w-full justify-start h-auto p-3">
-                                    <Link to="/blocks" className="flex items-center">
-                                        <Database className="h-5 w-5 mr-3 flex-shrink-0" />
-                                        <span className="text-left">{t('viewRecentBlocks')}</span>
-                                    </Link>
-                                </Button>
-                                <Button asChild variant="outline" className="w-full justify-start h-auto p-3">
-                                    <Link to="/masternodes" className="flex items-center">
-                                        <Shield className="h-5 w-5 mr-3 flex-shrink-0" />
-                                        <span className="text-left">{t('viewMasternodes')}</span>
-                                    </Link>
-                                </Button>
-                                <Button asChild variant="outline" className="w-full justify-start h-auto p-3">
-                                    <Link to="/mempool" className="flex items-center">
-                                        <Clock className="h-5 w-5 mr-3 flex-shrink-0" />
-                                        <span className="text-left">{t('viewMempool')}</span>
-                                    </Link>
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </TabsContent>
-            </Tabs>
-
-            {/* Navigation */}
-            <div className="flex flex-col space-y-2 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
-                <Button asChild variant="outline" className="w-full sm:w-auto">
-                    <Link to="/" className="flex items-center justify-center">
-                        <Home className="h-4 w-4 mr-2" />
-                        {t('backToHome')}
-                    </Link>
-                </Button>
-            </div>
-        </div>
+      <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+        <DetailHeader
+          title={t('title')}
+          subtitle={t('subtitle')}
+          onRefresh={() => void refetch()}
+          isRefreshing={isFetching}
+        />
+        <SectionCard>
+          <div className="flex flex-col items-center gap-3 py-8 text-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <AlertTriangle className="size-6" />
+            </span>
+            <p className="text-sm text-muted-foreground">
+              {error instanceof Error ? error.message : t('error')}
+            </p>
+            <Button variant="outline" onClick={() => void refetch()}>
+              {common('tryAgain')}
+            </Button>
+          </div>
+        </SectionCard>
+      </div>
     )
+  }
+
+  const supply = computeSupplyInfo(stats.blockHeight)
+  const phaseLabel = t('phase', { phase: stats.phase })
+
+  return (
+    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <DetailHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        onRefresh={() => void refetch()}
+        isRefreshing={isFetching}
+        action={
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+            <Activity className="size-3" />
+            {phaseLabel}
+          </span>
+        }
+      />
+
+      {/* Primary metrics */}
+      <StatTileGrid>
+        <StatTile
+          icon={Database}
+          label={t('blockHeight')}
+          value={formatNumber(stats.blockHeight)}
+          hint={t('currentBlockchainHeight')}
+        />
+        <StatTile
+          icon={Coins}
+          label={t('circulatingSupply')}
+          value={`${formatNumber(supply.circulating)} FAIR`}
+          hint={t('supplyProgress', { percentage: (supply.fraction * 100).toFixed(2) })}
+          accent
+        />
+        <StatTile
+          icon={Clock}
+          label={t('blockTime')}
+          value={`${Math.round(stats.avgBlockTime)}s`}
+          hint={t('averageBlockTime')}
+        />
+        <StatTile
+          icon={Link2}
+          label={t('connections')}
+          value={formatNumber(stats.connections)}
+          hint={t('peerConnections')}
+        />
+      </StatTileGrid>
+
+      {/* Supply economics */}
+      <SectionCard title={t('supplyEconomics')} icon={Coins}>
+        <div className="space-y-4">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="text-sm font-medium">{t('mintedSupply')}</span>
+            <span className="text-sm font-semibold tabular-nums">
+              {formatNumber(supply.circulating)} / {formatNumber(supply.max)} FAIR
+            </span>
+          </div>
+          <ProgressBar value={supply.fraction} label={t('supplyEconomics')} />
+          <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
+            <span>0 FAIR</span>
+            <span>
+              {t('supplyProgress', { percentage: (supply.fraction * 100).toFixed(2) })}
+            </span>
+            <span>
+              {formatNumber(supply.max)} FAIR ({t('max')})
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pt-1 sm:grid-cols-4">
+            <SupplyMetric
+              icon={Coins}
+              label={t('blockReward')}
+              value={`${supply.currentReward} FAIR`}
+            />
+            <SupplyMetric icon={Flame} label={t('halvings')} value={formatNumber(supply.halvings)} />
+            <SupplyMetric
+              icon={TrendingUp}
+              label={t('nextHalving')}
+              value={`#${formatNumber(supply.nextHalvingHeight)}`}
+            />
+            <SupplyMetric
+              icon={Clock}
+              label={t('blocksRemaining')}
+              value={formatNumber(supply.blocksToNextHalving)}
+            />
+          </div>
+        </div>
+      </SectionCard>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Network information */}
+        <SectionCard title={t('networkInformation')} icon={Database}>
+          <InfoGrid columns={2}>
+            <InfoRow label={t('difficulty')} value={stats.difficulty.toFixed(6)} mono />
+            <InfoRow label={t('hashRate')} value={formatHashrate(stats.hashrate, t)} mono />
+            <InfoRow label={t('masternodes')} value={formatNumber(stats.masternodeCount)} />
+            <InfoRow label={t('connections')} value={formatNumber(stats.connections)} />
+          </InfoGrid>
+        </SectionCard>
+
+        {/* Transaction statistics */}
+        <SectionCard title={t('transactionStatistics')} icon={Hash}>
+          <InfoGrid columns={2}>
+            <InfoRow label={t('totalTransactions')} value={formatNumber(stats.totalTransactions)} />
+            <InfoRow
+              label={t('avgTxPerBlock')}
+              value={stats.avgTransactionsPerBlock.toFixed(1)}
+            />
+            <InfoRow label={t('mempool')} value={formatNumber(stats.memPoolSize)} />
+            <InfoRow label={t('stakingRewards')} value={`${stats.stakingRewards} FAIR`} />
+          </InfoGrid>
+        </SectionCard>
+      </div>
+
+      {/* Latest block */}
+      <SectionCard title={t('latestBlock')} icon={Shield}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Database className="size-4" />
+            </span>
+            <div className="min-w-0">
+              <HashCell
+                value={String(stats.lastBlock.height)}
+                to="block"
+                hideCopy
+                textClassName="font-semibold"
+              />
+              <HashCell
+                value={stats.lastBlock.hash}
+                to="block"
+                textClassName="text-xs text-muted-foreground"
+              />
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-4 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <Users className="size-3.5" />
+              {formatBytes(stats.lastBlock.size)}
+            </span>
+            <RelativeTime timestamp={stats.lastBlock.time} />
+          </div>
+        </div>
+      </SectionCard>
+    </div>
+  )
+}
+
+function SupplyMetric({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Coins
+  label: string
+  value: string
+}) {
+  return (
+    <div className="flex flex-col gap-1 rounded-xl bg-muted/40 px-3 py-2.5">
+      <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <Icon className="size-3.5 shrink-0" />
+        <span className="truncate">{label}</span>
+      </span>
+      <span className="truncate text-sm font-semibold tabular-nums">{value}</span>
+    </div>
+  )
+}
+
+function formatHashrate(
+  hashrate: number,
+  t: (key: string, params?: Record<string, string | number>) => string,
+): string {
+  if (!Number.isFinite(hashrate) || hashrate <= 0) return t('hashrateIdle')
+  if (hashrate >= 1e12) return `${(hashrate / 1e12).toFixed(2)} TH/s`
+  if (hashrate >= 1e9) return `${(hashrate / 1e9).toFixed(2)} GH/s`
+  if (hashrate >= 1e6) return `${(hashrate / 1e6).toFixed(2)} MH/s`
+  if (hashrate >= 1e3) return `${(hashrate / 1e3).toFixed(2)} KH/s`
+  return `${hashrate.toFixed(0)} H/s`
+}
+
+function StatsSkeleton() {
+  return (
+    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <div className="flex items-center justify-between gap-2">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+        <Skeleton className="h-9 w-28 rounded-lg" />
+      </div>
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-20 rounded-xl" />
+        ))}
+      </div>
+      <Skeleton className="h-44 w-full rounded-xl" />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Skeleton className="h-40 w-full rounded-xl" />
+        <Skeleton className="h-40 w-full rounded-xl" />
+      </div>
+    </div>
+  )
 }

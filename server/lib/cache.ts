@@ -1,7 +1,17 @@
 import { MongoClient, Db } from 'mongodb'
-import { rpcWithNetwork, type NetworkType } from '@fairco.in/rpc-client'
+import { rpcWithNetwork, type NetworkType, type RpcParam } from '@fairco.in/rpc-client'
+import { escapeRegex } from './http'
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/faircoin-explorer'
+
+/** Networks accepted for cache keys; guards values that flow into Mongo `$regex`. */
+const VALID_NETWORKS: readonly NetworkType[] = ['mainnet', 'testnet']
+
+function assertValidNetwork(network: NetworkType): void {
+  if (!VALID_NETWORKS.includes(network)) {
+    throw new Error(`Invalid network: ${String(network)}`)
+  }
+}
 
 interface CacheOptions {
   ttl?: number // Time to live in seconds
@@ -23,9 +33,17 @@ interface CachedData {
   network: NetworkType
 }
 
+/** Extra seconds past a document's logical TTL before Mongo physically removes it. */
+const TTL_INDEX_GRACE_SECONDS = 3600
+
 export class BlockchainCache {
   private db: Db | null = null
   private client: MongoClient | null = null
+  /**
+   * In-flight RPC promises keyed by cache key. Concurrent identical cache
+   * misses share a single upstream call (stampede protection).
+   */
+  private readonly inFlight = new Map<string, Promise<unknown>>()
 
   protected async getDb(): Promise<Db> {
     if (!this.db) {
@@ -33,9 +51,27 @@ export class BlockchainCache {
       await this.client.connect()
       const dbName = new URL(MONGODB_URI).pathname.slice(1) || 'faircoin-explorer'
       this.db = this.client.db(dbName)
+      await this.ensureIndexes(this.db)
       console.log(`Connected to MongoDB database: ${dbName}`)
     }
     return this.db
+  }
+
+  /**
+   * Create TTL indexes so cache documents self-prune. `expiresAt` is a wall-clock
+   * Date; Mongo's TTL monitor deletes the doc once it passes. We add a grace
+   * window so application-level `isExpired` checks (which may still serve a
+   * slightly stale doc on RPC failure) win before physical deletion.
+   */
+  private async ensureIndexes(db: Db): Promise<void> {
+    try {
+      await Promise.all([
+        db.collection('cache').createIndex({ expiresAt: 1 }, { expireAfterSeconds: TTL_INDEX_GRACE_SECONDS }),
+        db.collection('recent_blocks').createIndex({ expiresAt: 1 }, { expireAfterSeconds: TTL_INDEX_GRACE_SECONDS }),
+      ])
+    } catch (error) {
+      console.error('Failed to ensure cache TTL indexes:', error)
+    }
   }
 
   private getCacheKey(method: string, params: any[], network: NetworkType) {
@@ -48,29 +84,33 @@ export class BlockchainCache {
   }
 
   async get<T>(method: string, params: any[] = [], options: CacheOptions): Promise<T> {
+    assertValidNetwork(options.network)
     const db = await this.getDb()
     const collection = db.collection('cache')
     const cacheKey = this.getCacheKey(method, params, options.network)
+    const ttlSeconds = options.ttl ?? 3600
 
     try {
       // Check cache first
       const cached = await collection.findOne({ _id: cacheKey } as any)
-      
+
       if (cached && !this.isExpired(cached as any)) {
         return cached.data
       }
-      
-      // Fetch from RPC
-      const data = await rpcWithNetwork<T>(method, params, options.network)
-      
-      // Store in cache
+
+      // Fetch from RPC behind single-flight so concurrent misses share one call.
+      const data = await this.fetchSingleFlight<T>(cacheKey, method, params, options.network)
+
+      // Store in cache. `expiresAt` powers the Mongo TTL index.
+      const now = Date.now()
       await collection.replaceOne(
         { _id: cacheKey } as any,
         {
           _id: cacheKey,
           data,
-          timestamp: Date.now(),
-          ttl: options.ttl || 3600,
+          timestamp: now,
+          ttl: ttlSeconds,
+          expiresAt: new Date(now + ttlSeconds * 1000),
           network: options.network
         } as any,
         { upsert: true }
@@ -79,8 +119,31 @@ export class BlockchainCache {
       return data
     } catch (error) {
       console.error(`Error in cache.get for ${method}:`, error)
-      // Fallback to RPC if cache fails
-      return await rpcWithNetwork<T>(method, params, options.network)
+      // Fallback to RPC (still single-flighted) if cache read/write fails.
+      return await this.fetchSingleFlight<T>(cacheKey, method, params, options.network)
+    }
+  }
+
+  /**
+   * Run an RPC call de-duplicated by cache key: if an identical call is already
+   * in flight, await the existing promise instead of issuing a second request.
+   */
+  private async fetchSingleFlight<T>(
+    cacheKey: string,
+    method: string,
+    params: RpcParam[],
+    network: NetworkType,
+  ): Promise<T> {
+    const existing = this.inFlight.get(cacheKey)
+    if (existing) {
+      return existing as Promise<T>
+    }
+    const promise = rpcWithNetwork<T>(method, params, network)
+    this.inFlight.set(cacheKey, promise)
+    try {
+      return await promise
+    } finally {
+      this.inFlight.delete(cacheKey)
     }
   }
 
@@ -93,11 +156,14 @@ export class BlockchainCache {
   }
 
   async invalidatePattern(pattern: string, network: NetworkType) {
+    assertValidNetwork(network)
     const db = await this.getDb()
     const collection = db.collection('cache')
-    
-    await collection.deleteMany({ 
-      _id: { $regex: `^${network}:${pattern}` }
+
+    // Escape `network` so it cannot inject regex metacharacters into the key match.
+    // `pattern` is caller-supplied and intentionally treated as a regex fragment.
+    await collection.deleteMany({
+      _id: { $regex: `^${escapeRegex(network)}:${pattern}` }
     } as any)
   }
 
@@ -118,6 +184,9 @@ export class BlockchainCache {
     }
   }
 }
+
+/** Freshness window for the precomputed recent-blocks list. */
+const RECENT_BLOCKS_TTL_MS = 30_000
 
 // Block-specific caching with different TTLs
 export class BlockCache extends BlockchainCache {
@@ -177,13 +246,14 @@ export class BlockCache extends BlockchainCache {
 
   // Get recent blocks with caching
   async getRecentBlocks(network: NetworkType, limit: number = 20): Promise<any[]> {
+    assertValidNetwork(network)
     const db = await this.getDb()
     const collection = db.collection('recent_blocks')
     const cacheKey = `${network}:recent:${limit}`
 
     // Check cache first
     const cached = await collection.findOne({ _id: cacheKey } as any)
-    if (cached && Date.now() - cached.timestamp < 30000) { // 30 seconds TTL
+    if (cached && Date.now() - cached.timestamp < RECENT_BLOCKS_TTL_MS) {
       return cached.blocks
     }
 
@@ -208,13 +278,15 @@ export class BlockCache extends BlockchainCache {
       }
     }
 
-    // Cache the result
+    // Cache the result. `expiresAt` powers the Mongo TTL index on recent_blocks.
+    const cachedAt = Date.now()
     await collection.replaceOne(
       { _id: cacheKey } as any,
       {
         _id: cacheKey,
         blocks,
-        timestamp: Date.now(),
+        timestamp: cachedAt,
+        expiresAt: new Date(cachedAt + RECENT_BLOCKS_TTL_MS),
         network
       } as any,
       { upsert: true }

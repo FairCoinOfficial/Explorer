@@ -1,267 +1,220 @@
-import { useNetwork } from '@/contexts/network-context'
-import { NetworkStatus } from '@/components/network-status'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { CopyButton } from '@/components/copy-button'
-import { SectionHeader, StatsGrid, StatsCard, EmptyState, LoadingState, SimpleDataTable } from '@/components/ui'
-import { Wallet, TrendingUp, TrendingDown, RefreshCw, Home, Hash, Clock, AlertTriangle } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Hash,
+  Info,
+  Receipt,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
+import { useTranslations } from '@/lib/i18n'
+import { useAddress, type AddressInfo, type AddressTransaction } from '@/hooks/use-address'
+import { formatNumber } from '@/lib/format'
+import { DetailHeader } from '@/components/detail/detail-header'
+import { SectionCard } from '@/components/detail/section-card'
+import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
+import { InfoRow } from '@/components/detail/info-row'
+import { HashCell } from '@/components/detail/hash-cell'
+import { RelativeTime } from '@/components/detail/relative-time'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 
-interface AddressTransaction {
-    txid: string
-    time: number
-    confirmations: number
-    amount: number
-    type: 'received' | 'sent'
-    blockHeight?: number
-}
-
-interface AddressInfo {
-    address: string
-    balance: number
-    totalReceived: number
-    totalSent: number
-    txCount: number
-    transactions: AddressTransaction[]
+function formatFair(value: number): string {
+  return `${value.toFixed(8)} FAIR`
 }
 
 export function AddressContent({ address }: { address: string }) {
-    const { currentNetwork } = useNetwork()
-    const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+  const t = useTranslations('address')
+  const { data: info, isLoading, isError, error, refetch, isFetching } = useAddress(address)
 
-    const fetchAddressInfo = async () => {
-        try {
-            setLoading(true)
-            setError(null)
+  if (isLoading) {
+    return <AddressSkeleton />
+  }
 
-            const response = await fetch(`/api/address/${address}?network=${currentNetwork}`)
-            if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.error || 'Failed to fetch address information')
-            }
-
-            const data = await response.json()
-            setAddressInfo(data.addressInfo)
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred')
-            toast.error('Failed to load address')
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    useEffect(() => {
-        fetchAddressInfo()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentNetwork, address])
-
-    if (loading) {
-        return (
-            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-                <LoadingState message={"Loading..."} />
-            </div>
-        )
-    }
-
-    if (error) {
-        return (
-            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-                <EmptyState
-                    icon={AlertTriangle}
-                    title="Error Loading Address"
-                    description={error}
-                    action={{
-                        label: "Try Again",
-                        onClick: fetchAddressInfo,
-                        variant: "outline"
-                    }}
-                />
-            </div>
-        )
-    }
-
-    if (!addressInfo) {
-        return (
-            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-                <div className="flex items-center justify-center h-64">
-                    <p className="text-lg text-muted-foreground">Address information not found</p>
-                </div>
-            </div>
-        )
-    }
-
+  if (isError || !info) {
     return (
-        <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-            {/* Header */}
-            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-                <div className="space-y-1">
-                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Address Details</h2>
-                    <p className="text-sm text-muted-foreground sm:text-base">
-                        Address information and transaction history
-                    </p>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <NetworkStatus />
-                    <Button onClick={fetchAddressInfo} variant="outline" size="sm" className="w-full sm:w-auto">
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Refresh
-                    </Button>
-                </div>
+      <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+        <DetailHeader
+          title={t('title')}
+          subtitle={t('subtitle')}
+          onRefresh={() => void refetch()}
+          isRefreshing={isFetching}
+        />
+        <SectionCard>
+          <div className="flex flex-col items-center gap-3 py-8 text-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <AlertTriangle className="size-6" />
+            </span>
+            <div className="space-y-1">
+              <p className="text-base font-semibold">{t('error')}</p>
+              <p className="text-sm text-muted-foreground">
+                {error instanceof Error ? error.message : t('notFound')}
+              </p>
             </div>
-
-            {/* Address Info */}
-            <SectionHeader
-                icon={Wallet}
-                title="Address Information"
-            />
-            <div className="rounded-xl border p-4 space-y-4">
-                <div>
-                    <label className="text-sm font-medium text-muted-foreground">Address</label>
-                    <div className="flex items-center gap-2 mt-1">
-                        <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">
-                            {addressInfo.address}
-                        </code>
-                        <CopyButton text={addressInfo.address} />
-                    </div>
-                </div>
-            </div>
-
-            {/* Balance Stats */}
-            <div className="space-y-4">
-                <SectionHeader
-                    icon={Wallet}
-                    title="Balance Statistics"
-                />
-                <StatsGrid>
-                    <StatsCard
-                        icon={Wallet}
-                        title="Current Balance"
-                        value={`${addressInfo.balance.toFixed(8)} FAIR`}
-                        description="Available balance"
-                    />
-                    <StatsCard
-                        icon={TrendingUp}
-                        title="Total Received"
-                        value={`${addressInfo.totalReceived.toFixed(8)} FAIR`}
-                        description="All time received"
-                    />
-                    <StatsCard
-                        icon={TrendingDown}
-                        title="Total Sent"
-                        value={`${addressInfo.totalSent.toFixed(8)} FAIR`}
-                        description="All time sent"
-                    />
-                    <StatsCard
-                        icon={Hash}
-                        title="Transactions"
-                        value={addressInfo.txCount.toLocaleString()}
-                        description="Total transactions"
-                    />
-                </StatsGrid>
-            </div>
-
-            {/* Transactions */}
-            <div className="space-y-4">
-                <SectionHeader
-                    icon={Hash}
-                    title="Transaction History"
-                    badge={{
-                        text: `${addressInfo.transactions.length} transactions`,
-                        variant: 'secondary'
-                    }}
-                />
-
-                {addressInfo.transactions.length > 0 ? (
-                    <div className="rounded-md border overflow-auto custom-scrollbar">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="h-8 px-2">Transaction</TableHead>
-                                    <TableHead className="h-8 px-2">Type</TableHead>
-                                    <TableHead className="h-8 px-2">Amount</TableHead>
-                                    <TableHead className="h-8 px-2">Block</TableHead>
-                                    <TableHead className="h-8 px-2">Time</TableHead>
-                                    <TableHead className="h-8 px-2">Status</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {addressInfo.transactions.map((tx) => (
-                                    <TableRow key={tx.txid}>
-                                        <TableCell className="font-mono text-sm whitespace-nowrap py-2 px-2">
-                                            <Link
-                                                to={`/tx/${tx.txid}`}
-                                                className="hover:underline break-all"
-                                            >
-                                                {tx.txid.substring(0, 16)}...
-                                            </Link>
-                                        </TableCell>
-                                        <TableCell className="py-2 px-2">
-                                            <Badge
-                                                variant={tx.type === 'received' ? 'default' : 'secondary'}
-                                                className="flex items-center gap-1 w-fit"
-                                            >
-                                                {tx.type === 'received' ? (
-                                                    <TrendingUp className="h-3 w-3" />
-                                                ) : (
-                                                    <TrendingDown className="h-3 w-3" />
-                                                )}
-                                                {tx.type === 'received' ? 'Received' : 'Sent'}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="font-mono whitespace-nowrap py-2 px-2">
-                                            <span className={tx.type === 'received' ? '' : ''}>
-                                                {tx.type === 'received' ? '+' : '-'}{Math.abs(tx.amount).toFixed(8)} FAIR
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="whitespace-nowrap py-2 px-2">
-                                            {tx.blockHeight ? (
-                                                <Link
-                                                    to={`/block/${tx.blockHeight}`}
-                                                    className="hover:underline"
-                                                >
-                                                    #{tx.blockHeight.toLocaleString()}
-                                                </Link>
-                                            ) : (
-                                                <Badge variant="outline">Pending</Badge>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="whitespace-nowrap py-2 px-2">
-                                            {new Date(tx.time * 1000).toLocaleString()}
-                                        </TableCell>
-                                        <TableCell className="py-2 px-2">
-                                            <Badge variant={tx.confirmations > 0 ? 'default' : 'secondary'}>
-                                                {tx.confirmations > 0 ? `${tx.confirmations} conf` : 'Unconfirmed'}
-                                            </Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                ) : (
-                    <EmptyState
-                        icon={Hash}
-                        title="No Transactions Found"
-                        description="This address has no transaction history"
-                    />
-                )}
-            </div>
-
-            {/* Navigation */}
-            <div className="flex justify-center">
-                <Button asChild variant="outline">
-                    <Link to="/">
-                        <Home className="h-4 w-4 mr-2" />
-                        Back to Home
-                    </Link>
-                </Button>
-            </div>
-        </div>
+            <Button variant="outline" onClick={() => void refetch()}>
+              {t('tryAgain')}
+            </Button>
+          </div>
+        </SectionCard>
+      </div>
     )
+  }
+
+  return (
+    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <DetailHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        onRefresh={() => void refetch()}
+        isRefreshing={isFetching}
+      />
+
+      {/* Address identity */}
+      <SectionCard title={t('addressInformation')} icon={Wallet}>
+        <InfoRow
+          label={t('address')}
+          value={<HashCell value={info.address} full />}
+        />
+      </SectionCard>
+
+      {/* Balance stats */}
+      <StatTileGrid>
+        <StatTile label={t('currentBalance')} value={formatFair(info.balance)} icon={Wallet} accent />
+        <StatTile label={t('totalReceived')} value={formatFair(info.totalReceived)} icon={TrendingUp} />
+        <StatTile label={t('totalSent')} value={formatFair(info.totalSent)} icon={TrendingDown} />
+        <StatTile label={t('transactions')} value={formatNumber(info.txCount)} icon={Hash} />
+      </StatTileGrid>
+
+      {info.note ? (
+        <div className="flex items-start gap-2 rounded-xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          <Info className="mt-0.5 size-4 shrink-0 text-primary" />
+          <span>{t('limitedData')}</span>
+        </div>
+      ) : null}
+
+      {/* Transaction history */}
+      <SectionCard
+        title={t('transactionHistory')}
+        icon={Receipt}
+        flush
+        action={
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+            {t('transactionsCount', { count: info.transactions?.length ?? 0 })}
+          </span>
+        }
+      >
+        <AddressTransactions info={info} t={t} />
+      </SectionCard>
+    </div>
+  )
+}
+
+function AddressTransactions({
+  info,
+  t,
+}: {
+  info: AddressInfo
+  t: (key: string, params?: Record<string, string | number>) => string
+}) {
+  const transactions = info.transactions ?? []
+
+  if (transactions.length === 0) {
+    return (
+      <div className="flex min-h-[140px] flex-col items-center justify-center gap-2 px-4 py-8 text-center">
+        <span className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <Receipt className="size-5" />
+        </span>
+        <p className="text-sm font-medium">{t('noTransactions')}</p>
+        <p className="text-xs text-muted-foreground">{t('noTransactionsDesc')}</p>
+      </div>
+    )
+  }
+
+  return (
+    <ul className="divide-y">
+      {transactions.map((tx) => (
+        <AddressTransactionRow key={tx.txid} tx={tx} t={t} />
+      ))}
+    </ul>
+  )
+}
+
+function AddressTransactionRow({
+  tx,
+  t,
+}: {
+  tx: AddressTransaction
+  t: (key: string, params?: Record<string, string | number>) => string
+}) {
+  const received = tx.type === 'received'
+  const confirmed = tx.confirmations > 0
+
+  return (
+    <li className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40">
+      <span
+        className={cn(
+          'flex size-7 shrink-0 items-center justify-center rounded-full',
+          received ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+        )}
+      >
+        {received ? <ArrowDownLeft className="size-4" /> : <ArrowUpRight className="size-4" />}
+      </span>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <HashCell value={tx.txid} to="tx" lead={10} tail={8} />
+        <span className="text-xs text-muted-foreground">
+          <RelativeTime timestamp={tx.time} />
+          {' · '}
+          {confirmed ? t('conf', { count: tx.confirmations }) : t('unconfirmed')}
+        </span>
+      </div>
+
+      <div className="flex shrink-0 flex-col items-end gap-0.5">
+        <span
+          className={cn(
+            'text-sm font-semibold tabular-nums',
+            received ? 'text-primary' : 'text-foreground',
+          )}
+        >
+          {received ? '+' : '−'}
+          {Math.abs(tx.amount).toFixed(8)}
+        </span>
+        {tx.blockHeight ? (
+          <Link
+            to={`/block/${tx.blockHeight}`}
+            className="text-xs text-muted-foreground tabular-nums hover:text-foreground hover:underline"
+          >
+            #{formatNumber(tx.blockHeight)}
+          </Link>
+        ) : (
+          <span className="text-xs text-muted-foreground">{t('pendingBadge')}</span>
+        )}
+      </div>
+    </li>
+  )
+}
+
+function AddressSkeleton() {
+  return (
+    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <div className="flex items-center justify-between gap-2">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+        <Skeleton className="h-9 w-28 rounded-lg" />
+      </div>
+      <Skeleton className="h-20 rounded-xl" />
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-[72px] rounded-xl" />
+        ))}
+      </div>
+      <Skeleton className="h-56 rounded-xl" />
+    </div>
+  )
 }

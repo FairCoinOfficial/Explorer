@@ -1,125 +1,49 @@
-import { useState } from "react"
-import { useNetwork } from "@/contexts/network-context"
+import { useState } from 'react'
 import {
-    Server,
-    Shield,
-    Award,
-    Settings,
-    FileText,
-    Copy,
-    CheckCircle,
-    AlertCircle,
-    Info,
-    Monitor,
-    Terminal,
-    Wallet,
-    Network,
-    Zap,
-    Key,
-    Database,
-    Users,
-    Clock,
-    Globe,
-    Vote,
-    DollarSign,
-    Calendar,
-    Link
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useTranslations } from "@/lib/i18n"
-import { toast } from 'sonner'
+  Activity,
+  AlertCircle,
+  Award,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Coins,
+  Database,
+  DollarSign,
+  FileText,
+  Info,
+  Key,
+  Monitor,
+  Network,
+  Server,
+  Settings,
+  Shield,
+  Terminal,
+  Users,
+  Vote,
+  Wallet,
+  Zap,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { useNetwork } from '@/contexts/network-context'
+import { useTranslations } from '@/lib/i18n'
+import {
+  MASTERNODE_COLLATERAL,
+  REWARD_SPLIT,
+  useMasternodes,
+} from '@/hooks/use-masternodes'
+import { formatNumber } from '@/lib/format'
+import { DetailHeader } from '@/components/detail/detail-header'
+import { SectionCard } from '@/components/detail/section-card'
+import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
+import { ProgressBar } from '@/components/detail/progress-bar'
+import { CopyButton } from '@/components/copy-button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-export function MasternodesContent() {
-    const { currentNetwork } = useNetwork()
-    const [activeTab, setActiveTab] = useState("overview")
-    const t = useTranslations('masternodes')
+type Translate = (key: string, params?: Record<string, string | number>) => string
 
-    const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text).then(() => {
-            toast.success('Copied to clipboard')
-        }).catch(() => {
-            toast.error('Failed to copy')
-        })
-    }
+const CONFIRMATION_BLOCKS = 15
 
-    const masternodeSteps = [
-        {
-            step: 1,
-            title: t('guide.steps.0.title'),
-            description: t('guide.steps.0.description'),
-            icon: Wallet,
-            details: t('guide.steps.0.details')
-        },
-        {
-            step: 2,
-            title: t('guide.steps.1.title'),
-            description: t('guide.steps.1.description'),
-            icon: Network,
-            details: t('guide.steps.1.details')
-        },
-        {
-            step: 3,
-            title: t('guide.steps.2.title'),
-            description: t('guide.steps.2.description'),
-            icon: Terminal,
-            details: t('guide.steps.2.details')
-        },
-        {
-            step: 4,
-            title: t('guide.steps.3.title'),
-            description: t('guide.steps.3.description'),
-            icon: Key,
-            details: t('guide.steps.3.details')
-        },
-        {
-            step: 5,
-            title: t('guide.steps.4.title'),
-            description: t('guide.steps.4.description'),
-            icon: Database,
-            details: t('guide.steps.4.details')
-        },
-        {
-            step: 6,
-            title: t('guide.steps.5.title'),
-            description: t('guide.steps.5.description'),
-            icon: Shield,
-            details: t('guide.steps.5.details')
-        },
-        {
-            step: 7,
-            title: t('guide.steps.6.title'),
-            description: t('guide.steps.6.description'),
-            icon: Settings,
-            details: t('guide.steps.6.details')
-        },
-        {
-            step: 8,
-            title: t('guide.steps.7.title'),
-            description: t('guide.steps.7.description'),
-            icon: FileText,
-            details: t('guide.steps.7.details')
-        },
-        {
-            step: 9,
-            title: t('guide.steps.8.title'),
-            description: t('guide.steps.8.description'),
-            icon: Monitor,
-            details: t('guide.steps.8.details')
-        },
-        {
-            step: 10,
-            title: t('guide.steps.9.title'),
-            description: t('guide.steps.9.description'),
-            icon: Zap,
-            details: t('guide.steps.9.details')
-        }
-    ]
-
-    const configExamples = {
-        faircoinConf: `rpcuser=ANYTHINGHERE
+const FAIRCOIN_CONF = `rpcuser=ANYTHINGHERE
 rpcpassword=ANYTHINGHERE
 listen=1
 server=1
@@ -128,472 +52,412 @@ allowip=127.0.0.1
 masternode=1
 externalip=YOURIP
 masternodeaddr=127.0.0.1:46372
-masternodeprivkey=PRIVATEKEYREPLACETHIS`,
-        masternodeConf: `mn1 127.0.0.1:46372 PRIVATEKEYREPLACETHIS INSERTYOURTXID 0`
-    }
+masternodeprivkey=PRIVATEKEYREPLACETHIS`
 
-    const requirements = [
-        {
-            title: t('requirements.hardware.title'),
-            items: [
-                t('requirements.hardware.items.0'),
-                t('requirements.hardware.items.1'),
-                t('requirements.hardware.items.2'),
-                t('requirements.hardware.items.3')
-            ],
-            icon: Server
-        },
-        {
-            title: t('requirements.software.title'),
-            items: [
-                t('requirements.software.items.0'),
-                t('requirements.software.items.1'),
-                t('requirements.software.items.2'),
-                t('requirements.software.items.3')
-            ],
-            icon: Monitor
-        },
-        {
-            title: t('requirements.network.title'),
-            items: [
-                t('requirements.network.items.0'),
-                t('requirements.network.items.1'),
-                t('requirements.network.items.2'),
-                t('requirements.network.items.3')
-            ],
-            icon: Network
+const MASTERNODE_CONF = `mn1 127.0.0.1:46372 PRIVATEKEYREPLACETHIS INSERTYOURTXID 0`
+
+const STEP_ICONS: LucideIcon[] = [
+  Wallet,
+  Network,
+  Terminal,
+  Key,
+  Database,
+  Shield,
+  Settings,
+  FileText,
+  Monitor,
+  Zap,
+]
+
+const BUDGET_STAGE_KEYS = [
+  { key: 'prepare', icon: FileText },
+  { key: 'submit', icon: Network },
+  { key: 'voting', icon: Vote },
+  { key: 'finalization', icon: Calendar },
+  { key: 'budgetVoting', icon: Vote },
+  { key: 'payment', icon: DollarSign },
+] as const
+
+const BUDGET_COMMAND_KEYS = [
+  'prepare',
+  'submit',
+  'getinfo',
+  'vote',
+  'projection',
+  'finalbudget',
+] as const
+
+const REQUIREMENT_GROUPS = [
+  { key: 'hardware', icon: Server },
+  { key: 'software', icon: Monitor },
+  { key: 'network', icon: Network },
+] as const
+
+export function MasternodesContent() {
+  const { currentNetwork } = useNetwork()
+  const t = useTranslations('masternodes')
+  const [activeTab, setActiveTab] = useState('overview')
+  const { data: stats, refetch, isFetching } = useMasternodes()
+
+  const activeCount = stats && stats.enabled > 0 ? formatNumber(stats.enabled) : '—'
+
+  return (
+    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <DetailHeader
+        title={t('header.title')}
+        subtitle={t('header.subtitle')}
+        onRefresh={() => void refetch()}
+        isRefreshing={isFetching}
+        action={
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+            <Activity className="size-3" />
+            {currentNetwork.toUpperCase()}
+          </span>
         }
-    ]
+      />
 
-    const troubleshooting = [
-        {
-            issue: t('troubleshooting.issues.0.issue'),
-            solution: t('troubleshooting.issues.0.solution'),
-            icon: AlertCircle
-        },
-        {
-            issue: t('troubleshooting.issues.1.issue'),
-            solution: t('troubleshooting.issues.1.solution'),
-            icon: AlertCircle
-        },
-        {
-            issue: t('troubleshooting.issues.2.issue'),
-            solution: t('troubleshooting.issues.2.solution'),
-            icon: AlertCircle
-        },
-        {
-            issue: t('troubleshooting.issues.3.issue'),
-            solution: t('troubleshooting.issues.3.solution'),
-            icon: AlertCircle
-        }
-    ]
+      {/* Live stats */}
+      <StatTileGrid>
+        <StatTile
+          icon={Shield}
+          label={t('stats.requiredCollateral')}
+          value={`${formatNumber(MASTERNODE_COLLATERAL)} FAIR`}
+          hint={t('stats.collateralHint')}
+        />
+        <StatTile
+          icon={Users}
+          label={t('stats.activeMasternodes')}
+          value={activeCount}
+          hint={t('stats.activeHint')}
+          accent
+        />
+        <StatTile
+          icon={Clock}
+          label={t('stats.confirmationBlocks')}
+          value={formatNumber(CONFIRMATION_BLOCKS)}
+          hint={t('stats.confirmationHint')}
+        />
+        <StatTile
+          icon={Coins}
+          label={t('stats.rewardSplit')}
+          value={`${REWARD_SPLIT.masternode}% / ${REWARD_SPLIT.staker}%`}
+          hint={t('stats.rewardSplitHint')}
+        />
+      </StatTileGrid>
 
-    const budgetStages = [
-        {
-            stage: t('budget.stages.prepare.title'),
-            description: t('budget.stages.prepare.description'),
-            icon: FileText,
-            details: t('budget.stages.prepare.details')
-        },
-        {
-            stage: t('budget.stages.submit.title'),
-            description: t('budget.stages.submit.description'),
-            icon: Network,
-            details: t('budget.stages.submit.details')
-        },
-        {
-            stage: t('budget.stages.voting.title'),
-            description: t('budget.stages.voting.description'),
-            icon: Vote,
-            details: t('budget.stages.voting.details')
-        },
-        {
-            stage: t('budget.stages.finalization.title'),
-            description: t('budget.stages.finalization.description'),
-            icon: Calendar,
-            details: t('budget.stages.finalization.details')
-        },
-        {
-            stage: t('budget.stages.budgetVoting.title'),
-            description: t('budget.stages.budgetVoting.description'),
-            icon: Vote,
-            details: t('budget.stages.budgetVoting.details')
-        },
-        {
-            stage: t('budget.stages.payment.title'),
-            description: t('budget.stages.payment.description'),
-            icon: DollarSign,
-            details: t('budget.stages.payment.details')
-        }
-    ]
-
-    const budgetCommands = [
-        {
-            command: t('budget.commands.prepare.name'),
-            description: t('budget.commands.prepare.description'),
-            example: t('budget.commands.prepare.example'),
-            output: t('budget.commands.prepare.output'),
-            copy: t('budget.commands.prepare.copy')
-        },
-        {
-            command: t('budget.commands.submit.name'),
-            description: t('budget.commands.submit.description'),
-            example: t('budget.commands.submit.example'),
-            output: t('budget.commands.submit.output'),
-            copy: t('budget.commands.submit.copy')
-        },
-        {
-            command: t('budget.commands.getinfo.name'),
-            description: t('budget.commands.getinfo.description'),
-            example: t('budget.commands.getinfo.example'),
-            output: t('budget.commands.getinfo.output'),
-            copy: t('budget.commands.getinfo.copy')
-        },
-        {
-            command: t('budget.commands.vote.name'),
-            description: t('budget.commands.vote.description'),
-            example: t('budget.commands.vote.example'),
-            output: t('budget.commands.vote.output'),
-            copy: t('budget.commands.vote.copy')
-        },
-        {
-            command: t('budget.commands.projection.name'),
-            description: t('budget.commands.projection.description'),
-            example: t('budget.commands.projection.example'),
-            output: t('budget.commands.projection.output'),
-            copy: t('budget.commands.projection.copy')
-        },
-        {
-            command: t('budget.commands.finalbudget.name'),
-            description: t('budget.commands.finalbudget.description'),
-            example: t('budget.commands.finalbudget.example'),
-            output: t('budget.commands.finalbudget.output'),
-            copy: t('budget.commands.finalbudget.copy')
-        }
-    ]
-
-    const stats = [
-        { label: "requiredCollateral", value: "5,000 FAIR", icon: Shield },
-        { label: "network", value: currentNetwork.toUpperCase(), icon: Globe },
-        { label: "confirmationBlocks", value: "15", icon: Clock },
-        { label: "activeMasternodes", value: "1,000+", icon: Users }
-    ]
-
-    return (
-        <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-            {/* Header */}
-            <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
-                <div>
-                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">{t('header.title')}</h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        {t('header.subtitle')}
-                    </p>
-                </div>
-                <Badge variant="outline" className="text-sm">
-                    {currentNetwork.toUpperCase()}
-                        </Badge>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {stats.map((stat, index) => (
-                    <div key={index}>
-                        <p className="text-xs text-muted-foreground mb-1">{t(`stats.${stat.label}`)}</p>
-                        <p className="text-2xl font-bold tabular-nums">{stat.value}</p>
-                    </div>
-                ))}
-            </div>
-
-            {/* Main Content Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
-                    <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
-                    <TabsTrigger value="guide">{t('tabs.guide')}</TabsTrigger>
-                    <TabsTrigger value="budget">{t('tabs.budget')}</TabsTrigger>
-                    <TabsTrigger value="requirements">{t('tabs.requirements')}</TabsTrigger>
-                    <TabsTrigger value="troubleshooting">{t('tabs.troubleshooting')}</TabsTrigger>
-                </TabsList>
-
-                {/* Overview Tab */}
-                <TabsContent value="overview" className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <div className="rounded-xl border p-4 space-y-3">
-                            <div className="flex items-center gap-2 font-semibold">
-                                <Shield className="h-4 w-4 text-primary" />
-                                {t('overview.whatAreMasternodes.title')}
-                            </div>
-                            <p className="text-muted-foreground">
-                                {t('overview.whatAreMasternodes.description')}
-                            </p>
-                            <ul className="text-sm text-muted-foreground space-y-1">
-                                <li>• {t('overview.whatAreMasternodes.features.security')}</li>
-                                <li>• {t('overview.whatAreMasternodes.features.instantTx')}</li>
-                                <li>• {t('overview.whatAreMasternodes.features.governance')}</li>
-                                <li>• {t('overview.whatAreMasternodes.features.rewards')}</li>
-                            </ul>
-                        </div>
-
-                        <div className="rounded-xl border p-4 space-y-3">
-                            <div className="flex items-center gap-2 font-semibold">
-                                <Award className="h-4 w-4 text-primary" />
-                                {t('overview.benefits.title')}
-                            </div>
-                            <ul className="text-sm text-muted-foreground space-y-1">
-                                <li>• {t('overview.benefits.earnRewards')}</li>
-                                <li>• {t('overview.benefits.secureNetwork')}</li>
-                                <li>• {t('overview.benefits.governance')}</li>
-                                <li>• {t('overview.benefits.ecosystem')}</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <Alert>
-                        <Info className="h-4 w-4 text-primary" />
-                        <AlertDescription>
-                            <strong>{t('overview.important.title')}</strong> {t('overview.important.description')}
-                        </AlertDescription>
-                    </Alert>
-                </TabsContent>
-
-                {/* Windows Guide Tab */}
-                <TabsContent value="guide" className="space-y-4">
-                    <div className="text-center space-y-2">
-                        <h2 className="text-2xl font-bold tracking-tight">{t('guide.title')}</h2>
-                        <p className="text-muted-foreground">
-                            {t('guide.subtitle')}
-                        </p>
-                    </div>
-
-                    {/* Step-by-Step Guide */}
-                    <div className="space-y-4">
-                        {masternodeSteps.map((step, index) => (
-                            <div key={index} className="rounded-xl border p-4">
-                                <div className="flex items-start gap-4">
-                                    <div className="flex-shrink-0">
-                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                            <span className="text-primary font-bold text-lg">{step.step}</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <step.icon className="h-4 w-4 text-primary" />
-                                            <h3 className="text-lg font-semibold">{step.title}</h3>
-                                        </div>
-                                        <p className="text-primary font-medium mb-2">{step.description}</p>
-                                        <p className="text-muted-foreground text-sm">{step.details}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Configuration Files */}
-                    <div className="space-y-4">
-                        <h3 className="text-xl font-bold tracking-tight text-center">{t('guide.configuration.title')}</h3>
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-3">
-                                <h4 className="flex items-center gap-2 font-semibold">
-                                    <FileText className="h-4 w-4 text-primary" />
-                                    {t('guide.configuration.faircoinConf.title')}
-                                </h4>
-                                <div className="bg-muted p-4 rounded-lg">
-                                    <pre className="text-xs text-foreground whitespace-pre-wrap font-mono">{configExamples.faircoinConf}</pre>
-                                </div>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-full"
-                                    onClick={() => copyToClipboard(configExamples.faircoinConf)}
-                                >
-                                    <Copy className="h-4 w-4 mr-2 text-primary" />
-                                    {t('guide.configuration.faircoinConf.copy')}
-                                </Button>
-                            </div>
-
-                            <div className="space-y-3">
-                                <h4 className="flex items-center gap-2 font-semibold">
-                                    <FileText className="h-4 w-4 text-primary" />
-                                    {t('guide.configuration.masternodeConf.title')}
-                                </h4>
-                                <div className="bg-muted p-4 rounded-lg">
-                                    <pre className="text-xs text-foreground whitespace-pre-wrap font-mono">{configExamples.masternodeConf}</pre>
-                                </div>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-full"
-                                    onClick={() => copyToClipboard(configExamples.masternodeConf)}
-                                >
-                                    <Copy className="h-4 w-4 mr-2 text-primary" />
-                                    {t('guide.configuration.masternodeConf.copy')}
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Important Notes */}
-                    <Alert>
-                        <AlertCircle className="h-4 w-4 text-primary" />
-                        <AlertDescription>
-                            <strong>{t('guide.configuration.notes.title')}</strong>
-                            <ul className="mt-2 space-y-1 text-sm">
-                                <li>• {t('guide.configuration.notes.note1')}</li>
-                                <li>• {t('guide.configuration.notes.note2')}</li>
-                                <li>• {t('guide.configuration.notes.note3')}</li>
-                                <li>• {t('guide.configuration.notes.note4')}</li>
-                            </ul>
-                        </AlertDescription>
-                    </Alert>
-                </TabsContent>
-
-                {/* Budget API Tab */}
-                <TabsContent value="budget" className="space-y-4">
-                    <div className="text-center space-y-2">
-                        <h2 className="text-2xl font-bold tracking-tight">{t('budget.title')}</h2>
-                        <p className="text-muted-foreground">
-                            {t('budget.description')}
-                        </p>
-                    </div>
-
-                    {/* Budget Stages */}
-                    <div className="space-y-4">
-                        <h3 className="text-xl font-bold tracking-tight">{t('budget.sections.budgetStages')}</h3>
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {budgetStages.map((stage, index) => (
-                                <div key={index} className="rounded-xl border p-4 h-full space-y-2">
-                                    <div className="flex items-center gap-2 font-semibold">
-                                        <stage.icon className="h-4 w-4 text-primary" />
-                                        {stage.stage}
-                                    </div>
-                                    <p className="text-primary font-medium text-sm">{stage.description}</p>
-                                    <p className="text-muted-foreground text-xs">{stage.details}</p>
-                                </div>
-                            ))}
-                            </div>
-                    </div>
-
-                    {/* Budget Commands */}
-                    <div className="space-y-4">
-                        <h3 className="text-xl font-bold tracking-tight">{t('budget.sections.budgetCommands')}</h3>
-                        <div className="space-y-4">
-                            {budgetCommands.map((cmd, index) => (
-                                <div key={index} className="rounded-xl border p-4 space-y-3">
-                                    <h4 className="flex items-center gap-2 font-semibold">
-                                        <Terminal className="h-4 w-4 text-primary" />
-                                        {cmd.command}
-                                    </h4>
-                                    <p className="text-muted-foreground text-sm">{cmd.description}</p>
-                                    <div className="space-y-2">
-                                        <div>
-                                            <span className="text-sm font-medium text-primary">{t('budget.sections.example')}</span>
-                                            <div className="bg-muted p-3 rounded-lg mt-1">
-                                                <code className="text-xs text-foreground font-mono">{cmd.example}</code>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <span className="text-sm font-medium text-primary">{t('budget.sections.output')}</span>
-                                            <div className="bg-muted p-3 rounded-lg mt-1">
-                                                <code className="text-xs text-foreground font-mono">{cmd.output}</code>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="w-full"
-                                        onClick={() => copyToClipboard(cmd.example)}
-                                    >
-                                        <Copy className="h-4 w-4 mr-2 text-primary" />
-                                        {cmd.copy}
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Important Information */}
-                    <Alert>
-                        <Info className="h-4 w-4 text-primary" />
-                        <AlertDescription>
-                            <strong>{t('budget.sections.important')}:</strong> {t('budget.alerts.votingRequirement')}
-                        </AlertDescription>
-                    </Alert>
-
-                    <Alert>
-                        <AlertCircle className="h-4 w-4 text-primary" />
-                        <AlertDescription>
-                            <strong>{t('budget.sections.warning')}:</strong> {t('budget.alerts.collateralWarning')}
-                        </AlertDescription>
-                    </Alert>
-                </TabsContent>
-
-                {/* Requirements Tab */}
-                <TabsContent value="requirements" className="space-y-4">
-                    <div className="text-center space-y-2">
-                        <h2 className="text-2xl font-bold tracking-tight">{t('requirements.title')}</h2>
-                        <p className="text-muted-foreground">
-                            {t('requirements.subtitle')}
-                        </p>
-                    </div>
-
-                    <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
-                        {requirements.map((req, index) => (
-                            <div key={index} className="space-y-3">
-                                <h4 className="flex items-center gap-2 font-semibold">
-                                    <req.icon className="h-4 w-4 text-primary" />
-                                    {req.title}
-                                </h4>
-                                <ul className="space-y-2">
-                                    {req.items.map((item, itemIndex) => (
-                                        <li key={itemIndex} className="flex items-start gap-2">
-                                            <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                                            <span className="text-sm text-muted-foreground">{item}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
-                    </div>
-
-                    <Alert>
-                        <Info className="h-4 w-4 text-primary" />
-                        <AlertDescription>
-                            {t('requirements.note')}
-                        </AlertDescription>
-                    </Alert>
-                </TabsContent>
-
-                {/* Troubleshooting Tab */}
-                <TabsContent value="troubleshooting" className="space-y-4">
-                    <div className="text-center space-y-2">
-                        <h2 className="text-2xl font-bold tracking-tight">{t('troubleshooting.title')}</h2>
-                        <p className="text-muted-foreground">
-                            {t('troubleshooting.subtitle')}
-                        </p>
-                    </div>
-
-                    <div className="space-y-4">
-                        {troubleshooting.map((item, index) => (
-                            <div key={index} className="rounded-xl border p-4">
-                                <div className="flex items-start gap-3">
-                                    <AlertCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                                    <div className="flex-1">
-                                        <h4 className="font-semibold mb-2">{item.issue}</h4>
-                                        <p className="text-muted-foreground text-sm">{item.solution}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    <Alert>
-                        <AlertCircle className="h-4 w-4 text-primary" />
-                        <AlertDescription>
-                            <strong>{t('troubleshooting.help.title')}</strong> {t('troubleshooting.help.description')}
-                        </AlertDescription>
-                    </Alert>
-                </TabsContent>
-            </Tabs>
+      {/* Reward distribution */}
+      <SectionCard title={t('rewards.title')} icon={Coins}>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">{t('rewards.description')}</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <RewardShare
+              label={t('rewards.masternodeShare')}
+              percent={REWARD_SPLIT.masternode}
+              icon={Server}
+            />
+            <RewardShare
+              label={t('rewards.stakerShare')}
+              percent={REWARD_SPLIT.staker}
+              icon={Wallet}
+            />
+          </div>
         </div>
-    )
+      </SectionCard>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
+          <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
+          <TabsTrigger value="guide">{t('tabs.guide')}</TabsTrigger>
+          <TabsTrigger value="budget">{t('tabs.budget')}</TabsTrigger>
+          <TabsTrigger value="requirements">{t('tabs.requirements')}</TabsTrigger>
+          <TabsTrigger value="troubleshooting">{t('tabs.troubleshooting')}</TabsTrigger>
+        </TabsList>
+
+        {/* Overview */}
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <SectionCard title={t('overview.whatAreMasternodes.title')} icon={Shield}>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  {t('overview.whatAreMasternodes.description')}
+                </p>
+                <ul className="space-y-1 text-sm text-muted-foreground">
+                  <li>• {t('overview.whatAreMasternodes.features.security')}</li>
+                  <li>• {t('overview.whatAreMasternodes.features.instantTx')}</li>
+                  <li>• {t('overview.whatAreMasternodes.features.governance')}</li>
+                  <li>• {t('overview.whatAreMasternodes.features.rewards')}</li>
+                </ul>
+              </div>
+            </SectionCard>
+
+            <SectionCard title={t('overview.benefits.title')} icon={Award}>
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                <li>• {t('overview.benefits.earnRewards')}</li>
+                <li>• {t('overview.benefits.secureNetwork')}</li>
+                <li>• {t('overview.benefits.governance')}</li>
+                <li>• {t('overview.benefits.ecosystem')}</li>
+              </ul>
+            </SectionCard>
+          </div>
+
+          <Callout tone="info" icon={Info} title={t('overview.important.title')}>
+            {t('overview.important.description')}
+          </Callout>
+        </TabsContent>
+
+        {/* Guide */}
+        <TabsContent value="guide" className="space-y-4">
+          <SectionCard title={t('guide.title')} icon={Terminal}>
+            <p className="text-sm text-muted-foreground">{t('guide.subtitle')}</p>
+          </SectionCard>
+
+          <div className="space-y-3">
+            {STEP_ICONS.map((Icon, index) => (
+              <SectionCard key={index}>
+                <div className="flex items-start gap-4">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base font-bold text-primary">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Icon className="size-4 text-primary" />
+                      <h3 className="text-sm font-semibold">{t(`guide.steps.${index}.title`)}</h3>
+                    </div>
+                    <p className="text-sm font-medium text-primary">
+                      {t(`guide.steps.${index}.description`)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {t(`guide.steps.${index}.details`)}
+                    </p>
+                  </div>
+                </div>
+              </SectionCard>
+            ))}
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <SectionCard title={t('guide.configuration.faircoinConf.title')} icon={FileText}>
+              <CodeBlock code={FAIRCOIN_CONF} copyLabel={t('guide.configuration.faircoinConf.copy')} />
+            </SectionCard>
+            <SectionCard title={t('guide.configuration.masternodeConf.title')} icon={FileText}>
+              <CodeBlock code={MASTERNODE_CONF} copyLabel={t('guide.configuration.masternodeConf.copy')} />
+            </SectionCard>
+          </div>
+
+          <Callout tone="warning" icon={AlertCircle} title={t('guide.configuration.notes.title')}>
+            <ul className="mt-1 space-y-1">
+              <li>• {t('guide.configuration.notes.note1')}</li>
+              <li>• {t('guide.configuration.notes.note2')}</li>
+              <li>• {t('guide.configuration.notes.note3')}</li>
+              <li>• {t('guide.configuration.notes.note4')}</li>
+            </ul>
+          </Callout>
+        </TabsContent>
+
+        {/* Budget */}
+        <TabsContent value="budget" className="space-y-4">
+          <SectionCard title={t('budget.title')} icon={Vote}>
+            <p className="text-sm text-muted-foreground">{t('budget.description')}</p>
+          </SectionCard>
+
+          <SectionCard title={t('budget.sections.budgetStages')} icon={Calendar}>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {BUDGET_STAGE_KEYS.map(({ key, icon: Icon }) => (
+                <div key={key} className="space-y-1 rounded-lg bg-muted/60 p-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Icon className="size-4 text-primary" />
+                    {t(`budget.stages.${key}.title`)}
+                  </div>
+                  <p className="text-sm font-medium text-primary">
+                    {t(`budget.stages.${key}.description`)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{t(`budget.stages.${key}.details`)}</p>
+                </div>
+              ))}
+            </div>
+          </SectionCard>
+
+          <SectionCard title={t('budget.sections.budgetCommands')} icon={Terminal}>
+            <div className="space-y-4">
+              {BUDGET_COMMAND_KEYS.map((key) => (
+                <div key={key} className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Terminal className="size-4 text-primary" />
+                    {t(`budget.commands.${key}.name`)}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t(`budget.commands.${key}.description`)}
+                  </p>
+                  <div className="space-y-2">
+                    <LabeledCode
+                      label={t('budget.sections.example')}
+                      code={t(`budget.commands.${key}.example`)}
+                      copyLabel={t(`budget.commands.${key}.copy`)}
+                    />
+                    <div className="space-y-1">
+                      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        {t('budget.sections.output')}
+                      </span>
+                      <div className="rounded-lg bg-muted/60 p-4 font-mono text-xs break-all">
+                        {t(`budget.commands.${key}.output`)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </SectionCard>
+
+          <Callout tone="info" icon={Info} title={t('budget.sections.important')}>
+            {t('budget.alerts.votingRequirement')}
+          </Callout>
+          <Callout tone="warning" icon={AlertCircle} title={t('budget.sections.warning')}>
+            {t('budget.alerts.collateralWarning')}
+          </Callout>
+        </TabsContent>
+
+        {/* Requirements */}
+        <TabsContent value="requirements" className="space-y-4">
+          <SectionCard title={t('requirements.title')} icon={Server}>
+            <p className="text-sm text-muted-foreground">{t('requirements.subtitle')}</p>
+          </SectionCard>
+
+          <div className="grid gap-4 lg:grid-cols-3">
+            {REQUIREMENT_GROUPS.map(({ key, icon }) => (
+              <SectionCard key={key} title={t(`requirements.${key}.title`)} icon={icon}>
+                <ul className="space-y-2">
+                  {[0, 1, 2, 3].map((index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+                      <span className="text-sm text-muted-foreground">
+                        {t(`requirements.${key}.items.${index}`)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </SectionCard>
+            ))}
+          </div>
+
+          <Callout tone="info" icon={Info} title={t('requirements.title')}>
+            {t('requirements.note')}
+          </Callout>
+        </TabsContent>
+
+        {/* Troubleshooting */}
+        <TabsContent value="troubleshooting" className="space-y-4">
+          <SectionCard title={t('troubleshooting.title')} icon={AlertCircle}>
+            <p className="text-sm text-muted-foreground">{t('troubleshooting.subtitle')}</p>
+          </SectionCard>
+
+          <div className="space-y-3">
+            {[0, 1, 2, 3].map((index) => (
+              <SectionCard key={index}>
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <h4 className="text-sm font-semibold">
+                      {t(`troubleshooting.issues.${index}.issue`)}
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      {t(`troubleshooting.issues.${index}.solution`)}
+                    </p>
+                  </div>
+                </div>
+              </SectionCard>
+            ))}
+          </div>
+
+          <Callout tone="info" icon={Info} title={t('troubleshooting.help.title')}>
+            {t('troubleshooting.help.description')}
+          </Callout>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
+
+function RewardShare({
+  label,
+  percent,
+  icon: Icon,
+}: {
+  label: string
+  percent: number
+  icon: LucideIcon
+}) {
+  return (
+    <div className="space-y-2 rounded-lg bg-muted/60 p-3">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-2 text-sm font-medium">
+          <Icon className="size-4 text-primary" />
+          {label}
+        </span>
+        <span className="text-sm font-semibold tabular-nums text-primary">{percent}%</span>
+      </div>
+      <ProgressBar value={percent / 100} label={label} />
+    </div>
+  )
+}
+
+function CodeBlock({ code, copyLabel }: { code: string; copyLabel: string }) {
+  return (
+    <div className="space-y-2">
+      <pre className="overflow-x-auto rounded-lg bg-muted/60 p-4 font-mono text-xs whitespace-pre-wrap break-all">
+        {code}
+      </pre>
+      <CopyButton text={code} label={copyLabel} className="w-full" />
+    </div>
+  )
+}
+
+function LabeledCode({
+  label,
+  code,
+  copyLabel,
+}: {
+  label: string
+  code: string
+  copyLabel: string
+}) {
+  return (
+    <div className="space-y-1">
+      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
+      <div className="flex items-start gap-2">
+        <code className="flex-1 overflow-x-auto rounded-lg bg-muted/60 p-4 font-mono text-xs break-all">
+          {code}
+        </code>
+        <CopyButton text={code} label={copyLabel} hideLabel className="shrink-0" />
+      </div>
+    </div>
+  )
+}
+
+function Callout({
+  tone,
+  icon: Icon,
+  title,
+  children,
+}: {
+  tone: 'info' | 'warning' | 'danger'
+  icon: LucideIcon
+  title: string
+  children: React.ReactNode
+}) {
+  const toneClass =
+    tone === 'danger'
+      ? 'border-destructive/30 bg-destructive/10 text-destructive'
+      : 'border-primary/30 bg-primary/10 text-primary'
+
+  return (
+    <div className={`flex items-start gap-2 rounded-xl border p-4 ${toneClass}`}>
+      <Icon className="mt-0.5 size-4 shrink-0" />
+      <div className="space-y-1 text-sm">
+        <p className="font-semibold">{title}</p>
+        <div className="text-foreground/80">{children}</div>
+      </div>
+    </div>
+  )
 }

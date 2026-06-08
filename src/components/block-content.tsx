@@ -1,307 +1,233 @@
-import { useNetwork } from '@/contexts/network-context'
-import { NetworkStatus } from '@/components/network-status'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { CopyButton } from '@/components/copy-button'
-import { Hash, Clock, Database, ArrowLeft, ArrowRight, RefreshCw, Home, Receipt } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Blocks,
+  Clock,
+  Database,
+  Layers,
+  Receipt,
+  Ruler,
+} from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
-
-interface Block {
-    hash: string
-    height: number
-    version: number
-    merkleroot: string
-    time: number
-    nonce: number
-    bits: string
-    difficulty: number
-    chainwork: string
-    nTx: number
-    size: number
-    weight?: number
-    tx: string[]
-    previousblockhash?: string
-    nextblockhash?: string
-    confirmations: number
-}
+import { useBlock } from '@/hooks/use-block'
+import { formatBytes, formatNumber } from '@/lib/format'
+import { DetailHeader } from '@/components/detail/detail-header'
+import { SectionCard } from '@/components/detail/section-card'
+import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
+import { InfoGrid, InfoRow } from '@/components/detail/info-row'
+import { HashCell } from '@/components/detail/hash-cell'
+import { RelativeTime } from '@/components/detail/relative-time'
+import { CopyButton } from '@/components/copy-button'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 
 export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
-    const { currentNetwork } = useNetwork()
-    const [block, setBlock] = useState<Block | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-    const t = useTranslations('block')
-    const common = useTranslations('common')
+  const t = useTranslations('block')
+  const common = useTranslations('common')
+  const { data: block, isLoading, isError, error, refetch, isFetching } = useBlock(hashOrHeight)
 
-    const fetchBlock = async () => {
-        try {
-            setLoading(true)
-            setError(null)
+  if (isLoading) {
+    return <BlockSkeleton />
+  }
 
-            const response = await fetch(`/api/block/${hashOrHeight}?network=${currentNetwork}`)
-            if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.error || 'Failed to fetch block')
-            }
-
-            const data = await response.json()
-            setBlock(data.block)
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred')
-            toast.error('Failed to load block details')
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    useEffect(() => {
-        fetchBlock()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentNetwork, hashOrHeight])
-
-    if (loading) {
-        return (
-            <div className="flex-1 space-y-4 p-8">
-                <div className="text-center">
-                    <p>{common('loading')}</p>
-                </div>
-            </div>
-        )
-    }
-
-    if (error) {
-        return (
-            <div className="flex-1 space-y-4 p-8">
-                <div className="text-center text-red-500">
-                    <p>{common('error')}: {error}</p>
-                </div>
-            </div>
-        )
-    }
-
-    if (!block) {
-        return (
-            <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-8">
-                <div className="flex items-center justify-center h-64">
-                    <p className="text-lg text-muted-foreground">Block not found</p>
-                </div>
-            </div>
-        )
-    }
-
+  if (isError || !block) {
     return (
-        <div className="flex-1 space-y-3 sm:space-y-4 p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
-            {/* Header */}
-            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-                <div className="space-y-1">
-                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{t('block')} #{block.height}</h2>
-                    <p className="text-sm text-muted-foreground sm:text-base">
-                        {t('details')}
-                    </p>
-                </div>
-                <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
-                    <div className="flex items-center space-x-2">
-                        <NetworkStatus />
-                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
-                            <Database className="w-3 h-3 mr-1" />
-                            {block.tx.length} TX
-                        </Badge>
-                    </div>
-                    <Button onClick={fetchBlock} variant="outline" size="sm" className="w-full sm:w-auto">
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        {t('refresh')}
-                    </Button>
-                </div>
-            </div>
-
-            {/* Block Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div>
-                    <p className="text-xs text-muted-foreground mb-1">{t('blockHeight')}</p>
-                    <p className="text-2xl font-bold tabular-nums">{block.height.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{t('blockNumber')}</p>
-                </div>
-                <div>
-                    <p className="text-xs text-muted-foreground mb-1">{common('transactions')}</p>
-                    <p className="text-2xl font-bold tabular-nums">{block.tx.length.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{t('totalTransactions')}</p>
-                </div>
-                <div>
-                    <p className="text-xs text-muted-foreground mb-1">{t('blockSize')}</p>
-                    <p className="text-2xl font-bold tabular-nums">{(block.size / 1024).toFixed(1)} KB</p>
-                    <p className="text-xs text-muted-foreground mt-1">{block.size.toLocaleString()} {t('bytes')}</p>
-                </div>
-                <div>
-                    <p className="text-xs text-muted-foreground mb-1">{common('confirmations')}</p>
-                    <p className="text-2xl font-bold tabular-nums">{block.confirmations.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{t('networkConfirmations')}</p>
-                </div>
-            </div>
-
-            <div className="h-px bg-border" />
-
-            {/* Block Details */}
-            <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('blockInformation')}</h3>
-
-                <div>
-                    <p className="text-xs text-muted-foreground">{t('blockHash')}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                        <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">
-                            {block.hash}
-                        </code>
-                        <CopyButton text={block.hash} />
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3">
-                    <div>
-                        <p className="text-xs text-muted-foreground">{t('timestamp')}</p>
-                        <p className="text-sm">{new Date(block.time * 1000).toLocaleString()}</p>
-                    </div>
-                    <div>
-                        <p className="text-xs text-muted-foreground">{t('difficulty')}</p>
-                        <p className="text-sm font-mono">{block.difficulty.toFixed(6)}</p>
-                    </div>
-                    <div>
-                        <p className="text-xs text-muted-foreground">{t('nonce')}</p>
-                        <p className="text-sm font-mono">{block.nonce.toLocaleString()}</p>
-                    </div>
-                    <div>
-                        <p className="text-xs text-muted-foreground">{t('version')}</p>
-                        <p className="text-sm font-mono">{block.version}</p>
-                    </div>
-                    <div>
-                        <p className="text-xs text-muted-foreground">{t('bits')}</p>
-                        <p className="text-sm font-mono">{block.bits}</p>
-                    </div>
-                    <div>
-                        <p className="text-xs text-muted-foreground">{t('weight')}</p>
-                        <p className="text-sm font-mono">{block.weight ? block.weight.toLocaleString() : 'N/A'}</p>
-                    </div>
-                </div>
-
-                <div>
-                    <p className="text-xs text-muted-foreground">{t('merkleRoot')}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                        <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">
-                            {block.merkleroot}
-                        </code>
-                        <CopyButton text={block.merkleroot} />
-                    </div>
-                </div>
-
-                {block.previousblockhash && (
-                    <div>
-                        <p className="text-xs text-muted-foreground">{t('previousBlock')}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                            <Link
-                                to={`/block/${block.previousblockhash}`}
-                                className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all hover:bg-muted/80 transition-colors"
-                            >
-                                {block.previousblockhash}
-                            </Link>
-                            <CopyButton text={block.previousblockhash} />
-                        </div>
-                    </div>
-                )}
-
-                {block.nextblockhash && (
-                    <div>
-                        <p className="text-xs text-muted-foreground">{t('nextBlock')}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                            <Link
-                                to={`/block/${block.nextblockhash}`}
-                                className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all hover:bg-muted/80 transition-colors"
-                            >
-                                {block.nextblockhash}
-                            </Link>
-                            <CopyButton text={block.nextblockhash} />
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Block Navigation */}
-            <div className="flex justify-between items-center">
-                <Button
-                    asChild
-                    variant="outline"
-                    disabled={!block.previousblockhash}
-                >
-                    <Link to={block.previousblockhash ? `/block/${block.height - 1}` : '#'}>
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        {t('previousBlock')}
-                    </Link>
-                </Button>
-
-                <Button asChild variant="outline">
-                    <Link to="/">
-                        <Home className="h-4 w-4 mr-2" />
-                        {t('backToHome')}
-                    </Link>
-                </Button>
-
-                <Button
-                    asChild
-                    variant="outline"
-                    disabled={!block.nextblockhash}
-                >
-                    <Link to={block.nextblockhash ? `/block/${block.height + 1}` : '#'}>
-                        {t('nextBlock')}
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                    </Link>
-                </Button>
-            </div>
-
-            {/* Transactions */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b">
-                    <Receipt className="h-5 w-5 text-primary" />
-                    <h2 className="text-lg font-semibold">{t('transactionsList')}</h2>
-                    <Badge variant="secondary" className="ml-auto">
-                        {block.tx.length} {common('transactions')}
-                    </Badge>
-                </div>
-
-                {block.tx.length > 0 ? (
-                    <div className="rounded-md border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>{t('transactionId')}</TableHead>
-                                    <TableHead className="text-right">{t('index')}</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {block.tx.map((txid, index) => (
-                                    <TableRow key={txid}>
-                                        <TableCell className="font-mono text-sm">
-                                            <Link
-                                                to={`/tx/${txid}`}
-                                                className="hover:underline break-all"
-                                            >
-                                                {txid}
-                                            </Link>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Badge variant="outline">#{index}</Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                ) : (
-                    <div className="text-center py-8">
-                        <p className="text-muted-foreground">{t('noTransactions')}</p>
-                    </div>
-                )}
-            </div>
-        </div>
+      <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+        <DetailHeader
+          title={t('notFound')}
+          subtitle={t('details')}
+          onRefresh={() => void refetch()}
+          isRefreshing={isFetching}
+        />
+        <SectionCard>
+          <div className="flex flex-col items-center gap-3 py-8 text-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <AlertTriangle className="size-6" />
+            </span>
+            <p className="text-sm text-muted-foreground">
+              {error instanceof Error ? error.message : t('notFound')}
+            </p>
+            <Button variant="outline" onClick={() => void refetch()}>
+              {common('tryAgain')}
+            </Button>
+          </div>
+        </SectionCard>
+      </div>
     )
+  }
+
+  const txCount = block.nTx ?? block.tx.length
+
+  return (
+    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <DetailHeader
+        title={`${t('block')} #${formatNumber(block.height)}`}
+        subtitle={t('details')}
+        onRefresh={() => void refetch()}
+        isRefreshing={isFetching}
+        action={
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+            <Database className="size-3" />
+            {common('transactions')}: {formatNumber(txCount)}
+          </span>
+        }
+      />
+
+      <StatTileGrid>
+        <StatTile label={t('blockHeight')} value={formatNumber(block.height)} icon={Blocks} />
+        <StatTile label={common('transactions')} value={formatNumber(txCount)} icon={Receipt} />
+        <StatTile
+          label={t('blockSize')}
+          value={formatBytes(block.size)}
+          icon={Ruler}
+          hint={`${formatNumber(block.size)} ${t('bytes')}`}
+        />
+        <StatTile
+          label={common('confirmations')}
+          value={formatNumber(block.confirmations)}
+          icon={Layers}
+        />
+      </StatTileGrid>
+
+      {/* Block info */}
+      <SectionCard title={t('blockInformation')} icon={Database}>
+        <div className="space-y-4">
+          <InfoRow label={t('blockHash')} value={<HashCell value={block.hash} full />} />
+
+          <InfoGrid>
+            <InfoRow label={t('timestamp')} value={<RelativeTime timestamp={block.time} />} />
+            <InfoRow label={t('difficulty')} value={block.difficulty.toFixed(6)} mono />
+            <InfoRow label={t('nonce')} value={formatNumber(block.nonce)} mono />
+            <InfoRow label={t('version')} value={block.version} mono />
+            <InfoRow label={t('bits')} value={block.bits} mono />
+            <InfoRow
+              label={t('weight')}
+              value={block.weight ? formatNumber(block.weight) : '—'}
+              mono
+            />
+          </InfoGrid>
+
+          <InfoRow label={t('merkleRoot')} value={<HashCell value={block.merkleroot} full />} />
+
+          {block.previousblockhash ? (
+            <InfoRow
+              label={t('previousBlock')}
+              value={<HashCell value={block.previousblockhash} to="block" full />}
+            />
+          ) : null}
+          {block.nextblockhash ? (
+            <InfoRow
+              label={t('nextBlock')}
+              value={<HashCell value={block.nextblockhash} to="block" full />}
+            />
+          ) : null}
+        </div>
+      </SectionCard>
+
+      {/* Prev / next pill navigation */}
+      <div className="flex items-center justify-between gap-2">
+        <NavPill
+          to={block.previousblockhash ? `/block/${block.height - 1}` : undefined}
+          direction="prev"
+          label={t('previousBlock')}
+        />
+        <NavPill
+          to={block.nextblockhash ? `/block/${block.height + 1}` : undefined}
+          direction="next"
+          label={t('nextBlock')}
+        />
+      </div>
+
+      {/* Transactions */}
+      <SectionCard
+        title={t('transactionsList')}
+        icon={Receipt}
+        flush
+        action={
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
+            {formatNumber(txCount)} {common('transactions')}
+          </span>
+        }
+      >
+        {block.tx.length > 0 ? (
+          <ul className="divide-y">
+            {block.tx.map((txid, index) => (
+              <li
+                key={txid}
+                className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40"
+              >
+                <span className="w-10 shrink-0 text-xs text-muted-foreground tabular-nums">
+                  #{index}
+                </span>
+                <HashCell value={txid} to="tx" lead={10} tail={8} className="min-w-0 flex-1" />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="flex min-h-[120px] items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
+            {t('noTransactions')}
+          </div>
+        )}
+      </SectionCard>
+    </div>
+  )
+}
+
+function NavPill({
+  to,
+  direction,
+  label,
+}: {
+  to: string | undefined
+  direction: 'prev' | 'next'
+  label: string
+}) {
+  const content = (
+    <>
+      {direction === 'prev' ? <ArrowLeft className="size-4" /> : null}
+      {label}
+      {direction === 'next' ? <ArrowRight className="size-4" /> : null}
+    </>
+  )
+
+  const classes = cn(
+    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
+    to
+      ? 'bg-muted/40 hover:bg-muted/70'
+      : 'pointer-events-none cursor-not-allowed bg-muted/20 text-muted-foreground opacity-50',
+  )
+
+  if (!to) {
+    return <span className={classes}>{content}</span>
+  }
+
+  return (
+    <Link to={to} className={classes}>
+      {content}
+    </Link>
+  )
+}
+
+function BlockSkeleton() {
+  return (
+    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <div className="flex items-center justify-between gap-2">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <Skeleton className="h-9 w-28 rounded-lg" />
+      </div>
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-[72px] rounded-xl" />
+        ))}
+      </div>
+      <Skeleton className="h-72 rounded-xl" />
+      <Skeleton className="h-48 rounded-xl" />
+    </div>
+  )
 }

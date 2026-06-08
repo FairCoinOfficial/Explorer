@@ -26,66 +26,89 @@ import { cn } from "@/lib/utils"
 import { useNetwork } from "@/contexts/network-context"
 import { useTranslations } from "@/lib/i18n"
 import { LanguageSelector } from "@/components/language-selector"
+import { FOCUS_SEARCH_EVENT } from "@/components/site/header"
 import { toast } from 'sonner'
 
 interface NavItemProps {
   icon: LucideIcon
   label: string
-  to: string
+  /** Route to navigate to. Omitted for action items that use `onSelect` instead. */
+  to?: string
+  /** Action items (e.g. Search) run this instead of navigating. */
+  onSelect?: () => void
   collapsed?: boolean
 }
 
-function NavItem({ icon: Icon, label, to, collapsed }: NavItemProps) {
+function NavItem({ icon: Icon, label, to, onSelect, collapsed }: NavItemProps) {
   const location = useLocation()
   const { setOpenMobile } = useSidebar()
-  const isActive = location.pathname === to || (to !== '/' && location.pathname.startsWith(to))
+  const isActive = to ? location.pathname === to || (to !== '/' && location.pathname.startsWith(to)) : false
+
+  const handleClick = () => {
+    setOpenMobile(false)
+    onSelect?.()
+  }
 
   if (collapsed) {
-    return (
-      <Link
-        to={to}
-        title={label}
-        onClick={() => setOpenMobile(false)}
+    const iconEl = (
+      <Icon
+        size={20}
         className={cn(
-          "group/nav-icon flex w-10 h-10 rounded-full items-center justify-center transition-colors",
-          isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted active:bg-muted/80",
+          "transition-transform group-hover/nav-icon:scale-110",
+          isActive ? "text-primary-foreground" : "text-foreground",
         )}
-      >
-        <Icon
-          size={20}
-          className={cn(
-            "transition-transform group-hover/nav-icon:scale-110",
-            isActive ? "text-primary-foreground" : "text-foreground",
-          )}
-        />
-      </Link>
+      />
+    )
+    const collapsedClassName = cn(
+      "group/nav-icon flex w-10 h-10 rounded-full items-center justify-center transition-colors",
+      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted active:bg-muted/80",
+    )
+
+    if (to) {
+      return (
+        <Link to={to} title={label} onClick={handleClick} className={collapsedClassName}>
+          {iconEl}
+        </Link>
+      )
+    }
+    return (
+      <button type="button" title={label} onClick={handleClick} className={cn(collapsedClassName, "cursor-pointer")}>
+        {iconEl}
+      </button>
     )
   }
+
+  const innerClassName = cn(
+    "flex flex-row items-center gap-2 overflow-hidden rounded-full text-left h-[36px] w-full px-3 transition-colors",
+    isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted active:bg-muted/80",
+  )
+  const inner = (
+    <>
+      <div className="w-6 h-6 flex items-center justify-center shrink-0">
+        <Icon size={18} className={isActive ? "text-primary-foreground" : "text-foreground"} />
+      </div>
+      <span className={cn(
+        "text-sm select-none font-semibold",
+        isActive ? "text-primary-foreground" : "text-foreground",
+      )}>
+        {label}
+      </span>
+    </>
+  )
 
   return (
     <div className="relative flex w-full min-w-0 flex-col px-1.5 py-0.5 shrink-0">
       <div className="flex w-full min-w-0 flex-col gap-px">
         <div className="group/menu-item whitespace-nowrap font-semibold mx-1 relative">
-          <Link
-            to={to}
-            onClick={() => setOpenMobile(false)}
-            className={cn(
-              "flex flex-row items-center gap-2 overflow-hidden rounded-full text-left h-[36px] w-full px-3 transition-colors",
-              isActive
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-muted active:bg-muted/80",
-            )}
-          >
-            <div className="w-6 h-6 flex items-center justify-center shrink-0">
-              <Icon size={18} className={isActive ? "text-primary-foreground" : "text-foreground"} />
-            </div>
-            <span className={cn(
-              "text-sm select-none font-semibold",
-              isActive ? "text-primary-foreground" : "text-foreground",
-            )}>
-              {label}
-            </span>
-          </Link>
+          {to ? (
+            <Link to={to} onClick={handleClick} className={innerClassName}>
+              {inner}
+            </Link>
+          ) : (
+            <button type="button" onClick={handleClick} className={cn(innerClassName, "cursor-pointer")}>
+              {inner}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -99,9 +122,11 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const t = useTranslations('nav')
   const tSidebar = useTranslations('sidebar')
 
+  const focusGlobalSearch = () => window.dispatchEvent(new Event(FOCUS_SEARCH_EVENT))
+
   const mainNav = [
     { icon: Home, label: t('home'), to: '/' },
-    { icon: Search, label: t('search'), to: '/search' },
+    { icon: Search, label: t('search'), onSelect: focusGlobalSearch },
     { icon: Blocks, label: t('blocks'), to: '/blocks' },
     { icon: Receipt, label: t('transactions'), to: '/tx' },
   ]
@@ -212,19 +237,19 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             {/* Collapsed: icon columns */}
             <div className="flex flex-col items-center gap-1 py-1 shrink-0">
               {mainNav.map((item) => (
-                <NavItem key={item.to} {...item} collapsed />
+                <NavItem key={item.label} {...item} collapsed />
               ))}
             </div>
             <div className="w-8 mx-auto my-1" style={{ borderTop: '1px solid hsl(var(--border) / 0.3)' }} />
             <div className="flex flex-col items-center gap-1 py-1 shrink-0">
               {networkNav.map((item) => (
-                <NavItem key={item.to} {...item} collapsed />
+                <NavItem key={item.label} {...item} collapsed />
               ))}
             </div>
             <div className="w-8 mx-auto my-1" style={{ borderTop: '1px solid hsl(var(--border) / 0.3)' }} />
             <div className="flex flex-col items-center gap-1 py-1 shrink-0">
               {toolsNav.map((item) => (
-                <NavItem key={item.to} {...item} collapsed />
+                <NavItem key={item.label} {...item} collapsed />
               ))}
             </div>
           </>
@@ -233,19 +258,19 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             {/* Expanded: full nav items */}
             <div className="shrink-0">
               {mainNav.map((item) => (
-                <NavItem key={item.to} {...item} />
+                <NavItem key={item.label} {...item} />
               ))}
             </div>
             <div className="mx-2 my-1" style={{ borderTop: '1px solid hsl(var(--border) / 0.3)' }} />
             <div className="shrink-0">
               {networkNav.map((item) => (
-                <NavItem key={item.to} {...item} />
+                <NavItem key={item.label} {...item} />
               ))}
             </div>
             <div className="mx-2 my-1" style={{ borderTop: '1px solid hsl(var(--border) / 0.3)' }} />
             <div className="shrink-0">
               {toolsNav.map((item) => (
-                <NavItem key={item.to} {...item} />
+                <NavItem key={item.label} {...item} />
               ))}
             </div>
           </>
