@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Hash, Home, Search } from 'lucide-react'
+import { useTranslations } from '@/lib/i18n'
+import { DetailHeader } from '@/components/detail/detail-header'
+import { SectionCard } from '@/components/detail/section-card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Hash, Search, Home } from 'lucide-react'
 
 export default function TxIndexPage() {
   const navigate = useNavigate()
+  const nav = useTranslations('nav')
+  const common = useTranslations('common')
   const [txid, setTxid] = useState('')
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -16,35 +20,41 @@ export default function TxIndexPage() {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-3 pt-4 md:p-6 lg:p-8">
-      <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Transactions</h2>
-          <p className="text-muted-foreground text-sm sm:text-base">Search and explore FairCoin transactions</p>
-        </div>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Hash className="h-4 w-4" />Transaction Lookup</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="max-w-md mx-auto">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="txid" className="text-sm font-medium">Transaction ID</label>
-                <Input id="txid" value={txid} onChange={(e) => setTxid(e.target.value)} placeholder="Enter a transaction ID..." className="font-mono" />
-              </div>
-              <Button type="submit" className="w-full"><Search className="w-4 h-4 mr-2" />Search Transaction</Button>
-            </form>
-          </div>
-          <div className="text-center py-4">
-            <div className="text-sm text-muted-foreground">Or browse recent blocks on the home page</div>
-            <Button variant="outline" className="mt-4" asChild>
-              <Link to="/"><Home className="w-4 h-4 mr-2" />Back to Home</Link>
+    <div className="flex-1 space-y-3 p-2 pt-3 sm:space-y-4 sm:p-4 md:p-6 lg:p-8">
+      <DetailHeader title={nav('transactions')} subtitle="Search and explore FairCoin transactions" />
+
+      <SectionCard title="Transaction Lookup" icon={Hash}>
+        <div className="mx-auto max-w-md space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="txid" className="block text-sm font-medium">
+                Transaction ID
+              </label>
+              <Input
+                id="txid"
+                value={txid}
+                onChange={(event) => setTxid(event.target.value)}
+                placeholder="Enter a transaction ID..."
+                className="font-mono text-sm"
+              />
+            </div>
+            <Button type="submit" disabled={!txid.trim()} className="w-full">
+              <Search className="size-4" />
+              Search Transaction
+            </Button>
+          </form>
+
+          <div className="space-y-3 border-t pt-4 text-center">
+            <p className="text-sm text-muted-foreground">Or browse recent blocks on the home page</p>
+            <Button variant="outline" asChild>
+              <Link to="/">
+                <Home className="size-4" />
+                {common('backToHome')}
+              </Link>
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </SectionCard>
     </div>
   )
 }

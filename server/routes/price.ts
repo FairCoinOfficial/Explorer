@@ -1,120 +1,253 @@
 import { Router, type Request, type Response } from "express";
 import connectToDatabase from "../lib/db/connect";
-import { Price, type IPrice } from "../lib/db/models/Price";
+import { Price } from "../lib/db/models/Price";
 
 const router = Router();
 
-const VALID_PERIODS = ["24h", "7d", "30d", "1y", "all"] as const;
-type Period = (typeof VALID_PERIODS)[number];
+/**
+ * GET /api/price
+ *
+ * Returns the live USD price of FAIR, sourced from WFAIR — the wrapped-FAIR
+ * bridge token on Base L2 (1:1 peg, so WFAIR's market price represents FAIR's).
+ *
+ * Price is fetched server-side (no key required) and cached for
+ * {@link CACHE_TTL_MS}, mirroring the single-flight pattern in routes/github.ts.
+ *
+ * Source order:
+ *   1. GeckoTerminal token endpoint (primary, public/no-key).
+ *   2. Dexscreener token endpoint (fallback, used only if Gecko has no price
+ *      but a Dexscreener pair appears later).
+ *
+ * Reality at time of writing: WFAIR has no Uniswap pool with liquidity, so
+ * `price_usd` is `null`. That is an honest, expected state — the endpoint
+ * returns `{ price: null, ... }` with HTTP 200 (never a 5xx), and will begin
+ * serving a real price automatically the moment a priced pool exists.
+ */
 
-function periodToMs(period: Period): number {
-  switch (period) {
-    case "24h":
-      return 24 * 60 * 60 * 1000;
-    case "7d":
-      return 7 * 24 * 60 * 60 * 1000;
-    case "30d":
-      return 30 * 24 * 60 * 60 * 1000;
-    case "1y":
-      return 365 * 24 * 60 * 60 * 1000;
-    case "all":
-      return 0;
-  }
+const WFAIR_ADDRESS = "0xF2853CedDF47A05Fee0B4b24DFf2925d59737fb3";
+const WFAIR_NETWORK = "base";
+const PRICE_SOURCE = "wfair-base" as const;
+
+const GECKOTERMINAL_BASE = "https://api.geckoterminal.com/api/v2";
+const DEXSCREENER_BASE = "https://api.dexscreener.com/latest/dex";
+
+/** 3 minutes — long enough to stay well under upstream rate limits. */
+const CACHE_TTL_MS = 3 * 60 * 1000;
+
+/** Upstream request timeout to keep the endpoint responsive on slow networks. */
+const UPSTREAM_TIMEOUT_MS = 8_000;
+
+interface PricePayload {
+  price: number | null;
+  change24h: number | null;
+  volume24h: number | null;
+  liquidityUsd: number | null;
+  marketCapUsd: number | null;
+  source: typeof PRICE_SOURCE;
+  updatedAt: string;
 }
 
-function isValidPeriod(value: string): value is Period {
-  return (VALID_PERIODS as readonly string[]).includes(value);
+// ---- Upstream response shapes (only the fields we consume) ----
+
+interface GeckoTerminalTokenResponse {
+  data?: {
+    attributes?: {
+      price_usd?: string | null;
+      volume_usd?: { h24?: string | null } | null;
+      market_cap_usd?: string | null;
+      fdv_usd?: string | null;
+      total_reserve_in_usd?: string | null;
+    } | null;
+  } | null;
+}
+
+interface DexscreenerPair {
+  priceUsd?: string | null;
+  priceChange?: { h24?: number | null } | null;
+  liquidity?: { usd?: number | null } | null;
+  volume?: { h24?: number | null } | null;
+  marketCap?: number | null;
+}
+
+interface DexscreenerTokenResponse {
+  pairs?: DexscreenerPair[] | null;
 }
 
 /**
- * GET /api/price
- * Returns the latest price and 24h change percentage.
+ * Parse a numeric upstream field that may arrive as a string, number, null, or
+ * a non-finite value. Returns `null` for anything that is not a finite number.
  */
-router.get("/", async (_req: Request, res: Response) => {
+function parseNumeric(value: string | number | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+async function fetchJson<T>(url: string): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
   try {
-    await connectToDatabase();
-
-    const latest = await Price.findOne().sort({ timestamp: -1 }).lean<IPrice>();
-
-    if (!latest) {
-      res.json({ price: null, message: "No price data available" });
-      return;
+    const res = await fetch(url, {
+      headers: { Accept: "application/json", "User-Agent": "faircoin-explorer" },
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`Upstream ${res.status} ${res.statusText} for ${url}`);
     }
+    return (await res.json()) as T;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
-    // Calculate 24h change
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const previous = await Price.findOne({ timestamp: { $lte: oneDayAgo } })
-      .sort({ timestamp: -1 })
-      .lean<IPrice>();
+/**
+ * Primary source: GeckoTerminal. Returns a partial payload; `price` may be
+ * `null` when no priced pool exists yet (the current real-world state).
+ */
+async function loadFromGeckoTerminal(): Promise<Omit<PricePayload, "source" | "updatedAt">> {
+  const body = await fetchJson<GeckoTerminalTokenResponse>(
+    `${GECKOTERMINAL_BASE}/networks/${WFAIR_NETWORK}/tokens/${WFAIR_ADDRESS}`,
+  );
+  const attrs = body.data?.attributes ?? null;
 
-    interface Change24h {
-      usd: number;
-      eur: number;
-      btc: number;
-    }
+  // GeckoTerminal does not expose a 24h price-change percentage on the token
+  // endpoint; it only becomes available once we can read it from a pool
+  // (Dexscreener). `total_reserve_in_usd` is the on-chain reserve value and is
+  // populated even before a priced pool exists, so we surface it as liquidity.
+  return {
+    price: parseNumeric(attrs?.price_usd),
+    change24h: null,
+    volume24h: parseNumeric(attrs?.volume_usd?.h24),
+    liquidityUsd: parseNumeric(attrs?.total_reserve_in_usd),
+    marketCapUsd: parseNumeric(attrs?.market_cap_usd),
+  };
+}
 
-    let change24h: Change24h | null = null;
-    if (previous && previous.price_usd > 0) {
-      change24h = {
-        usd: ((latest.price_usd - previous.price_usd) / previous.price_usd) * 100,
-        eur:
-          previous.price_eur > 0
-            ? ((latest.price_eur - previous.price_eur) / previous.price_eur) * 100
-            : 0,
-        btc:
-          previous.price_btc > 0
-            ? ((latest.price_btc - previous.price_btc) / previous.price_btc) * 100
-            : 0,
+/**
+ * Fallback source: Dexscreener. Only consulted to fill in a price when Gecko
+ * has none — handy if a pair is indexed by Dexscreener before GeckoTerminal.
+ */
+async function loadFromDexscreener(): Promise<Omit<PricePayload, "source" | "updatedAt"> | null> {
+  const body = await fetchJson<DexscreenerTokenResponse>(
+    `${DEXSCREENER_BASE}/tokens/${WFAIR_ADDRESS}`,
+  );
+  const pair = body.pairs?.[0];
+  if (!pair) return null;
+
+  const price = parseNumeric(pair.priceUsd);
+  if (price === null) return null;
+
+  return {
+    price,
+    change24h: parseNumeric(pair.priceChange?.h24),
+    volume24h: parseNumeric(pair.volume?.h24),
+    liquidityUsd: parseNumeric(pair.liquidity?.usd),
+    marketCapUsd: parseNumeric(pair.marketCap),
+  };
+}
+
+async function loadPrice(): Promise<PricePayload> {
+  const gecko = await loadFromGeckoTerminal();
+
+  // Prefer GeckoTerminal when it already has a price. Otherwise try Dexscreener,
+  // which may surface a freshly-created pair sooner. Either way, merge so we
+  // keep Gecko's reserve/volume context even when Dexscreener supplies price.
+  let merged = gecko;
+  if (gecko.price === null) {
+    const dex = await loadFromDexscreener().catch((error: unknown) => {
+      console.error("Dexscreener fallback failed for WFAIR price:", error);
+      return null;
+    });
+    if (dex && dex.price !== null) {
+      merged = {
+        price: dex.price,
+        change24h: dex.change24h ?? gecko.change24h,
+        volume24h: dex.volume24h ?? gecko.volume24h,
+        liquidityUsd: dex.liquidityUsd ?? gecko.liquidityUsd,
+        marketCapUsd: dex.marketCapUsd ?? gecko.marketCapUsd,
       };
     }
-
-    res.json({
-      price: {
-        usd: latest.price_usd,
-        eur: latest.price_eur,
-        btc: latest.price_btc,
-      },
-      source: latest.source,
-      timestamp: latest.timestamp,
-      change_24h: change24h,
-    });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to fetch price";
-    console.error("Error fetching price:", error);
-    res.status(500).json({ error: message });
   }
+
+  return {
+    ...merged,
+    source: PRICE_SOURCE,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+// ---- Module-level cache + single-flight (mirrors routes/github.ts) ----
+
+interface CacheEntry {
+  data: PricePayload;
+  expires: number;
+}
+
+let cache: CacheEntry | null = null;
+let lastGood: PricePayload | null = null;
+/** De-duplicates concurrent cache misses into a single upstream fetch. */
+let inFlight: Promise<PricePayload> | null = null;
+
+async function getPrice(): Promise<PricePayload> {
+  const now = Date.now();
+  if (cache && cache.expires > now) {
+    return cache.data;
+  }
+
+  if (!inFlight) {
+    inFlight = loadPrice();
+  }
+
+  try {
+    const data = await inFlight;
+    cache = { data, expires: now + CACHE_TTL_MS };
+    lastGood = data;
+    return data;
+  } catch (error: unknown) {
+    console.error("Error fetching WFAIR price:", error);
+    // Serve the last successful payload if we have one; otherwise an honest
+    // null-price payload so the client renders its "no market yet" state.
+    if (lastGood) {
+      return lastGood;
+    }
+    return {
+      price: null,
+      change24h: null,
+      volume24h: null,
+      liquidityUsd: null,
+      marketCapUsd: null,
+      source: PRICE_SOURCE,
+      updatedAt: new Date().toISOString(),
+    };
+  } finally {
+    inFlight = null;
+  }
+}
+
+router.get("/", async (_req: Request, res: Response) => {
+  const data = await getPrice();
+  res.json(data);
 });
 
 /**
  * GET /api/price/history?period=24h|7d|30d|1y|all
- * Returns price history for the given period.
+ *
+ * Sparkline source. GeckoTerminal OHLCV requires a pool address, which does not
+ * exist for WFAIR yet, so we have no on-chain price history to chart. Returns an
+ * empty series gracefully (HTTP 200, never an error). When a priced pool
+ * appears, this is the single place to wire pool-OHLCV fetching.
  */
-router.get("/history", async (req: Request, res: Response) => {
-  try {
-    await connectToDatabase();
-
-    const periodParam = (req.query.period as string) || "7d";
-    const period: Period = isValidPeriod(periodParam) ? periodParam : "7d";
-    const ms = periodToMs(period);
-
-    const query = ms > 0 ? { timestamp: { $gte: new Date(Date.now() - ms) } } : {};
-
-    const history = await Price.find(query)
-      .sort({ timestamp: 1 })
-      .select({ price_usd: 1, price_eur: 1, price_btc: 1, timestamp: 1, _id: 0 })
-      .lean();
-
-    res.json({ history, period });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to fetch price history";
-    console.error("Error fetching price history:", error);
-    res.status(500).json({ error: message });
-  }
+router.get("/history", (_req: Request, res: Response) => {
+  res.json({ history: [], source: PRICE_SOURCE });
 });
 
 /**
  * POST /api/price
- * Set a new price entry (admin, protected by API key).
+ *
+ * Records a manual price point in the database (admin, protected by API key).
+ * This is independent of the live WFAIR feed above — it remains available for
+ * operators who want to log reference prices, but the public GET always serves
+ * the live WFAIR market price.
  */
 router.post("/", async (req: Request, res: Response) => {
   try {

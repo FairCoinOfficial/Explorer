@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import { Area, AreaChart, ResponsiveContainer, YAxis } from 'recharts'
-import { TrendingUp, TrendingDown, LineChart } from 'lucide-react'
+import { TrendingUp, TrendingDown, LineChart, ArrowUpRight } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
 import { useCoinPrice, usePriceHistory } from '@/hooks/use-coin-price'
 import { formatUsd } from '@/lib/format'
+import { WFAIR_CONFIG } from '@/lib/wfair'
 import { ModuleCard } from '@/components/home/module-card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
@@ -22,9 +23,9 @@ export function PriceCard() {
     [history.data],
   )
 
-  const change = price.data?.change24h?.usd ?? null
+  const change = price.data?.change24h ?? null
   const isUp = change !== null && change >= 0
-  const usd = price.data?.price?.usd ?? null
+  const usd = price.data?.price ?? null
 
   const action =
     change !== null ? (
@@ -55,8 +56,20 @@ export function PriceCard() {
         </div>
       ) : usd === null ? (
         <div className="flex flex-1 flex-col justify-center">
-          <p className="text-2xl font-semibold tracking-tight">{t('priceUnavailable')}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{t('priceUnavailableHint')}</p>
+          <p className="text-lg font-semibold tracking-tight">{t('priceNoMarket')}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t('priceAwaitingLiquidity')}</p>
+          <a
+            href={WFAIR_CONFIG.buyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex w-fit items-center gap-1 text-xs font-medium text-primary transition-opacity hover:opacity-80"
+          >
+            {t('priceGetFair')}
+            <ArrowUpRight className="size-3" />
+          </a>
+          <p className="mt-2 text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+            {t('priceSource')}
+          </p>
         </div>
       ) : (
         <div className="flex flex-1 flex-col">
@@ -90,9 +103,11 @@ export function PriceCard() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-          ) : (
-            <p className="mt-3 text-xs text-muted-foreground">{t('priceNoHistory')}</p>
-          )}
+          ) : null}
+
+          <p className="mt-auto pt-2 text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+            {t('priceSource')}
+          </p>
         </div>
       )}
     </ModuleCard>

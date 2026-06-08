@@ -6,6 +6,7 @@ export const WFAIR_CONFIG = {
   basescanUrl: 'https://basescan.org/address/0xF2853CedDF47A05Fee0B4b24DFf2925d59737fb3',
   bridgeApiUrl: 'https://bridge.fairco.in/api/bridge/reserves',
   landingUrl: 'https://fairco.in/',
+  buyUrl: 'https://buy.fairco.in/',
   repoUrl: 'https://github.com/FairCoinOfficial/faircoin-bridge',
   tokenListUrl: 'https://fairco.in/tokenlist.json',
   rpcUrls: [

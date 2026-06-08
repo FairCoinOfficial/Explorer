@@ -1,34 +1,53 @@
 import { Link } from 'react-router-dom'
+import { ArrowLeft, Blocks, FileQuestion, Home, Receipt } from 'lucide-react'
+import { useTranslations } from '@/lib/i18n'
+import { SectionCard } from '@/components/detail/section-card'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Home, Receipt, Blocks, FileQuestion, ArrowLeft } from 'lucide-react'
 
 export default function NotFoundPage() {
+  const t = useTranslations('notFound')
+  const nav = useTranslations('nav')
+
   return (
-    <div className="flex-1 flex items-center justify-center min-h-[60vh] p-4">
-      <div className="w-full max-w-md space-y-6">
-        <Card className="border-dashed border-2 border-muted-foreground/30">
-          <CardHeader className="text-center pb-4">
-            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-muted flex items-center justify-center">
-              <FileQuestion className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <CardTitle className="text-2xl font-bold">Page Not Found</CardTitle>
-            <p className="text-muted-foreground text-sm">The page you are looking for does not exist or has been moved.</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-2">
-              <Button asChild className="w-full"><Link to="/"><Home className="h-4 w-4 mr-2" />Back to Home</Link></Button>
-              <div className="grid grid-cols-2 gap-2">
-                <Button asChild variant="outline" size="sm"><Link to="/tx"><Receipt className="h-4 w-4 mr-1" />Transactions</Link></Button>
-                <Button asChild variant="outline" size="sm"><Link to="/blocks"><Blocks className="h-4 w-4 mr-1" />Blocks</Link></Button>
-              </div>
-              <Button variant="ghost" size="sm" className="text-xs" onClick={() => window.history.back()}>
-                <ArrowLeft className="h-3 w-3 mr-1" />Go Back
+    <div className="flex flex-1 items-center justify-center p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
+      <SectionCard className="w-full max-w-md text-center">
+        <div className="flex flex-col items-center gap-4">
+          <span className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <FileQuestion className="size-8" />
+          </span>
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold tracking-tight">{t('title')}</h2>
+            <p className="text-sm text-muted-foreground">{t('description')}</p>
+          </div>
+
+          <div className="grid w-full gap-2">
+            <Button asChild className="w-full">
+              <Link to="/">
+                <Home className="size-4" />
+                {t('backToHome')}
+              </Link>
+            </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button asChild variant="outline">
+                <Link to="/tx">
+                  <Receipt className="size-4" />
+                  {nav('transactions')}
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/blocks">
+                  <Blocks className="size-4" />
+                  {t('blocks')}
+                </Link>
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <Button variant="ghost" size="sm" onClick={() => window.history.back()}>
+              <ArrowLeft className="size-3.5" />
+              {t('goBack')}
+            </Button>
+          </div>
+        </div>
+      </SectionCard>
     </div>
   )
 }

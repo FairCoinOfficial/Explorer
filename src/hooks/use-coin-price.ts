@@ -1,42 +1,38 @@
 import { useQuery } from '@tanstack/react-query'
 
-export interface CoinPrice {
-  usd: number
-  eur: number
-  btc: number
-}
-
-export interface PriceChange24h {
-  usd: number
-  eur: number
-  btc: number
-}
-
+/**
+ * FAIR price, sourced from WFAIR (wrapped-FAIR, 1:1) on Base L2 via the
+ * server-side `/api/price` endpoint. `price` is `null` until a priced Uniswap
+ * pool exists — that is an honest, expected state, not an error.
+ */
 export interface CoinPriceData {
-  price: CoinPrice | null
+  price: number | null
+  change24h: number | null
+  volume24h: number | null
+  liquidityUsd: number | null
+  marketCapUsd: number | null
   source: string | null
-  timestamp: string | null
-  change24h: PriceChange24h | null
+  updatedAt: string | null
 }
 
 interface PriceResponse {
-  price: CoinPrice | null
-  source?: string
-  timestamp?: string
-  change_24h?: PriceChange24h | null
-  message?: string
+  price: number | null
+  change24h?: number | null
+  volume24h?: number | null
+  liquidityUsd?: number | null
+  marketCapUsd?: number | null
+  source?: string | null
+  updatedAt?: string | null
 }
 
 export interface PriceHistoryPoint {
   price_usd: number
-  price_eur: number
-  price_btc: number
   timestamp: string
 }
 
 interface PriceHistoryResponse {
   history: PriceHistoryPoint[]
-  period: string
+  source?: string
 }
 
 export function useCoinPrice() {
@@ -50,16 +46,24 @@ export function useCoinPrice() {
       const data = (await response.json()) as PriceResponse
       return {
         price: data.price,
+        change24h: data.change24h ?? null,
+        volume24h: data.volume24h ?? null,
+        liquidityUsd: data.liquidityUsd ?? null,
+        marketCapUsd: data.marketCapUsd ?? null,
         source: data.source ?? null,
-        timestamp: data.timestamp ?? null,
-        change24h: data.change_24h ?? null,
+        updatedAt: data.updatedAt ?? null,
       }
     },
-    refetchInterval: 60_000,
+    refetchInterval: 3 * 60_000,
     retry: 1,
   })
 }
 
+/**
+ * Price history for the sparkline. WFAIR has no priced pool yet, so the server
+ * returns an empty series; this hook stays in place so the chart fills in
+ * automatically once pool OHLCV becomes available.
+ */
 export function usePriceHistory(period: '24h' | '7d' | '30d' | '1y' | 'all' = '7d') {
   return useQuery<PriceHistoryPoint[]>({
     queryKey: ['coin-price-history', period],

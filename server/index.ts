@@ -62,14 +62,21 @@ const strictLimiter = rateLimit({
   legacyHeaders: false,
 })
 
-// helmet's default CSP has no `connect-src`, so cross-origin fetch/XHR/WebSocket
-// fall back to `default-src 'self'`. The WFAIR card's client-side Base L2 RPC
-// calls (viem, see src/lib/base-client.ts) need those Base RPC origins allowed.
-// We keep every other helmet default intact (useDefaults: true) and only widen
-// `connect-src`; `'self'` already covers same-origin requests and the same-origin
-// `/api/ws` WebSocket. The bridge reserves call is now same-origin (proxied), so
-// the bridge host is intentionally NOT listed here.
+// helmet's default CSP is strict (`default-src 'self'`, `script-src 'self'`, and
+// no `connect-src`). Two adjustments for this SPA, keeping every other default:
+//  - connect-src: allow the client-side Base L2 RPC origins (viem, see
+//    src/lib/base-client.ts) used for WFAIR chain data. `'self'` already covers
+//    same-origin /api requests and the same-origin `/api/ws` WebSocket; the
+//    bridge reserves call is same-origin (proxied) so that host is omitted.
+//  - script-src: index.html ships two small static inline scripts (theme/FOUC
+//    init + stale-service-worker cleanup). Allow them by their sha256 hashes so
+//    script-src stays strict with NO 'unsafe-inline'. Update these hashes if the
+//    inline <script> blocks in index.html ever change.
 const BASE_RPC_ORIGINS = ['https://mainnet.base.org', 'https://base.llamarpc.com']
+const INLINE_SCRIPT_HASHES = [
+  "'sha256-FjIFuDzKeMu5Q5hBXRiAasoY+iWnGizSt08R6+PPtKE='",
+  "'sha256-Y3tjE3tP/HuXab807guUsN6AXkpNv5KDg4H2vDEiQE4='",
+]
 
 app.use(
   helmet({
@@ -77,6 +84,7 @@ app.use(
       useDefaults: true,
       directives: {
         connectSrc: ["'self'", ...BASE_RPC_ORIGINS],
+        scriptSrc: ["'self'", ...INLINE_SCRIPT_HASHES],
       },
     },
   }),
