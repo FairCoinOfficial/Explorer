@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { TrendingUp, TrendingDown, LineChart, ArrowUpRight, Droplet } from 'lucide-react'
+import { TrendingUp, TrendingDown, LineChart, ArrowUpRight } from 'lucide-react'
 import { useTranslations, useLocale } from '@/lib/i18n'
 import { useCoinPrice, usePriceHistory, type PriceHistoryPoint } from '@/hooks/use-coin-price'
 import { formatUsd } from '@/lib/format'
@@ -113,13 +113,16 @@ export function PriceCard() {
           </p>
         </div>
       ) : (
-        <div className="relative flex flex-1 flex-col overflow-hidden">
-          {/* Interactive area sparkline, behind the text. Pointer events live on
-              its own overlay, so it can sit under the hero price and still track
-              the cursor. */}
+        <div className="relative flex flex-1 flex-col">
+          {/* Full-bleed interactive area sparkline, behind the text. The negative
+              insets cancel ModuleCard's `p-4` so the gradient/line reach the card
+              edges (left/right + bottom); the rounded corners are clipped by
+              ModuleCard's `overflow-hidden`. Pointer events live on its own
+              overlay, so it can sit under the hero price and still track the
+              cursor. */}
           <div
             className={cn(
-              'absolute inset-x-0 bottom-0 h-3/5 select-none',
+              'absolute -inset-x-4 -bottom-4 top-1/3 select-none',
               hasRealSpark ? 'opacity-70' : 'opacity-40',
             )}
           >
@@ -133,7 +136,7 @@ export function PriceCard() {
 
           {/* Hero price (foreground). Reflects the hovered point while hovering. */}
           <div className="pointer-events-none relative flex items-baseline gap-1.5">
-            <span className="text-4xl font-bold tracking-tight tabular-nums">
+            <span className="text-5xl font-bold tracking-tight tabular-nums">
               {formatUsd(displayUsd ?? latestUsd)}
             </span>
             <span className="text-xs font-medium text-muted-foreground">
@@ -141,15 +144,9 @@ export function PriceCard() {
             </span>
           </div>
 
-          <div className="pointer-events-none relative mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-8">
-            <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-              {t('priceSource')}
-            </p>
-            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[0.6rem] uppercase tracking-wide text-muted-foreground">
-              <Droplet className="size-2.5" />
-              {t('priceLowLiquidity')}
-            </span>
-          </div>
+          <p className="pointer-events-none relative mt-auto pt-4 text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+            {t('priceSource')}
+          </p>
         </div>
       )}
     </ModuleCard>

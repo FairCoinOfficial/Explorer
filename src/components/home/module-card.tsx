@@ -32,7 +32,7 @@ export function ModuleCard({
   return (
     <section
       className={cn(
-        'flex h-full flex-col rounded-2xl border bg-muted/30 p-4 transition-colors hover:bg-muted/40',
+        'relative flex h-full flex-col overflow-hidden rounded-2xl border bg-muted/30 p-4 transition-colors hover:bg-muted/40',
         className,
       )}
     >
@@ -54,18 +54,18 @@ export function ModuleCard({
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary transition-opacity hover:opacity-80"
+            className="mt-3 inline-flex items-center gap-1 text-[0.8125rem] font-medium text-primary transition-opacity hover:opacity-80"
           >
             {footerLabel}
-            <ArrowUpRight className="size-3" />
+            <ArrowUpRight className="size-3.5" />
           </a>
         ) : (
           <Link
             to={href}
-            className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary transition-opacity hover:opacity-80"
+            className="mt-3 inline-flex items-center gap-1 text-[0.8125rem] font-medium text-primary transition-opacity hover:opacity-80"
           >
             {footerLabel}
-            <ArrowUpRight className="size-3" />
+            <ArrowUpRight className="size-3.5" />
           </Link>
         )
       ) : null}
