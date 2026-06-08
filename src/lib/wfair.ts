@@ -1,3 +1,6 @@
+/** WFAIR/USDC Uniswap V3 pool on Base (fee 0.3%); source of the live FAIR price. */
+export const WFAIR_USDC_POOL_ADDRESS = '0x9F4F694390c60b51e30461c785C1345A1545b7ca' as const
+
 export const WFAIR_CONFIG = {
   chainId: 8453,
   chainName: 'Base',
@@ -7,6 +10,8 @@ export const WFAIR_CONFIG = {
   bridgeApiUrl: 'https://bridge.fairco.in/api/bridge/reserves',
   landingUrl: 'https://fairco.in/',
   buyUrl: 'https://buy.fairco.in/',
+  /** Uniswap UI page for the WFAIR/USDC pool — where "View market" points. */
+  poolUrl: `https://app.uniswap.org/explore/pools/base/${WFAIR_USDC_POOL_ADDRESS}`,
   repoUrl: 'https://github.com/FairCoinOfficial/faircoin-bridge',
   tokenListUrl: 'https://fairco.in/tokenlist.json',
   rpcUrls: [

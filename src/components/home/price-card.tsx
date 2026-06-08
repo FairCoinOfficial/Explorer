@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Area, AreaChart, ResponsiveContainer, YAxis } from 'recharts'
-import { TrendingUp, TrendingDown, LineChart, ArrowUpRight } from 'lucide-react'
+import { TrendingUp, TrendingDown, LineChart, ArrowUpRight, Droplet } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
 import { useCoinPrice, usePriceHistory } from '@/hooks/use-coin-price'
 import { formatUsd } from '@/lib/format'
@@ -46,7 +46,8 @@ export function PriceCard() {
       title={t('priceTitle')}
       icon={LineChart}
       action={action}
-      href="/stats"
+      href={WFAIR_CONFIG.poolUrl}
+      external
       footerLabel={t('priceViewMarket')}
     >
       {price.isLoading ? (
@@ -105,9 +106,15 @@ export function PriceCard() {
             </div>
           ) : null}
 
-          <p className="mt-auto pt-2 text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-            {t('priceSource')}
-          </p>
+          <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-2">
+            <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+              {t('priceSource')}
+            </p>
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[0.6rem] uppercase tracking-wide text-muted-foreground">
+              <Droplet className="size-2.5" />
+              {t('priceLowLiquidity')}
+            </span>
+          </div>
         </div>
       )}
     </ModuleCard>

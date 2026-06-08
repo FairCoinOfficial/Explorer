@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import connectToDatabase from "../lib/db/connect";
 import { Price } from "../lib/db/models/Price";
+import { getBasePublicClient } from "../lib/base-client";
 
 const router = Router();
 
@@ -10,29 +11,71 @@ const router = Router();
  * Returns the live USD price of FAIR, sourced from WFAIR — the wrapped-FAIR
  * bridge token on Base L2 (1:1 peg, so WFAIR's market price represents FAIR's).
  *
- * Price is fetched server-side (no key required) and cached for
+ * Primary source is the on-chain spot price of the WFAIR/USDC Uniswap V3 pool,
+ * read directly from the pool's `slot0()` via the Base RPC. The pool has a real
+ * spot price even when it is single-sided / un-traded, so this works where the
+ * indexers below return `null`.
+ *
+ * GeckoTerminal / Dexscreener are kept only for *supplementary* context (24h
+ * volume, USD liquidity) and as a price fallback if the pool read ever fails.
+ *
+ * Price is computed server-side (no key required) and cached for
  * {@link CACHE_TTL_MS}, mirroring the single-flight pattern in routes/github.ts.
  *
  * Source order:
- *   1. GeckoTerminal token endpoint (primary, public/no-key).
- *   2. Dexscreener token endpoint (fallback, used only if Gecko has no price
- *      but a Dexscreener pair appears later).
+ *   1. WFAIR/USDC Uniswap V3 pool `slot0` (primary, on-chain spot price).
+ *   2. GeckoTerminal token endpoint (price fallback + volume/liquidity context).
+ *   3. Dexscreener token endpoint (last-ditch price fallback).
  *
- * Reality at time of writing: WFAIR has no Uniswap pool with liquidity, so
- * `price_usd` is `null`. That is an honest, expected state — the endpoint
- * returns `{ price: null, ... }` with HTTP 200 (never a 5xx), and will begin
- * serving a real price automatically the moment a priced pool exists.
+ * The endpoint always returns HTTP 200 (never a 5xx); `price` is `null` only in
+ * the unlikely case that every source above is unavailable.
  */
 
-const WFAIR_ADDRESS = "0xF2853CedDF47A05Fee0B4b24DFf2925d59737fb3";
+// ---- On-chain pool (Base, Uniswap V3, fee 0.3%) ----
+
+/** WFAIR/USDC Uniswap V3 pool on Base. token0 = USDC, token1 = WFAIR. */
+const WFAIR_USDC_POOL_ADDRESS = "0x9F4F694390c60b51e30461c785C1345A1545b7ca" as const;
+/** USDC on Base (pool token0), 6 decimals. */
+const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
+/** WFAIR on Base (pool token1), 18 decimals. */
+const WFAIR_ADDRESS = "0xF2853CedDF47A05Fee0B4b24DFf2925d59737fb3" as const;
+
+const USDC_DECIMALS = 6;
+const WFAIR_DECIMALS = 18;
+
+/**
+ * Uniswap V3 `slot0()` returns the current `sqrtPriceX96` as its first field.
+ * We only need that first value, but viem requires the full tuple shape to
+ * decode the call correctly.
+ */
+const UNISWAP_V3_POOL_ABI = [
+  {
+    type: "function",
+    name: "slot0",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [
+      { name: "sqrtPriceX96", type: "uint160" },
+      { name: "tick", type: "int24" },
+      { name: "observationIndex", type: "uint16" },
+      { name: "observationCardinality", type: "uint16" },
+      { name: "observationCardinalityNext", type: "uint16" },
+      { name: "feeProtocol", type: "uint8" },
+      { name: "unlocked", type: "bool" },
+    ],
+  },
+] as const;
+
 const WFAIR_NETWORK = "base";
-const PRICE_SOURCE = "wfair-base" as const;
+const PRICE_SOURCE_POOL = "wfair-usdc-pool" as const;
+const PRICE_SOURCE_FALLBACK = "wfair-base" as const;
+type PriceSource = typeof PRICE_SOURCE_POOL | typeof PRICE_SOURCE_FALLBACK;
 
 const GECKOTERMINAL_BASE = "https://api.geckoterminal.com/api/v2";
 const DEXSCREENER_BASE = "https://api.dexscreener.com/latest/dex";
 
-/** 3 minutes — long enough to stay well under upstream rate limits. */
-const CACHE_TTL_MS = 3 * 60 * 1000;
+/** 60s — fresh enough for a spot price while staying well under rate limits. */
+const CACHE_TTL_MS = 60 * 1000;
 
 /** Upstream request timeout to keep the endpoint responsive on slow networks. */
 const UPSTREAM_TIMEOUT_MS = 8_000;
@@ -43,9 +86,24 @@ interface PricePayload {
   volume24h: number | null;
   liquidityUsd: number | null;
   marketCapUsd: number | null;
-  source: typeof PRICE_SOURCE;
+  source: PriceSource;
   updatedAt: string;
 }
+
+/** Supplementary context (volume/liquidity) sourced from the indexers. */
+interface PriceContext {
+  change24h: number | null;
+  volume24h: number | null;
+  liquidityUsd: number | null;
+  marketCapUsd: number | null;
+}
+
+const EMPTY_CONTEXT: PriceContext = {
+  change24h: null,
+  volume24h: null,
+  liquidityUsd: null,
+  marketCapUsd: null,
+};
 
 // ---- Upstream response shapes (only the fields we consume) ----
 
@@ -101,33 +159,67 @@ async function fetchJson<T>(url: string): Promise<T> {
 }
 
 /**
- * Primary source: GeckoTerminal. Returns a partial payload; `price` may be
- * `null` when no priced pool exists yet (the current real-world state).
+ * Primary source: the WFAIR/USDC Uniswap V3 pool spot price, read on-chain.
+ *
+ * Uniswap V3 stores price as `sqrtPriceX96`, where the raw token1/token0 ratio
+ * is `(sqrtPriceX96 / 2**96) ** 2`. With token0 = USDC (6 dp) and token1 = WFAIR
+ * (18 dp), the decimal adjustment between the raw ratio and a human price is
+ * `10 ** (WFAIR_DECIMALS - USDC_DECIMALS) = 1e12`. Concretely, for a human price
+ * of `P` USDC per WFAIR the raw ratio is `1e12 / P`, so we invert:
+ *
+ *   usdPerWfair = 1e12 / ((sqrtPriceX96 / 2**96) ** 2)
+ *
+ * Number-precision math is acceptable here: the result feeds a display string
+ * rounded to a few decimals, and `sqrtPriceX96` (≤ 2**160) stays well within a
+ * double's exactly-representable range once divided by 2**96.
  */
-async function loadFromGeckoTerminal(): Promise<Omit<PricePayload, "source" | "updatedAt">> {
+async function loadPoolPrice(): Promise<number | null> {
+  const client = getBasePublicClient();
+  const slot0 = await client.readContract({
+    address: WFAIR_USDC_POOL_ADDRESS,
+    abi: UNISWAP_V3_POOL_ABI,
+    functionName: "slot0",
+  });
+
+  const sqrtPriceX96 = slot0[0];
+  if (sqrtPriceX96 <= 0n) return null;
+
+  const decimalAdjustment = 10 ** (WFAIR_DECIMALS - USDC_DECIMALS);
+  const ratio = (Number(sqrtPriceX96) / 2 ** 96) ** 2;
+  if (!Number.isFinite(ratio) || ratio <= 0) return null;
+
+  const usdPerWfair = decimalAdjustment / ratio;
+  return Number.isFinite(usdPerWfair) && usdPerWfair > 0 ? usdPerWfair : null;
+}
+
+/**
+ * Supplementary context from GeckoTerminal: 24h volume, on-chain reserve value
+ * (surfaced as liquidity), market cap. Also returns a price we can fall back to
+ * if the pool read failed.
+ */
+async function loadFromGeckoTerminal(): Promise<{ price: number | null; context: PriceContext }> {
   const body = await fetchJson<GeckoTerminalTokenResponse>(
     `${GECKOTERMINAL_BASE}/networks/${WFAIR_NETWORK}/tokens/${WFAIR_ADDRESS}`,
   );
   const attrs = body.data?.attributes ?? null;
 
-  // GeckoTerminal does not expose a 24h price-change percentage on the token
-  // endpoint; it only becomes available once we can read it from a pool
-  // (Dexscreener). `total_reserve_in_usd` is the on-chain reserve value and is
-  // populated even before a priced pool exists, so we surface it as liquidity.
   return {
     price: parseNumeric(attrs?.price_usd),
-    change24h: null,
-    volume24h: parseNumeric(attrs?.volume_usd?.h24),
-    liquidityUsd: parseNumeric(attrs?.total_reserve_in_usd),
-    marketCapUsd: parseNumeric(attrs?.market_cap_usd),
+    context: {
+      // GeckoTerminal's token endpoint exposes no 24h price-change percentage.
+      change24h: null,
+      volume24h: parseNumeric(attrs?.volume_usd?.h24),
+      liquidityUsd: parseNumeric(attrs?.total_reserve_in_usd),
+      marketCapUsd: parseNumeric(attrs?.market_cap_usd),
+    },
   };
 }
 
 /**
- * Fallback source: Dexscreener. Only consulted to fill in a price when Gecko
- * has none — handy if a pair is indexed by Dexscreener before GeckoTerminal.
+ * Last-ditch price + context from Dexscreener. Only consulted when both the
+ * pool read and GeckoTerminal failed to produce a price.
  */
-async function loadFromDexscreener(): Promise<Omit<PricePayload, "source" | "updatedAt"> | null> {
+async function loadFromDexscreener(): Promise<{ price: number; context: PriceContext } | null> {
   const body = await fetchJson<DexscreenerTokenResponse>(
     `${DEXSCREENER_BASE}/tokens/${WFAIR_ADDRESS}`,
   );
@@ -139,39 +231,64 @@ async function loadFromDexscreener(): Promise<Omit<PricePayload, "source" | "upd
 
   return {
     price,
-    change24h: parseNumeric(pair.priceChange?.h24),
-    volume24h: parseNumeric(pair.volume?.h24),
-    liquidityUsd: parseNumeric(pair.liquidity?.usd),
-    marketCapUsd: parseNumeric(pair.marketCap),
+    context: {
+      change24h: parseNumeric(pair.priceChange?.h24),
+      volume24h: parseNumeric(pair.volume?.h24),
+      liquidityUsd: parseNumeric(pair.liquidity?.usd),
+      marketCapUsd: parseNumeric(pair.marketCap),
+    },
   };
 }
 
 async function loadPrice(): Promise<PricePayload> {
-  const gecko = await loadFromGeckoTerminal();
+  // 1. On-chain pool spot price (primary). Supplementary context comes from the
+  //    indexers below, fetched in parallel so a slow indexer never delays price.
+  const [poolPrice, gecko] = await Promise.all([
+    loadPoolPrice().catch((error: unknown) => {
+      console.error("WFAIR/USDC pool slot0 read failed:", error);
+      return null;
+    }),
+    loadFromGeckoTerminal().catch((error: unknown) => {
+      console.error("GeckoTerminal context fetch failed for WFAIR:", error);
+      return { price: null as number | null, context: EMPTY_CONTEXT };
+    }),
+  ]);
 
-  // Prefer GeckoTerminal when it already has a price. Otherwise try Dexscreener,
-  // which may surface a freshly-created pair sooner. Either way, merge so we
-  // keep Gecko's reserve/volume context even when Dexscreener supplies price.
-  let merged = gecko;
-  if (gecko.price === null) {
+  let price = poolPrice;
+  let context = gecko.context;
+  let source: PriceSource = PRICE_SOURCE_POOL;
+
+  // 2. Pool unavailable → fall back to GeckoTerminal's indexed price.
+  if (price === null && gecko.price !== null) {
+    price = gecko.price;
+    source = PRICE_SOURCE_FALLBACK;
+  }
+
+  // 3. Still no price → last-ditch Dexscreener (also enriches context).
+  if (price === null) {
     const dex = await loadFromDexscreener().catch((error: unknown) => {
       console.error("Dexscreener fallback failed for WFAIR price:", error);
       return null;
     });
-    if (dex && dex.price !== null) {
-      merged = {
-        price: dex.price,
-        change24h: dex.change24h ?? gecko.change24h,
-        volume24h: dex.volume24h ?? gecko.volume24h,
-        liquidityUsd: dex.liquidityUsd ?? gecko.liquidityUsd,
-        marketCapUsd: dex.marketCapUsd ?? gecko.marketCapUsd,
+    if (dex) {
+      price = dex.price;
+      source = PRICE_SOURCE_FALLBACK;
+      context = {
+        change24h: dex.context.change24h ?? context.change24h,
+        volume24h: dex.context.volume24h ?? context.volume24h,
+        liquidityUsd: dex.context.liquidityUsd ?? context.liquidityUsd,
+        marketCapUsd: dex.context.marketCapUsd ?? context.marketCapUsd,
       };
     }
   }
 
   return {
-    ...merged,
-    source: PRICE_SOURCE,
+    price,
+    change24h: context.change24h,
+    volume24h: context.volume24h,
+    liquidityUsd: context.liquidityUsd,
+    marketCapUsd: context.marketCapUsd,
+    source,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -216,7 +333,7 @@ async function getPrice(): Promise<PricePayload> {
       volume24h: null,
       liquidityUsd: null,
       marketCapUsd: null,
-      source: PRICE_SOURCE,
+      source: PRICE_SOURCE_POOL,
       updatedAt: new Date().toISOString(),
     };
   } finally {
@@ -232,13 +349,14 @@ router.get("/", async (_req: Request, res: Response) => {
 /**
  * GET /api/price/history?period=24h|7d|30d|1y|all
  *
- * Sparkline source. GeckoTerminal OHLCV requires a pool address, which does not
- * exist for WFAIR yet, so we have no on-chain price history to chart. Returns an
- * empty series gracefully (HTTP 200, never an error). When a priced pool
- * appears, this is the single place to wire pool-OHLCV fetching.
+ * Sparkline source. GeckoTerminal OHLCV requires a pool address; the WFAIR/USDC
+ * pool exists but is single-sided / un-traded, so it has no meaningful OHLCV
+ * history to chart yet. Returns an empty series gracefully (HTTP 200, never an
+ * error). When the pool starts trading, this is the single place to wire
+ * pool-OHLCV fetching (keyed by {@link WFAIR_USDC_POOL_ADDRESS}).
  */
 router.get("/history", (_req: Request, res: Response) => {
-  res.json({ history: [], source: PRICE_SOURCE });
+  res.json({ history: [], source: PRICE_SOURCE_POOL });
 });
 
 /**
