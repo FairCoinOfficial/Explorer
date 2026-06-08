@@ -1,5 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { WFAIR_CONFIG } from '@/lib/wfair'
+
+/**
+ * Same-origin reserves endpoint. The explorer API proxies the bridge's
+ * `https://bridge.fairco.in/api/bridge/reserves` (which sends no CORS header)
+ * and serves it here, so the browser fetch stays same-origin and CSP-compliant.
+ */
+const RESERVES_ENDPOINT = '/api/bridge/reserves'
 
 export interface ReservesSnapshot {
   at: string
@@ -15,10 +21,10 @@ export type ReservesResult =
 
 export function useWfairReserves() {
   return useQuery<ReservesResult>({
-    queryKey: ['wfair', 'reserves', WFAIR_CONFIG.bridgeApiUrl],
+    queryKey: ['wfair', 'reserves', RESERVES_ENDPOINT],
     queryFn: async () => {
       try {
-        const response = await fetch(WFAIR_CONFIG.bridgeApiUrl, {
+        const response = await fetch(RESERVES_ENDPOINT, {
           method: 'GET',
           headers: { Accept: 'application/json' },
         })
@@ -28,7 +34,7 @@ export function useWfairReserves() {
         const data = (await response.json()) as ReservesSnapshot
         return { status: 'ok', data }
       } catch (error) {
-        console.error('[wfair-reserves] bridge API unreachable:', error)
+        console.error('[wfair-reserves] reserves API unreachable:', error)
         return { status: 'unavailable' }
       }
     },

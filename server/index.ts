@@ -62,7 +62,25 @@ const strictLimiter = rateLimit({
   legacyHeaders: false,
 })
 
-app.use(helmet())
+// helmet's default CSP has no `connect-src`, so cross-origin fetch/XHR/WebSocket
+// fall back to `default-src 'self'`. The WFAIR card's client-side Base L2 RPC
+// calls (viem, see src/lib/base-client.ts) need those Base RPC origins allowed.
+// We keep every other helmet default intact (useDefaults: true) and only widen
+// `connect-src`; `'self'` already covers same-origin requests and the same-origin
+// `/api/ws` WebSocket. The bridge reserves call is now same-origin (proxied), so
+// the bridge host is intentionally NOT listed here.
+const BASE_RPC_ORIGINS = ['https://mainnet.base.org', 'https://base.llamarpc.com']
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        connectSrc: ["'self'", ...BASE_RPC_ORIGINS],
+      },
+    },
+  }),
+)
 app.use(compression())
 
 // Resolve dist directory - try multiple possible locations
@@ -360,6 +378,74 @@ app.get('/api/search', async (req, res) => {
     }
     console.error('Search API error:', error)
     res.status(500).json({ error: 'Search failed', timestamp: new Date().toISOString() })
+  }
+})
+
+// ---- WFAIR bridge reserves proxy ----
+// The bridge's reserves endpoint returns valid JSON but sends no CORS header, so
+// the browser cannot fetch it cross-origin. Proxy it server-side (no CORS issue)
+// and serve a short-lived cached copy to the same-origin `/api/bridge/reserves`
+// the frontend calls. The JSON is passed through verbatim so the client contract
+// (use-wfair-reserves.ts) is unchanged; on any upstream failure we return a clean
+// `{ status: 'unavailable' }` and never throw.
+
+const BRIDGE_RESERVES_URL = 'https://bridge.fairco.in/api/bridge/reserves'
+/** Freshness window for the proxied reserves snapshot. */
+const BRIDGE_RESERVES_TTL_MS = 30_000
+/** Upstream fetch timeout so a hung bridge never stalls the explorer API. */
+const BRIDGE_RESERVES_TIMEOUT_MS = 8_000
+
+/** Shape the bridge returns; mirrored by `ReservesSnapshot` in the frontend hook. */
+interface BridgeReservesSnapshot {
+  at: string
+  fairCustodySats: string
+  wfairSupplyWei: string
+  deltaSats: string
+  pegHealthy: boolean
+}
+
+interface BridgeReservesCacheEntry {
+  data: BridgeReservesSnapshot
+  expires: number
+}
+
+let bridgeReservesCache: BridgeReservesCacheEntry | null = null
+/** De-duplicates concurrent cache misses into a single upstream fetch. */
+let bridgeReservesInFlight: Promise<BridgeReservesSnapshot> | null = null
+
+async function loadBridgeReserves(): Promise<BridgeReservesSnapshot> {
+  const response = await fetch(BRIDGE_RESERVES_URL, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(BRIDGE_RESERVES_TIMEOUT_MS),
+  })
+  if (!response.ok) {
+    throw new Error(`Bridge reserves upstream error: ${response.status} ${response.statusText}`)
+  }
+  return (await response.json()) as BridgeReservesSnapshot
+}
+
+app.get('/api/bridge/reserves', async (_req, res) => {
+  const now = Date.now()
+  if (bridgeReservesCache && bridgeReservesCache.expires > now) {
+    res.json(bridgeReservesCache.data)
+    return
+  }
+
+  // Single-flight: concurrent misses share one upstream round-trip.
+  if (!bridgeReservesInFlight) {
+    bridgeReservesInFlight = loadBridgeReserves()
+  }
+
+  try {
+    const data = await bridgeReservesInFlight
+    bridgeReservesCache = { data, expires: now + BRIDGE_RESERVES_TTL_MS }
+    res.json(data)
+  } catch (error) {
+    console.error('Error fetching bridge reserves:', error)
+    res.status(502).json({ status: 'unavailable' })
+  } finally {
+    bridgeReservesInFlight = null
   }
 })
 
