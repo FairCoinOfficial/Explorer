@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import connectToDatabase from "../lib/db/connect";
 import { Price } from "../lib/db/models/Price";
+import { PricePoint } from "../lib/db/models/PricePoint";
 import { getBasePublicClient } from "../lib/base-client";
 
 const router = Router();
@@ -341,22 +342,131 @@ async function getPrice(): Promise<PricePayload> {
   }
 }
 
+// ---- Price history sampler (accumulates a real series over time) ----
+//
+// The pool has a real on-chain spot price even though it is single-sided and
+// un-traded, so no OHLCV indexer will chart it. To build a genuine history we
+// sample that spot price ourselves: a server-side interval reads the pool and
+// upserts one point per fixed time window into Mongo. The accumulated series
+// backs the home price-card sparkline via GET /api/price/history.
+
+/** One sample per 5-minute window. */
+const SAMPLE_INTERVAL_MS = 5 * 60 * 1000;
+/** Retain ~7 days of history; older points are pruned on each successful write. */
+const HISTORY_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+/** Cap on points returned by GET /api/price/history (newest-biased, then sorted asc). */
+const HISTORY_MAX_POINTS = 100;
+
+/**
+ * Floor `now` to the start of its sampling window. Bucketing the timestamp makes
+ * the upsert idempotent: every tick inside one window targets the same document,
+ * so a restart, an overlapping run, or a double-fire can never create duplicates
+ * (the unique index on `timestamp` enforces ≤1 sample per window).
+ */
+function currentSampleBucket(now: number): Date {
+  return new Date(Math.floor(now / SAMPLE_INTERVAL_MS) * SAMPLE_INTERVAL_MS);
+}
+
+/**
+ * Read the pool spot price once and upsert it as this window's sample, then prune
+ * points older than the retention horizon. Fully guarded — any failure (RPC down,
+ * Mongo unavailable) is logged and swallowed so the sampler never crashes the
+ * process or interferes with serving requests.
+ */
+async function sampleAndStorePrice(): Promise<void> {
+  try {
+    const price = await loadPoolPrice();
+    if (price === null) {
+      // No usable spot price this tick (e.g. transient RPC issue); skip quietly.
+      return;
+    }
+
+    await connectToDatabase();
+
+    const bucket = currentSampleBucket(Date.now());
+    await PricePoint.updateOne(
+      { timestamp: bucket },
+      { $set: { price_usd: price, source: PRICE_SOURCE_POOL } },
+      { upsert: true },
+    );
+
+    const cutoff = new Date(Date.now() - HISTORY_RETENTION_MS);
+    await PricePoint.deleteMany({ timestamp: { $lt: cutoff } });
+  } catch (error: unknown) {
+    console.error("Price sampler tick failed:", error);
+  }
+}
+
+let samplerStarted = false;
+
+/**
+ * Start the background sampler exactly once per process. Runs an immediate tick
+ * (so history begins accumulating without waiting a full window) and then on a
+ * fixed interval. `unref()` keeps the timer from holding the event loop open, so
+ * it never blocks a graceful shutdown.
+ */
+function startPriceSampler(): void {
+  if (samplerStarted) return;
+  samplerStarted = true;
+
+  void sampleAndStorePrice();
+
+  const timer = setInterval(() => {
+    void sampleAndStorePrice();
+  }, SAMPLE_INTERVAL_MS);
+  timer.unref?.();
+}
+
+startPriceSampler();
+
 router.get("/", async (_req: Request, res: Response) => {
   const data = await getPrice();
   res.json(data);
 });
 
+interface PriceHistoryPoint {
+  price_usd: number;
+  timestamp: string;
+}
+
 /**
  * GET /api/price/history?period=24h|7d|30d|1y|all
  *
- * Sparkline source. GeckoTerminal OHLCV requires a pool address; the WFAIR/USDC
- * pool exists but is single-sided / un-traded, so it has no meaningful OHLCV
- * history to chart yet. Returns an empty series gracefully (HTTP 200, never an
- * error). When the pool starts trading, this is the single place to wire
- * pool-OHLCV fetching (keyed by {@link WFAIR_USDC_POOL_ADDRESS}).
+ * Returns the stored WFAIR/USDC spot-price series accumulated by the sampler
+ * above, oldest→newest, capped to the most recent {@link HISTORY_MAX_POINTS}
+ * points (≈7 days at the sampling cadence). The series is empty until the first
+ * sample lands; either way the response is always HTTP 200 (never a 5xx) so the
+ * card can render its low-data state instead of erroring.
+ *
+ * The `period` query param is accepted for forward-compatibility but does not
+ * widen the window beyond retention; the stored series is already bounded.
  */
-router.get("/history", (_req: Request, res: Response) => {
-  res.json({ history: [], source: PRICE_SOURCE_POOL });
+router.get("/history", async (_req: Request, res: Response) => {
+  try {
+    await connectToDatabase();
+
+    const cutoff = new Date(Date.now() - HISTORY_RETENTION_MS);
+    const docs = await PricePoint.find({ timestamp: { $gte: cutoff } })
+      .sort({ timestamp: -1 })
+      .limit(HISTORY_MAX_POINTS)
+      .lean<{ price_usd: number; timestamp: Date }[]>()
+      .exec();
+
+    // Fetched newest-first (to take the most recent N); reverse to oldest→newest
+    // for charting.
+    const history: PriceHistoryPoint[] = docs
+      .reverse()
+      .map((doc) => ({
+        price_usd: doc.price_usd,
+        timestamp: doc.timestamp.toISOString(),
+      }));
+
+    res.json({ history, source: PRICE_SOURCE_POOL });
+  } catch (error: unknown) {
+    console.error("Error fetching price history:", error);
+    // Honest empty series rather than a 5xx so the sparkline degrades gracefully.
+    res.json({ history: [], source: PRICE_SOURCE_POOL });
+  }
 });
 
 /**
