@@ -223,12 +223,8 @@ export class BlockCache extends BlockchainCache {
     return await this.get<any>('validateaddress', [address], { network, ttl: 86400 }) // 24 hours for address validation
   }
 
-  async getMasternodeList(network: NetworkType, filter: string = ''): Promise<any> {
-    // FairCoin's `masternodelist` takes an optional search FILTER (partial match
-    // on txhash/status/addr), NOT a Dash-style mode. Passing 'full' filtered out
-    // every node → empty list. Call with no filter to get all masternodes (an
-    // array of { txhash, status, addr, version, lastseen, activetime, ... }).
-    return this.get('masternodelist', filter ? [filter] : [], { network, ttl: 600 }) // 10 min TTL
+  async getMasternodeList(network: NetworkType, mode: string = 'full'): Promise<any> {
+    return this.get('masternodelist', [mode], { network, ttl: 3600 }) // 1 hour TTL for masternode list
   }
 
   async getMempoolInfo(network: NetworkType): Promise<any> {

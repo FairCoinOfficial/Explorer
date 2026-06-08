@@ -221,7 +221,7 @@ app.get('/api/masternodes', async (req, res) => {
     const BLOCK_REWARD = 10
 
     const [masternodeList, masternodeCount, blockHeight] = await Promise.all([
-      blockCache.getMasternodeList(network).catch(() => []),
+      blockCache.getMasternodeList(network, 'full').catch(() => ({})),
       rpcWithNetwork<Record<string, number>>('masternode', ['count'], network).catch(() => null),
       blockCache.getBlockCount(network).catch(() => 0),
     ])
@@ -240,16 +240,7 @@ app.get('/api/masternodes', async (req, res) => {
       return { txid, address: '', protocol: 0, status: 'UNKNOWN', activeTime: 0, lastSeen: 0, pubkey: '' }
     }
 
-    // FairCoin's `masternodelist` returns an ARRAY of entries; handle that (and a
-    // legacy txid-keyed object) and use the real txhash as each masternode id.
-    const mnSource: unknown = masternodeList
-    const mnEntries: Array<[string, unknown]> = Array.isArray(mnSource)
-      ? mnSource.map((entry): [string, unknown] => {
-          const obj = (entry ?? {}) as Record<string, unknown>
-          return [String(obj.txhash ?? obj.txid ?? ''), entry]
-        })
-      : Object.entries((mnSource ?? {}) as Record<string, unknown>)
-    const masternodes = mnEntries.map(([txid, data]) => parseMasternodeEntry(txid, data))
+    const masternodes = Object.entries(masternodeList).map(([txid, data]) => parseMasternodeEntry(txid, data))
     const totalSupply = blockHeight > 0 ? blockHeight * BLOCK_REWARD : 33000000
     const totalCollateral = masternodes.length * COLLATERAL_PER_MASTERNODE
     const collateralPercentage = totalSupply > 0 ? (totalCollateral / totalSupply) * 100 : 0
