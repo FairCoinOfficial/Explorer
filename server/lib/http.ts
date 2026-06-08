@@ -15,18 +15,17 @@ import type { NetworkType } from '@fairco.in/rpc-client'
 
 /** Inclusive bounds for any list `limit` query parameter. */
 export const MIN_LIMIT = 1
-export const MAX_LIMIT = 50
+export const MAX_LIMIT = 100
 const DEFAULT_LIMIT = 20
 
 const NETWORKS = ['mainnet', 'testnet'] as const
 
 const networkSchema = z.enum(NETWORKS)
 
-const limitSchema = z.coerce
-  .number()
-  .int()
-  .min(MIN_LIMIT)
-  .max(MAX_LIMIT)
+// Just require an integer; the out-of-range handling is a clamp (not a reject)
+// in parseLimit so legitimate callers (e.g. the /blocks list asks for 100) work
+// and abusive values (?limit=99999) are capped to MAX_LIMIT rather than 400'd.
+const limitSchema = z.coerce.number().int()
 
 /** Raised when an edge validation check fails; carries the client-facing 400 message. */
 export class ValidationError extends Error {
@@ -53,9 +52,10 @@ export function parseNetwork(value: unknown): NetworkType {
 }
 
 /**
- * Validate and clamp the `limit` query parameter to the integer range
- * [{@link MIN_LIMIT}, {@link MAX_LIMIT}]. Returns the default when absent;
- * throws {@link ValidationError} on NaN/non-integer/out-of-range input.
+ * Coerce the `limit` query parameter into the integer range
+ * [{@link MIN_LIMIT}, {@link MAX_LIMIT}]. Returns the default when absent or
+ * non-numeric; CLAMPS out-of-range values (so large requests are capped rather
+ * than rejected) — this keeps the DoS guard while never 400'ing a real caller.
  */
 export function parseLimit(value: unknown): number {
   if (value === undefined || value === null || value === '') {
@@ -63,11 +63,9 @@ export function parseLimit(value: unknown): number {
   }
   const result = limitSchema.safeParse(value)
   if (!result.success) {
-    throw new ValidationError(
-      `Invalid 'limit': must be an integer between ${MIN_LIMIT} and ${MAX_LIMIT}`,
-    )
+    return DEFAULT_LIMIT
   }
-  return result.data
+  return Math.min(MAX_LIMIT, Math.max(MIN_LIMIT, result.data))
 }
 
 /** Escape a string for safe interpolation into a MongoDB `$regex` pattern. */
