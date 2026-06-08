@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import {
   Activity,
   AlertTriangle,
@@ -8,20 +9,26 @@ import {
   Network,
   XCircle,
   Zap,
+  type LucideIcon,
 } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
-import { useNodeStatus, type NodeStatus } from '@/hooks/use-node-status'
+import { useNodeStatus } from '@/hooks/use-node-status'
+import { useStatsHistory } from '@/hooks/use-stats-history'
 import { useNetwork } from '@/contexts/network-context'
-import { formatNumber } from '@/lib/format'
+import { formatCompactNumber, formatNumber } from '@/lib/format'
 import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
 import { InfoGrid, InfoRow } from '@/components/detail/info-row'
+import { Sparkline } from '@/components/home/sparkline'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
 type Translate = (key: string, params?: Record<string, string | number>) => string
+
+/** A series needs at least two points before a sparkline reads as a trend. */
+const MIN_SPARK_POINTS = 2
 
 function formatHashrate(hashrate: number, idle: string): string {
   if (!Number.isFinite(hashrate) || hashrate <= 0) return idle
@@ -37,6 +44,20 @@ export function NetworkStatusContent() {
   const common = useTranslations('common')
   const { currentNetwork } = useNetwork()
   const { data: status, isLoading, isError, error, refetch, isFetching } = useNodeStatus()
+  const { data: statsHistory } = useStatsHistory()
+
+  // Background series for the time-varying tiles (Connections, Difficulty).
+  // Series shorter than MIN_SPARK_POINTS are dropped so the tile stays clean.
+  const sparks = useMemo(() => {
+    const points = statsHistory ?? []
+    if (points.length < MIN_SPARK_POINTS) {
+      return { connections: undefined, difficulty: undefined } as const
+    }
+    return {
+      connections: points.map((point) => point.connections),
+      difficulty: points.map((point) => point.difficulty),
+    } as const
+  }, [statsHistory])
 
   if (isLoading) {
     return <NetworkStatusSkeleton />
@@ -54,11 +75,17 @@ export function NetworkStatusContent() {
         action={
           <span
             className={cn(
-              'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium',
+              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium',
               online ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive',
             )}
           >
-            <Activity className={cn('size-3', online && 'animate-pulse')} />
+            <span
+              className={cn(
+                'size-1.5 rounded-full',
+                online ? 'animate-pulse bg-primary' : 'bg-destructive',
+              )}
+              aria-hidden
+            />
             {online ? t('online') : t('offline')}
           </span>
         }
@@ -88,17 +115,19 @@ export function NetworkStatusContent() {
               hint={t('currentBlockHeight')}
               accent
             />
-            <StatTile
+            <MetricTile
               icon={Link2}
               label={t('connections')}
               value={formatNumber(status.connections)}
               hint={t('peerConnections')}
+              spark={sparks.connections}
             />
-            <StatTile
+            <MetricTile
               icon={Gauge}
               label={t('difficulty')}
-              value={status.difficulty > 0 ? status.difficulty.toExponential(2) : '0'}
+              value={status.difficulty > 0 ? formatCompactNumber(status.difficulty) : '0'}
               hint={t('networkDifficulty')}
+              spark={sparks.difficulty}
             />
             <StatTile
               icon={Zap}
@@ -132,6 +161,42 @@ export function NetworkStatusContent() {
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+interface MetricTileProps {
+  icon: LucideIcon
+  label: string
+  value: string
+  hint?: string
+  /** Background series for time-varying metrics; too-short series render clean. */
+  spark?: number[]
+}
+
+/**
+ * A {@link StatTile}-styled metric tile with a subtle, non-interactive background
+ * sparkline for values that change over time (Connections, Difficulty). Falls back
+ * to a clean tile until enough history has accumulated.
+ */
+function MetricTile({ icon: Icon, label, value, hint, spark }: MetricTileProps) {
+  const hasSpark = Boolean(spark && spark.length >= MIN_SPARK_POINTS)
+
+  return (
+    <div className="relative flex flex-col gap-1 overflow-hidden rounded-xl bg-muted/60 px-3 py-2.5 transition-colors hover:bg-muted/80">
+      {hasSpark && spark ? (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 opacity-25">
+          <Sparkline data={spark} />
+        </div>
+      ) : null}
+      <div className="relative flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <Icon className="size-3.5 shrink-0" />
+        <span className="truncate">{label}</span>
+      </div>
+      <span className="relative truncate text-base font-semibold tabular-nums">{value}</span>
+      {hint ? (
+        <span className="relative truncate text-[11px] text-muted-foreground tabular-nums">{hint}</span>
+      ) : null}
     </div>
   )
 }

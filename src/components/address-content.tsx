@@ -16,7 +16,6 @@ import { formatNumber } from '@/lib/format'
 import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
-import { InfoRow } from '@/components/detail/info-row'
 import { HashCell } from '@/components/detail/hash-cell'
 import { RelativeTime } from '@/components/detail/relative-time'
 import { Button } from '@/components/ui/button'
@@ -71,15 +70,61 @@ export function AddressContent({ address }: { address: string }) {
         subtitle={t('subtitle')}
         onRefresh={() => void refetch()}
         isRefreshing={isFetching}
+        action={
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+            <Receipt className="size-3" />
+            {t('transactionsCount', { count: info.txCount })}
+          </span>
+        }
       />
 
-      {/* Address identity */}
-      <SectionCard title={t('addressInformation')} icon={Wallet}>
-        <InfoRow
-          label={t('address')}
-          value={<HashCell value={info.address} full />}
-        />
-      </SectionCard>
+      {/* Hero: balance as the confident primary figure + address identity. */}
+      <section className="rounded-2xl border bg-muted/30 p-4 transition-colors hover:bg-muted/40 sm:p-5">
+        <header className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Wallet className="size-4" />
+            </span>
+            <h3 className="text-sm font-semibold tracking-tight">{t('addressInformation')}</h3>
+          </div>
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
+            <Hash className="size-3" />
+            {t('transactionsCount', { count: info.txCount })}
+          </span>
+        </header>
+
+        <div className="flex items-baseline gap-2">
+          <span className="text-3xl font-bold tracking-tight tabular-nums text-primary sm:text-4xl">
+            {formatNumber(info.balance, 8)}
+          </span>
+          <span className="text-sm font-medium text-muted-foreground">
+            FAIR · {t('currentBalance')}
+          </span>
+        </div>
+
+        {/* Received / sent flow summary, inline under the hero balance. */}
+        <dl className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+          <div className="flex items-center gap-1.5">
+            <TrendingUp className="size-3.5 text-primary" />
+            <dt className="text-muted-foreground">{t('totalReceived')}</dt>
+            <dd className="font-semibold tabular-nums">{formatFair(info.totalReceived)}</dd>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <TrendingDown className="size-3.5 text-muted-foreground" />
+            <dt className="text-muted-foreground">{t('totalSent')}</dt>
+            <dd className="font-semibold tabular-nums">{formatFair(info.totalSent)}</dd>
+          </div>
+        </dl>
+
+        <div className="mt-3">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            {t('address')}
+          </span>
+          <div className="mt-1">
+            <HashCell value={info.address} full />
+          </div>
+        </div>
+      </section>
 
       {/* Balance stats */}
       <StatTileGrid>
@@ -157,7 +202,7 @@ function AddressTransactionRow({
     <li className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40">
       <span
         className={cn(
-          'flex size-7 shrink-0 items-center justify-center rounded-full',
+          'flex size-8 shrink-0 items-center justify-center rounded-full',
           received ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
         )}
       >
@@ -208,7 +253,7 @@ function AddressSkeleton() {
         </div>
         <Skeleton className="h-9 w-28 rounded-lg" />
       </div>
-      <Skeleton className="h-20 rounded-xl" />
+      <Skeleton className="h-[188px] rounded-2xl" />
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="h-[72px] rounded-xl" />

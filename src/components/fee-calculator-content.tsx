@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import { Calculator, Coins, Gauge, Receipt, Wallet } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useNetwork } from '@/contexts/network-context'
 import { useTranslations } from '@/lib/i18n'
 import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
-import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
 import { InfoGrid, InfoRow } from '@/components/detail/info-row'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import {
   Select,
   SelectContent,
@@ -35,6 +36,9 @@ const PRIORITY_VARIANT: Record<Priority, 'secondary' | 'default' | 'outline' | '
   high: 'outline',
   priority: 'destructive',
 }
+
+/** Brand gradient reused from the supply panel: primary → bright accent. */
+const HERO_GRADIENT = 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))'
 
 /**
  * Estimate transaction size in KB from the spend amount. Base tx ~250 bytes plus
@@ -95,10 +99,10 @@ export function FeeCalculatorContent() {
         }
       />
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
         {/* Inputs */}
         <SectionCard title={t('transactionDetails')} icon={Coins}>
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div className="space-y-2">
               <label htmlFor="amount" className="block text-sm font-medium">
                 {t('amount')} (FAIR)
@@ -112,7 +116,7 @@ export function FeeCalculatorContent() {
                 onChange={(event) => setAmount(event.target.value)}
                 min="0"
                 step="0.00000001"
-                className="font-mono tabular-nums"
+                className="h-11 font-mono text-base tabular-nums"
               />
             </div>
 
@@ -121,7 +125,7 @@ export function FeeCalculatorContent() {
                 {t('feePriority')}
               </label>
               <Select value={priority} onValueChange={(value) => setPriority(value as Priority)}>
-                <SelectTrigger id="priority" className="w-full">
+                <SelectTrigger id="priority" className="h-11 w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -137,58 +141,95 @@ export function FeeCalculatorContent() {
 
             <div className="space-y-2">
               <span className="block text-sm font-medium">{t('feeRate')}</span>
-              <div className="flex flex-wrap gap-1.5">
-                {PRIORITY_ORDER.map((key) => (
-                  <Badge
-                    key={key}
-                    variant={key === priority ? PRIORITY_VARIANT[key] : 'ghost'}
-                    asChild
-                  >
-                    <button type="button" onClick={() => setPriority(key)}>
-                      {priorityLabels[key]} · {FEE_RATES[key]} FAIR/KB
+              <div className="grid grid-cols-2 gap-2">
+                {PRIORITY_ORDER.map((key) => {
+                  const active = key === priority
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setPriority(key)}
+                      aria-pressed={active}
+                      className={cn(
+                        'flex flex-col gap-1.5 rounded-xl border px-3 py-2.5 text-left transition-colors',
+                        active
+                          ? 'border-primary/40 bg-primary/10'
+                          : 'border-transparent bg-muted/60 hover:bg-muted/80',
+                      )}
+                    >
+                      <Badge variant={active ? PRIORITY_VARIANT[key] : 'ghost'} className="self-start">
+                        {priorityLabels[key]}
+                      </Badge>
+                      <span
+                        className={cn(
+                          'text-sm font-semibold tabular-nums',
+                          active ? 'text-primary' : 'text-foreground',
+                        )}
+                      >
+                        {FEE_RATES[key]} FAIR/KB
+                      </span>
                     </button>
-                  </Badge>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>
         </SectionCard>
 
-        {/* Estimate */}
+        {/* Estimate hero */}
         <SectionCard title={t('feeEstimate')} icon={Receipt}>
           {hasAmount ? (
             <div className="space-y-4">
-              <StatTileGrid className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3">
-                <StatTile
-                  icon={Wallet}
-                  label={t('amount')}
-                  value={`${amountValue.toFixed(8)} FAIR`}
+              {/* Hero fee figure: brand gradient panel, supply-bar treatment. */}
+              <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
+                <div
+                  className="pointer-events-none absolute inset-x-0 top-0 h-1 rounded-t-2xl"
+                  style={{ backgroundImage: HERO_GRADIENT }}
+                  aria-hidden
                 />
-                <StatTile
-                  icon={Gauge}
-                  label={t('estimatedFee')}
-                  value={`${estimatedFee.toFixed(8)} FAIR`}
-                  accent
-                />
-                <StatTile
-                  icon={Coins}
-                  label={t('totalCost')}
-                  value={`${totalCost.toFixed(8)} FAIR`}
-                />
-              </StatTileGrid>
-              <ul className="space-y-1 text-xs text-muted-foreground">
-                <li>• {t('estimatedSize', { bytes: sizeBytes })}</li>
-                <li>• {t('feeCalculationBased', { priority: priorityLabels[priority] })}</li>
-                <li>• {t('actualFeesDisclaimer')}</li>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    <Gauge className="size-3.5" />
+                    {t('estimatedFee')}
+                  </span>
+                  <Badge variant={PRIORITY_VARIANT[priority]}>{priorityLabels[priority]}</Badge>
+                </div>
+                <div className="mt-1.5 flex items-baseline gap-2">
+                  <span className="text-3xl font-bold tracking-tight tabular-nums text-primary sm:text-4xl">
+                    {estimatedFee.toFixed(8)}
+                  </span>
+                  <span className="text-sm font-medium text-muted-foreground">FAIR</span>
+                </div>
+              </div>
+
+              {/* Amount + total breakdown as sub-stat tiles. */}
+              <dl className="grid grid-cols-2 gap-2">
+                <BreakdownTile icon={Wallet} label={t('amount')} value={amountValue.toFixed(8)} />
+                <BreakdownTile icon={Coins} label={t('totalCost')} value={totalCost.toFixed(8)} accent />
+              </dl>
+
+              <ul className="space-y-1.5 rounded-xl bg-muted/50 p-3 text-xs text-muted-foreground">
+                <li className="flex gap-1.5">
+                  <span className="text-primary">•</span>
+                  {t('estimatedSize', { bytes: sizeBytes })}
+                </li>
+                <li className="flex gap-1.5">
+                  <span className="text-primary">•</span>
+                  {t('feeCalculationBased', { priority: priorityLabels[priority] })}
+                </li>
+                <li className="flex gap-1.5">
+                  <span className="text-primary">•</span>
+                  {t('actualFeesDisclaimer')}
+                </li>
               </ul>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-3 py-8 text-center">
-              <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Calculator className="size-6" />
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <Calculator className="size-7" />
               </span>
               <div className="space-y-1">
-                <p className="text-sm font-medium">{t('enterAmountTitle')}</p>
+                <p className="text-sm font-semibold">{t('enterAmountTitle')}</p>
                 <p className="text-sm text-muted-foreground">{t('enterAmountDescription')}</p>
               </div>
             </div>
@@ -209,6 +250,34 @@ export function FeeCalculatorContent() {
           <InfoRow label={t('recommendedConfirmations')} value={t('sixConfirmations')} />
         </InfoGrid>
       </SectionCard>
+    </div>
+  )
+}
+
+/** Compact value tile for the fee breakdown (amount / total cost). */
+function BreakdownTile({
+  icon: Icon,
+  label,
+  value,
+  accent = false,
+}: {
+  icon: LucideIcon
+  label: string
+  value: string
+  accent?: boolean
+}) {
+  return (
+    <div className="flex flex-col gap-1 rounded-xl bg-muted/60 px-3 py-2.5 transition-colors hover:bg-muted/80">
+      <dt className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <Icon className="size-3.5 shrink-0" />
+        <span className="truncate">{label}</span>
+      </dt>
+      <dd className="flex items-baseline gap-1">
+        <span className={cn('truncate text-base font-semibold tabular-nums', accent && 'text-primary')}>
+          {value}
+        </span>
+        <span className="text-[11px] font-medium text-muted-foreground">FAIR</span>
+      </dd>
     </div>
   )
 }

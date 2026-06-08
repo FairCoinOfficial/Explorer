@@ -4,6 +4,7 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   CheckCircle,
+  CheckCircle2,
   Coins,
   Database,
   FileText,
@@ -16,7 +17,6 @@ import { useTranslations } from '@/lib/i18n'
 import {
   isCoinbaseInput,
   useTransaction,
-  type Transaction,
   type TransactionInput,
   type TransactionOutput,
 } from '@/hooks/use-transaction'
@@ -30,8 +30,15 @@ import { RelativeTime } from '@/components/detail/relative-time'
 import { CopyButton } from '@/components/copy-button'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 
 const ZERO_HASH = '0000000000000000000000000000000000000000000000000000000000000000'
+
+/** Confirmations at which a transaction is treated as fully settled for the meter. */
+const MATURE_CONFIRMATIONS = 100
+
+/** Gradient fill for the confirmation meter: brand primary → bright accent. */
+const PROGRESS_GRADIENT = 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))'
 
 function formatFair(value: number): string {
   return `${value.toFixed(8)} FAIR`
@@ -85,7 +92,8 @@ export function TransactionContent({ txid }: { txid: string }) {
     )
   }
 
-  const confirmed = (transaction.confirmations ?? 0) > 0
+  const confirmations = transaction.confirmations ?? 0
+  const confirmed = confirmations > 0
   const totalOutput = transaction.vout.reduce((sum, output) => sum + output.value, 0)
 
   return (
@@ -97,48 +105,89 @@ export function TransactionContent({ txid }: { txid: string }) {
         isRefreshing={isFetching}
       />
 
-      {/* Identity + summary */}
+      {/* Hero: total value moved + transaction id + settlement status. */}
+      <section className="rounded-2xl border bg-muted/30 p-4 transition-colors hover:bg-muted/40 sm:p-5">
+        <header className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Coins className="size-4" />
+            </span>
+            <h3 className="text-sm font-semibold tracking-tight">{t('transactionInformation')}</h3>
+          </div>
+          <span
+            className={cn(
+              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+              confirmed ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive',
+            )}
+          >
+            {confirmed ? <CheckCircle className="size-3" /> : <XCircle className="size-3" />}
+            {confirmed ? common('confirmed') : t('unconfirmed')}
+          </span>
+        </header>
+
+        <div className="flex items-baseline gap-2">
+          <span className="text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">
+            {formatNumber(totalOutput, 8)}
+          </span>
+          <span className="text-sm font-medium text-muted-foreground">FAIR · {t('totalOutput')}</span>
+        </div>
+
+        <div className="mt-3">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            {t('transactionId')}
+          </span>
+          <div className="mt-1">
+            <HashCell value={transaction.txid} full />
+          </div>
+        </div>
+
+        <ConfirmationMeter
+          confirmations={confirmations}
+          label={common('confirmations')}
+          className="mt-4"
+        />
+      </section>
+
+      {/* Summary tiles */}
+      <StatTileGrid>
+        <StatTile
+          label={common('status')}
+          value={confirmed ? common('confirmed') : t('unconfirmed')}
+          icon={confirmed ? CheckCircle : XCircle}
+          accent={confirmed}
+        />
+        <StatTile
+          label={common('confirmations')}
+          value={formatNumber(confirmations)}
+          icon={Layers}
+        />
+        <StatTile
+          label={t('totalOutput')}
+          value={formatFair(totalOutput)}
+          icon={ArrowUpRight}
+          hint={t('outputsCount', { count: transaction.vout.length })}
+        />
+        <StatTile
+          label={common('size')}
+          value={transaction.size ? formatBytes(transaction.size) : '—'}
+          icon={Ruler}
+        />
+      </StatTileGrid>
+
+      {/* Metadata */}
       <SectionCard title={t('transactionInformation')} icon={Coins}>
         <div className="space-y-4">
-          <InfoRow
-            label={t('transactionId')}
-            value={
-              <div className="flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-2">
-                <code className="min-w-0 flex-1 break-all font-mono text-sm">{transaction.txid}</code>
-                <CopyButton text={transaction.txid} className="size-7 shrink-0" />
-              </div>
-            }
-          />
-
-          <StatTileGrid>
-            <StatTile
-              label={common('status')}
-              value={confirmed ? common('confirmed') : t('unconfirmed')}
-              icon={confirmed ? CheckCircle : XCircle}
-              accent={confirmed}
-            />
-            <StatTile
-              label={common('confirmations')}
-              value={formatNumber(transaction.confirmations ?? 0)}
-              icon={Layers}
-            />
-            <StatTile
-              label={t('totalOutput')}
-              value={formatFair(totalOutput)}
-              icon={ArrowUpRight}
-              hint={t('outputsCount', { count: transaction.vout.length })}
-            />
-            <StatTile
-              label={common('size')}
-              value={transaction.size ? formatBytes(transaction.size) : '—'}
-              icon={Ruler}
-            />
-          </StatTileGrid>
-
           <InfoGrid>
-            <InfoRow label={t('blockTime')} value={
-              transaction.blocktime ? <RelativeTime timestamp={transaction.blocktime} /> : t('pending')
-            } />
+            <InfoRow
+              label={t('blockTime')}
+              value={
+                transaction.blocktime ? (
+                  <RelativeTime timestamp={transaction.blocktime} />
+                ) : (
+                  t('pending')
+                )
+              }
+            />
             <InfoRow label={t('version')} value={transaction.version} mono />
             <InfoRow label={t('lockTime')} value={formatNumber(transaction.locktime)} mono />
           </InfoGrid>
@@ -164,7 +213,7 @@ export function TransactionContent({ txid }: { txid: string }) {
       >
         <ul className="space-y-2">
           {transaction.vin.map((input, index) => (
-            <li key={index} className="rounded-lg bg-muted/50 p-3">
+            <li key={index} className="rounded-xl bg-muted/60 p-3">
               <InputRow input={input} index={index} />
             </li>
           ))}
@@ -183,7 +232,7 @@ export function TransactionContent({ txid }: { txid: string }) {
       >
         <ul className="space-y-2">
           {transaction.vout.map((output) => (
-            <li key={output.n} className="rounded-lg bg-muted/50 p-3">
+            <li key={output.n} className="rounded-xl bg-muted/60 p-3">
               <OutputRow output={output} t={t} />
             </li>
           ))}
@@ -202,6 +251,55 @@ export function TransactionContent({ txid }: { txid: string }) {
           {transaction.hex}
         </code>
       </SectionCard>
+    </div>
+  )
+}
+
+/**
+ * Gradient confirmation meter mirroring the home supply bar: a thin track that
+ * fills primary→accent and caps at {@link MATURE_CONFIRMATIONS}.
+ */
+function ConfirmationMeter({
+  confirmations,
+  label,
+  className,
+}: {
+  confirmations: number
+  label: string
+  className?: string
+}) {
+  const fraction = Math.min(Math.max(confirmations, 0) / MATURE_CONFIRMATIONS, 1)
+  const fillWidth = confirmations > 0 ? Math.max(fraction * 100, 4) : 0
+  const percent = Math.round(fraction * 1000) / 10
+
+  return (
+    <div className={cn('space-y-1.5', className)}>
+      <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <span className="inline-flex items-center gap-1">
+          <CheckCircle2 className="size-3" />
+          {label}
+        </span>
+        <span className="tabular-nums">
+          {formatNumber(confirmations)} / {formatNumber(MATURE_CONFIRMATIONS)}
+        </span>
+      </div>
+      <div
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+        aria-label={label}
+        className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted"
+      >
+        <div
+          className="relative h-full rounded-full transition-[width] duration-500 ease-out"
+          style={{ width: `${fillWidth}%`, backgroundImage: PROGRESS_GRADIENT }}
+        >
+          {confirmations > 0 ? (
+            <span className="absolute inset-y-0 right-0 w-1.5 rounded-full bg-accent" aria-hidden />
+          ) : null}
+        </div>
+      </div>
     </div>
   )
 }
@@ -291,7 +389,12 @@ function TransactionSkeleton() {
         </div>
         <Skeleton className="h-9 w-28 rounded-lg" />
       </div>
-      <Skeleton className="h-64 rounded-xl" />
+      <Skeleton className="h-[188px] rounded-2xl" />
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-[72px] rounded-xl" />
+        ))}
+      </div>
       <Skeleton className="h-40 rounded-xl" />
       <Skeleton className="h-40 rounded-xl" />
     </div>

@@ -3,15 +3,21 @@ import {
   AlertTriangle,
   Blocks as BlocksIcon,
   Calendar,
+  Clock,
   Database,
+  Layers,
+  Network,
   Receipt,
+  Ruler,
   Search,
 } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
+import { useNetwork } from '@/contexts/network-context'
 import { useRecentBlocks, type RecentBlock } from '@/hooks/use-recent-blocks'
 import { formatBytes, formatNumber } from '@/lib/format'
 import { ListHeader } from '@/components/detail/list-header'
 import { SectionCard } from '@/components/detail/section-card'
+import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
 import { HashCell } from '@/components/detail/hash-cell'
 import { RelativeTime } from '@/components/detail/relative-time'
 import { Button } from '@/components/ui/button'
@@ -40,6 +46,7 @@ const FILTER_WINDOW_SECONDS: Record<Exclude<TimeFilter, 'all'>, number> = {
 export function BlocksContent() {
   const t = useTranslations('blocks')
   const common = useTranslations('common')
+  const { networkConfig } = useNetwork()
   const { data, isLoading, isError, error, refetch, isFetching } = useRecentBlocks(BLOCKS_LIMIT)
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -73,6 +80,11 @@ export function BlocksContent() {
     const start = (currentPage - 1) * BLOCKS_PER_PAGE
     return filteredBlocks.slice(start, start + BLOCKS_PER_PAGE)
   }, [filteredBlocks, currentPage])
+
+  const filterLabel = useMemo(() => {
+    if (timeFilter === 'all') return t('allTime')
+    return t('last', { period: t(TIME_FILTERS.find((f) => f.key === timeFilter)?.labelKey ?? 'all') })
+  }, [timeFilter, t])
 
   if (isLoading) {
     return <BlocksSkeleton />
@@ -118,6 +130,24 @@ export function BlocksContent() {
           </span>
         }
       />
+
+      {/* Summary tiles — same language as the home stat strip. */}
+      <StatTileGrid>
+        <StatTile
+          label={t('currentHeight')}
+          value={formatNumber(height)}
+          icon={Layers}
+          accent
+          hint={t('latestBlockHeight')}
+        />
+        <StatTile
+          label={t('blocksShown')}
+          value={formatNumber(filteredBlocks.length)}
+          icon={BlocksIcon}
+        />
+        <StatTile label={t('timeFilter')} value={filterLabel} icon={Calendar} />
+        <StatTile label={t('network')} value={networkConfig.displayName} icon={Network} />
+      </StatTileGrid>
 
       {/* Search + time filter */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -167,14 +197,35 @@ export function BlocksContent() {
         }
       >
         {pageBlocks.length > 0 ? (
-          <ul className="divide-y">
-            {pageBlocks.map((block) => (
-              <BlockRow key={block.height} block={block} t={t} />
-            ))}
-          </ul>
+          <>
+            {/* Column header — aligns the row columns and adds list legibility. */}
+            <div className="hidden items-center gap-3 border-b px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:flex">
+              <span className="flex-1">{common('height')}</span>
+              <span className="inline-flex w-24 items-center justify-end gap-1">
+                <Receipt className="size-3" />
+                {common('transactions')}
+              </span>
+              <span className="inline-flex w-28 items-center justify-end gap-1">
+                <Clock className="size-3" />
+                {common('time')}
+              </span>
+              <span className="inline-flex w-16 items-center justify-end gap-1">
+                <Ruler className="size-3" />
+                {common('size')}
+              </span>
+            </div>
+            <ul className="divide-y">
+              {pageBlocks.map((block) => (
+                <BlockRow key={block.height} block={block} t={t} />
+              ))}
+            </ul>
+          </>
         ) : (
-          <div className="flex min-h-[160px] items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
-            {common('noResults')}
+          <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 px-4 py-8 text-center">
+            <span className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <BlocksIcon className="size-5" />
+            </span>
+            <p className="text-sm text-muted-foreground">{common('noResults')}</p>
           </div>
         )}
 
@@ -223,17 +274,30 @@ function BlockRow({
 
   return (
     <li className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <BlocksIcon className="size-4" />
+      </span>
+
       <div className="flex min-w-0 flex-1 flex-col">
-        <HashCell value={String(block.height)} to="block" hideCopy textClassName="font-semibold" />
+        <HashCell
+          value={String(block.height)}
+          to="block"
+          hideCopy
+          textClassName="text-sm font-semibold tabular-nums"
+        />
         <HashCell value={block.hash} to="block" textClassName="text-xs text-muted-foreground" />
       </div>
 
-      <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs">
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary tabular-nums">
+      <span className="hidden w-24 shrink-0 justify-end text-right sm:flex">
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
           {t('txCount', { count: txCount })}
         </span>
-        <RelativeTime timestamp={block.time} className="text-muted-foreground" />
-      </div>
+      </span>
+
+      <RelativeTime
+        timestamp={block.time}
+        className="w-28 shrink-0 text-right text-xs text-muted-foreground"
+      />
 
       <span className="hidden w-16 shrink-0 text-right text-xs text-muted-foreground tabular-nums sm:inline">
         {formatBytes(block.size)}
@@ -252,12 +316,18 @@ function BlocksSkeleton() {
         </div>
         <Skeleton className="h-9 w-28 rounded-lg" />
       </div>
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-[72px] rounded-xl" />
+        ))}
+      </div>
       <Skeleton className="h-10 w-full max-w-md rounded-lg" />
       <div className={cn('rounded-xl border bg-muted/40')}>
         <ul className="divide-y">
           {Array.from({ length: 10 }).map((_, i) => (
-            <li key={i} className="flex items-center justify-between gap-3 px-4 py-2.5">
-              <div className="space-y-1">
+            <li key={i} className="flex items-center gap-3 px-4 py-2.5">
+              <Skeleton className="size-8 shrink-0 rounded-full" />
+              <div className="flex-1 space-y-1">
                 <Skeleton className="h-4 w-20" />
                 <Skeleton className="h-3 w-40" />
               </div>

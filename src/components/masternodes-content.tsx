@@ -35,13 +35,16 @@ import { formatNumber } from '@/lib/format'
 import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
-import { ProgressBar } from '@/components/detail/progress-bar'
 import { CopyButton } from '@/components/copy-button'
+import { cn } from '@/lib/utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 type Translate = (key: string, params?: Record<string, string | number>) => string
 
 const CONFIRMATION_BLOCKS = 15
+
+/** Brand gradient reused from the supply panel: primary → bright accent. */
+const REWARD_GRADIENT = 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))'
 
 const FAIRCOIN_CONF = `rpcuser=ANYTHINGHERE
 rpcpassword=ANYTHINGHERE
@@ -145,24 +148,8 @@ export function MasternodesContent() {
         />
       </StatTileGrid>
 
-      {/* Reward distribution */}
-      <SectionCard title={t('rewards.title')} icon={Coins}>
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">{t('rewards.description')}</p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <RewardShare
-              label={t('rewards.masternodeShare')}
-              percent={REWARD_SPLIT.masternode}
-              icon={Server}
-            />
-            <RewardShare
-              label={t('rewards.stakerShare')}
-              percent={REWARD_SPLIT.staker}
-              icon={Wallet}
-            />
-          </div>
-        </div>
-      </SectionCard>
+      {/* Reward distribution — premium panel */}
+      <RewardPanel t={t} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
@@ -181,21 +168,21 @@ export function MasternodesContent() {
                 <p className="text-sm text-muted-foreground">
                   {t('overview.whatAreMasternodes.description')}
                 </p>
-                <ul className="space-y-1 text-sm text-muted-foreground">
-                  <li>• {t('overview.whatAreMasternodes.features.security')}</li>
-                  <li>• {t('overview.whatAreMasternodes.features.instantTx')}</li>
-                  <li>• {t('overview.whatAreMasternodes.features.governance')}</li>
-                  <li>• {t('overview.whatAreMasternodes.features.rewards')}</li>
+                <ul className="space-y-2">
+                  <FeatureItem>{t('overview.whatAreMasternodes.features.security')}</FeatureItem>
+                  <FeatureItem>{t('overview.whatAreMasternodes.features.instantTx')}</FeatureItem>
+                  <FeatureItem>{t('overview.whatAreMasternodes.features.governance')}</FeatureItem>
+                  <FeatureItem>{t('overview.whatAreMasternodes.features.rewards')}</FeatureItem>
                 </ul>
               </div>
             </SectionCard>
 
             <SectionCard title={t('overview.benefits.title')} icon={Award}>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• {t('overview.benefits.earnRewards')}</li>
-                <li>• {t('overview.benefits.secureNetwork')}</li>
-                <li>• {t('overview.benefits.governance')}</li>
-                <li>• {t('overview.benefits.ecosystem')}</li>
+              <ul className="space-y-2">
+                <FeatureItem>{t('overview.benefits.earnRewards')}</FeatureItem>
+                <FeatureItem>{t('overview.benefits.secureNetwork')}</FeatureItem>
+                <FeatureItem>{t('overview.benefits.governance')}</FeatureItem>
+                <FeatureItem>{t('overview.benefits.ecosystem')}</FeatureItem>
               </ul>
             </SectionCard>
           </div>
@@ -215,7 +202,7 @@ export function MasternodesContent() {
             {STEP_ICONS.map((Icon, index) => (
               <SectionCard key={index}>
                 <div className="flex items-start gap-4">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base font-bold text-primary">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base font-bold tabular-nums text-primary ring-1 ring-primary/20">
                     {index + 1}
                   </span>
                   <div className="min-w-0 flex-1 space-y-1">
@@ -262,9 +249,15 @@ export function MasternodesContent() {
 
           <SectionCard title={t('budget.sections.budgetStages')} icon={Calendar}>
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {BUDGET_STAGE_KEYS.map(({ key, icon: Icon }) => (
-                <div key={key} className="space-y-1 rounded-lg bg-muted/60 p-3">
+              {BUDGET_STAGE_KEYS.map(({ key, icon: Icon }, index) => (
+                <div
+                  key={key}
+                  className="space-y-1.5 rounded-xl border bg-muted/50 p-3 transition-colors hover:bg-muted/70"
+                >
                   <div className="flex items-center gap-2 text-sm font-semibold">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold tabular-nums text-primary">
+                      {index + 1}
+                    </span>
                     <Icon className="size-4 text-primary" />
                     {t(`budget.stages.${key}.title`)}
                   </div>
@@ -278,29 +271,29 @@ export function MasternodesContent() {
           </SectionCard>
 
           <SectionCard title={t('budget.sections.budgetCommands')} icon={Terminal}>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {BUDGET_COMMAND_KEYS.map((key) => (
-                <div key={key} className="space-y-2">
+                <div key={key} className="space-y-2.5 rounded-xl border bg-muted/30 p-3.5">
                   <div className="flex items-center gap-2 text-sm font-semibold">
-                    <Terminal className="size-4 text-primary" />
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <Terminal className="size-3.5" />
+                    </span>
                     {t(`budget.commands.${key}.name`)}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {t(`budget.commands.${key}.description`)}
                   </p>
-                  <div className="space-y-2">
-                    <LabeledCode
-                      label={t('budget.sections.example')}
-                      code={t(`budget.commands.${key}.example`)}
-                      copyLabel={t(`budget.commands.${key}.copy`)}
-                    />
-                    <div className="space-y-1">
-                      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        {t('budget.sections.output')}
-                      </span>
-                      <div className="rounded-lg bg-muted/60 p-4 font-mono text-xs break-all">
-                        {t(`budget.commands.${key}.output`)}
-                      </div>
+                  <LabeledCode
+                    label={t('budget.sections.example')}
+                    code={t(`budget.commands.${key}.example`)}
+                    copyLabel={t(`budget.commands.${key}.copy`)}
+                  />
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                      {t('budget.sections.output')}
+                    </span>
+                    <div className="rounded-lg bg-background/60 p-3 font-mono text-xs break-all text-muted-foreground ring-1 ring-border/60">
+                      {t(`budget.commands.${key}.output`)}
                     </div>
                   </div>
                 </div>
@@ -325,7 +318,7 @@ export function MasternodesContent() {
           <div className="grid gap-4 lg:grid-cols-3">
             {REQUIREMENT_GROUPS.map(({ key, icon }) => (
               <SectionCard key={key} title={t(`requirements.${key}.title`)} icon={icon}>
-                <ul className="space-y-2">
+                <ul className="space-y-2.5">
                   {[0, 1, 2, 3].map((index) => (
                     <li key={index} className="flex items-start gap-2">
                       <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
@@ -354,7 +347,9 @@ export function MasternodesContent() {
             {[0, 1, 2, 3].map((index) => (
               <SectionCard key={index}>
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <AlertCircle className="size-4" />
+                  </span>
                   <div className="min-w-0 flex-1 space-y-1">
                     <h4 className="text-sm font-semibold">
                       {t(`troubleshooting.issues.${index}.issue`)}
@@ -377,33 +372,136 @@ export function MasternodesContent() {
   )
 }
 
-function RewardShare({
+/**
+ * Premium reward-distribution panel modelled on the home supply bar: a hero
+ * collateral figure, a single dual-fill gradient bar that reads the 50/50 split
+ * at a glance, and richer per-share sub-stat tiles. All token-coloured.
+ */
+function RewardPanel({ t }: { t: Translate }) {
+  const total = REWARD_SPLIT.masternode + REWARD_SPLIT.staker
+  const masternodePct = total > 0 ? (REWARD_SPLIT.masternode / total) * 100 : 0
+  const stakerPct = 100 - masternodePct
+
+  return (
+    <section className="relative overflow-hidden rounded-2xl border bg-muted/30 p-4 sm:p-5">
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Coins className="size-4" />
+          </span>
+          <h3 className="text-sm font-semibold tracking-tight">{t('rewards.title')}</h3>
+        </div>
+        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
+          {REWARD_SPLIT.masternode}% / {REWARD_SPLIT.staker}%
+        </span>
+      </header>
+
+      {/* Hero figure: locked collateral against per-block split context. */}
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div className="flex items-baseline gap-2">
+          <span className="text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">
+            {formatNumber(MASTERNODE_COLLATERAL)}
+          </span>
+          <span className="text-sm font-medium text-muted-foreground">FAIR</span>
+        </div>
+        <span className="text-xs text-muted-foreground">{t('stats.collateralHint')}</span>
+      </div>
+
+      <p className="mt-2 text-sm text-muted-foreground">{t('rewards.description')}</p>
+
+      {/* Single split bar: masternode (primary→accent gradient) vs staker (muted). */}
+      <div
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(masternodePct)}
+        aria-label={t('rewards.title')}
+        className="mt-3 flex h-3 w-full overflow-hidden rounded-full bg-muted"
+      >
+        <div
+          className="relative h-full transition-[width] duration-500 ease-out"
+          style={{ width: `${masternodePct}%`, backgroundImage: REWARD_GRADIENT }}
+        >
+          <span className="absolute inset-y-0 right-0 w-1.5 bg-accent" aria-hidden />
+        </div>
+        <div className="h-full flex-1 bg-primary/25" />
+      </div>
+
+      {/* Per-share sub-stat tiles. */}
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        <RewardShareTile
+          icon={Server}
+          label={t('rewards.masternodeShare')}
+          percent={REWARD_SPLIT.masternode}
+          tone="primary"
+        />
+        <RewardShareTile
+          icon={Wallet}
+          label={t('rewards.stakerShare')}
+          percent={REWARD_SPLIT.staker}
+          tone="muted"
+        />
+      </div>
+
+      {/* Hidden-but-present staker fraction keeps the split self-describing. */}
+      <span className="sr-only">{stakerPct}%</span>
+    </section>
+  )
+}
+
+function RewardShareTile({
+  icon: Icon,
   label,
   percent,
-  icon: Icon,
+  tone,
 }: {
+  icon: LucideIcon
   label: string
   percent: number
-  icon: LucideIcon
+  tone: 'primary' | 'muted'
 }) {
   return (
-    <div className="space-y-2 rounded-lg bg-muted/60 p-3">
-      <div className="flex items-center justify-between">
-        <span className="flex items-center gap-2 text-sm font-medium">
-          <Icon className="size-4 text-primary" />
+    <div className="flex items-center gap-3 rounded-xl bg-muted/60 px-3 py-3 transition-colors hover:bg-muted/80">
+      <span
+        className={cn(
+          'flex size-9 shrink-0 items-center justify-center rounded-full',
+          tone === 'primary' ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground',
+        )}
+      >
+        <Icon className="size-4" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           {label}
-        </span>
-        <span className="text-sm font-semibold tabular-nums text-primary">{percent}%</span>
+        </p>
+        <p className="flex items-baseline gap-1">
+          <span
+            className={cn(
+              'text-xl font-bold tabular-nums',
+              tone === 'primary' ? 'text-primary' : 'text-foreground',
+            )}
+          >
+            {percent}%
+          </span>
+        </p>
       </div>
-      <ProgressBar value={percent / 100} label={label} />
     </div>
+  )
+}
+
+function FeatureItem({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="flex items-start gap-2 text-sm text-muted-foreground">
+      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+      <span>{children}</span>
+    </li>
   )
 }
 
 function CodeBlock({ code, copyLabel }: { code: string; copyLabel: string }) {
   return (
     <div className="space-y-2">
-      <pre className="overflow-x-auto rounded-lg bg-muted/60 p-4 font-mono text-xs whitespace-pre-wrap break-all">
+      <pre className="overflow-x-auto rounded-lg bg-background/60 p-4 font-mono text-xs whitespace-pre-wrap break-all ring-1 ring-border/60">
         {code}
       </pre>
       <CopyButton text={code} label={copyLabel} className="w-full" />
@@ -422,11 +520,11 @@ function LabeledCode({
 }) {
   return (
     <div className="space-y-1">
-      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </span>
       <div className="flex items-start gap-2">
-        <code className="flex-1 overflow-x-auto rounded-lg bg-muted/60 p-4 font-mono text-xs break-all">
+        <code className="flex-1 overflow-x-auto rounded-lg bg-background/60 p-3 font-mono text-xs break-all ring-1 ring-border/60">
           {code}
         </code>
         <CopyButton text={code} label={copyLabel} hideLabel className="shrink-0" />
@@ -452,7 +550,7 @@ function Callout({
       : 'border-primary/30 bg-primary/10 text-primary'
 
   return (
-    <div className={`flex items-start gap-2 rounded-xl border p-4 ${toneClass}`}>
+    <div className={cn('flex items-start gap-2 rounded-xl border p-4', toneClass)}>
       <Icon className="mt-0.5 size-4 shrink-0" />
       <div className="space-y-1 text-sm">
         <p className="font-semibold">{title}</p>

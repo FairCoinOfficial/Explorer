@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { CheckCircle2, Info, ShieldCheck, Wallet, XCircle } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useNetwork } from '@/contexts/network-context'
 import { useTranslations } from '@/lib/i18n'
 import { useValidateAddress } from '@/hooks/use-validate-address'
@@ -22,6 +23,9 @@ interface ValidationResult {
 }
 
 const BASE58_REGEX = /^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/
+
+/** Brand gradient reused from the supply panel: primary → bright accent. */
+const SUCCESS_GRADIENT = 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))'
 
 /** Client-side FairCoin address validation based on prefix and Base58 charset. */
 function validateAddress(input: string, t: Translate): ValidationResult {
@@ -131,12 +135,12 @@ export function AddressValidatorContent() {
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' && address.trim()) handleValidate()
                 }}
-                className="font-mono text-sm"
+                className="h-11 font-mono text-sm"
               />
               <Button
                 onClick={handleValidate}
                 disabled={!address.trim()}
-                className="shrink-0"
+                className="h-11 shrink-0"
               >
                 {t('form.validate')}
               </Button>
@@ -144,89 +148,130 @@ export function AddressValidatorContent() {
           </div>
 
           {result ? (
-            <div className="space-y-4 border-t pt-4">
-              <ResultBanner isValid={result.isValid} t={t} />
-
-              {result.isValid ? (
-                <div className="space-y-4">
-                  <HashCell value={submittedAddress} to="address" full textClassName="text-sm" />
-
-                  <InfoGrid columns={2}>
-                    <InfoRow
-                      label={t('results.network')}
-                      value={
-                        <Badge variant={result.network === 'mainnet' ? 'default' : 'secondary'}>
-                          {result.network.toUpperCase()}
-                        </Badge>
-                      }
-                    />
-                    <InfoRow
-                      label={t('results.addressType')}
-                      value={
-                        <span className="space-y-0.5">
-                          <span className="block text-sm font-medium">{result.addressType}</span>
-                          <span className="block text-xs text-muted-foreground">
-                            {describeType(result.addressType, t)}
-                          </span>
-                        </span>
-                      }
-                    />
-                  </InfoGrid>
-
-                  {networkMismatch ? (
-                    <Callout tone="info" icon={Info} title={t('warnings.networkMismatch.title')}>
-                      {t('warnings.networkMismatch.description', {
-                        addressNetwork: result.network,
-                        currentNetwork,
-                      })}
-                    </Callout>
-                  ) : null}
-
-                  {isCheckingNode ? (
-                    <p className="text-xs text-muted-foreground">{t('networkValidation.checking')}</p>
-                  ) : null}
-
-                  {nodeValidation ? (
-                    <div className="rounded-lg bg-muted/60 p-4">
-                      <h4 className="mb-2 text-sm font-semibold">{t('networkValidation.title')}</h4>
-                      <div className="space-y-1.5 text-sm">
-                        <NodeRow
-                          label={t('networkValidation.valid')}
-                          ok={nodeValidation.isvalid}
-                          common={common}
-                          highlight
-                        />
-                        {nodeValidation.ismine !== undefined ? (
-                          <NodeRow
-                            label={t('networkValidation.isMine')}
-                            ok={nodeValidation.ismine}
-                            common={common}
-                          />
-                        ) : null}
-                        {nodeValidation.iswatchonly !== undefined ? (
-                          <NodeRow
-                            label={t('networkValidation.watchOnly')}
-                            ok={nodeValidation.iswatchonly}
-                            common={common}
-                          />
-                        ) : null}
-                        {nodeValidation.isscript !== undefined ? (
-                          <NodeRow
-                            label={t('networkValidation.scriptAddress')}
-                            ok={nodeValidation.isscript}
-                            common={common}
-                          />
-                        ) : null}
-                      </div>
+            result.isValid ? (
+              <div className="space-y-4 border-t pt-4">
+                {/* Confident success panel: brand gradient edge, token colours. */}
+                <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                  <div
+                    className="pointer-events-none absolute inset-y-0 left-0 w-1"
+                    style={{ backgroundImage: SUCCESS_GRADIENT }}
+                    aria-hidden
+                  />
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <CheckCircle2 className="size-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-base font-semibold text-primary">{t('results.valid')}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {result.addressType}
+                      </p>
                     </div>
-                  ) : null}
+                    <Badge
+                      variant={result.network === 'mainnet' ? 'default' : 'secondary'}
+                      className="ml-auto"
+                    >
+                      {result.network.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <div className="mt-3 rounded-xl bg-muted/50 px-3 py-2.5">
+                    <HashCell value={submittedAddress} to="address" full textClassName="text-sm" />
+                  </div>
                 </div>
-              ) : (
-                <Callout tone="error" icon={XCircle} title={t('errors.title')}>
-                  {result.error}
-                </Callout>
-              )}
-            </div>
+
+                <InfoGrid columns={2}>
+                  <InfoRow
+                    label={t('results.network')}
+                    value={
+                      <Badge variant={result.network === 'mainnet' ? 'default' : 'secondary'}>
+                        {result.network.toUpperCase()}
+                      </Badge>
+                    }
+                  />
+                  <InfoRow
+                    label={t('results.addressType')}
+                    value={
+                      <span className="space-y-0.5">
+                        <span className="block text-sm font-medium">{result.addressType}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {describeType(result.addressType, t)}
+                        </span>
+                      </span>
+                    }
+                  />
+                </InfoGrid>
+
+                {networkMismatch ? (
+                  <Callout tone="info" icon={Info} title={t('warnings.networkMismatch.title')}>
+                    {t('warnings.networkMismatch.description', {
+                      addressNetwork: result.network,
+                      currentNetwork,
+                    })}
+                  </Callout>
+                ) : null}
+
+                {isCheckingNode ? (
+                  <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="size-1.5 animate-pulse rounded-full bg-primary" aria-hidden />
+                    {t('networkValidation.checking')}
+                  </p>
+                ) : null}
+
+                {nodeValidation ? (
+                  <div className="rounded-xl border bg-muted/40 p-4">
+                    <h4 className="mb-3 text-sm font-semibold">{t('networkValidation.title')}</h4>
+                    <div className="space-y-2 text-sm">
+                      <NodeRow
+                        label={t('networkValidation.valid')}
+                        ok={nodeValidation.isvalid}
+                        common={common}
+                        highlight
+                      />
+                      {nodeValidation.ismine !== undefined ? (
+                        <NodeRow
+                          label={t('networkValidation.isMine')}
+                          ok={nodeValidation.ismine}
+                          common={common}
+                        />
+                      ) : null}
+                      {nodeValidation.iswatchonly !== undefined ? (
+                        <NodeRow
+                          label={t('networkValidation.watchOnly')}
+                          ok={nodeValidation.iswatchonly}
+                          common={common}
+                        />
+                      ) : null}
+                      {nodeValidation.isscript !== undefined ? (
+                        <NodeRow
+                          label={t('networkValidation.scriptAddress')}
+                          ok={nodeValidation.isscript}
+                          common={common}
+                        />
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div className="border-t pt-4">
+                {/* Confident error panel: destructive token surface. */}
+                <div className="relative overflow-hidden rounded-2xl border border-destructive/20 bg-destructive/5 p-4">
+                  <div
+                    className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-destructive"
+                    aria-hidden
+                  />
+                  <div className="flex items-start gap-2.5">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                      <XCircle className="size-5" />
+                    </span>
+                    <div className="min-w-0 space-y-0.5">
+                      <p className="text-base font-semibold text-destructive">{t('results.invalid')}</p>
+                      <p className="text-sm text-foreground/80">{result.error}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
           ) : null}
         </div>
       </SectionCard>
@@ -248,23 +293,6 @@ export function AddressValidatorContent() {
   )
 }
 
-function ResultBanner({ isValid, t }: { isValid: boolean; t: Translate }) {
-  return (
-    <div
-      className={
-        isValid
-          ? 'flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-primary'
-          : 'flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-destructive'
-      }
-    >
-      {isValid ? <CheckCircle2 className="size-5" /> : <XCircle className="size-5" />}
-      <span className="text-sm font-semibold">
-        {isValid ? t('results.valid') : t('results.invalid')}
-      </span>
-    </div>
-  )
-}
-
 function NodeRow({
   label,
   ok,
@@ -280,14 +308,16 @@ function NodeRow({
     <div className="flex items-center justify-between gap-3">
       <span className="text-muted-foreground">{label}</span>
       <span
-        className={
-          highlight
-            ? ok
-              ? 'font-medium text-primary'
-              : 'font-medium text-destructive'
-            : 'tabular-nums'
-        }
+        className={cn(
+          'inline-flex items-center gap-1.5 font-medium tabular-nums',
+          highlight && (ok ? 'text-primary' : 'text-destructive'),
+        )}
       >
+        {ok ? (
+          <CheckCircle2 className="size-3.5 text-primary" />
+        ) : (
+          <XCircle className="size-3.5 text-muted-foreground" />
+        )}
         {ok ? common('yes') : common('no')}
       </span>
     </div>
@@ -301,7 +331,7 @@ function Callout({
   children,
 }: {
   tone: 'info' | 'error'
-  icon: typeof Info
+  icon: LucideIcon
   title: string
   children: React.ReactNode
 }) {
@@ -311,7 +341,7 @@ function Callout({
       : 'border-primary/30 bg-primary/10 text-primary'
 
   return (
-    <div className={cn('flex items-start gap-2 rounded-lg border p-3', toneClass)}>
+    <div className={cn('flex items-start gap-2 rounded-xl border p-3', toneClass)}>
       <Icon className="mt-0.5 size-4 shrink-0" />
       <div className="space-y-0.5 text-sm">
         <p className="font-medium">{title}</p>

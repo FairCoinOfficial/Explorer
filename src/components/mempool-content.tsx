@@ -15,7 +15,6 @@ import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
 import { HashCell } from '@/components/detail/hash-cell'
-import { RelativeTime } from '@/components/detail/relative-time'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -71,7 +70,7 @@ export default function MempoolContent() {
       />
 
       {/* Stats */}
-      <StatTileGrid className="lg:grid-cols-3">
+      <StatTileGrid className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3">
         <StatTile
           icon={Hash}
           label={t('pendingTransactions')}
@@ -111,12 +110,12 @@ export default function MempoolContent() {
             ))}
           </ul>
         ) : (
-          <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
-            <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <div className="flex flex-col items-center gap-3 px-4 py-14 text-center">
+            <span className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary ring-8 ring-primary/5">
               <Inbox className="size-6" />
             </span>
-            <div>
-              <p className="text-sm font-medium">{t('empty')}</p>
+            <div className="space-y-0.5">
+              <p className="text-sm font-semibold">{t('empty')}</p>
               <p className="text-sm text-muted-foreground">{t('emptyDescription')}</p>
             </div>
           </div>
@@ -153,9 +152,14 @@ function MempoolRow({
 
   return (
     <li className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <Hash className="size-4" />
+      </span>
+
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <HashCell value={tx.txid} to="tx" textClassName="font-medium" />
-        <span className="text-xs text-muted-foreground tabular-nums" title={waiting}>
+        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground tabular-nums" title={waiting}>
+          <Clock className="size-3" />
           {waiting}
         </span>
       </div>
