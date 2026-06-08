@@ -221,26 +221,31 @@ app.get('/api/masternodes', async (req, res) => {
     const BLOCK_REWARD = 10
 
     const [masternodeList, masternodeCount, blockHeight] = await Promise.all([
-      blockCache.getMasternodeList(network, 'full').catch(() => ({})),
-      rpcWithNetwork<Record<string, number>>('masternode', ['count'], network).catch(() => null),
+      blockCache.getMasternodeList(network).catch(() => [] as unknown[]),
+      blockCache.getMasternodeCount(network).catch(() => null),
       blockCache.getBlockCount(network).catch(() => 0),
     ])
 
-    interface MasternodeEntry { txid: string; address: string; protocol: number; status: string; activeTime: number; lastSeen: number; pubkey: string }
+    interface MasternodeEntry { txid: string; outidx: number; address: string; protocol: number; status: string; activeTime: number; lastSeen: number; lastPaid: number; rank: number }
 
-    function parseMasternodeEntry(txid: string, data: unknown): MasternodeEntry {
-      if (typeof data === 'string') {
-        const parts = data.trim().split(/\s+/)
-        return { txid, address: parts[0] || '', protocol: parseInt(parts[1]) || 0, status: parts[2] || 'UNKNOWN', activeTime: parseInt(parts[3]) || 0, lastSeen: parseInt(parts[4]) || 0, pubkey: parts[5] || '' }
+    // FairCoin v3.0.5 `masternodelist` (default mode) returns an array of objects:
+    // { rank, txhash, outidx, status, addr, version, lastseen, activetime, lastpaid }.
+    function parseMasternodeEntry(data: unknown): MasternodeEntry {
+      const obj = (typeof data === 'object' && data !== null ? data : {}) as Record<string, unknown>
+      return {
+        txid: String(obj.txhash ?? ''),
+        outidx: Number(obj.outidx ?? 0),
+        address: String(obj.addr ?? ''),
+        protocol: Number(obj.version ?? 0),
+        status: String(obj.status ?? 'UNKNOWN'),
+        activeTime: Number(obj.activetime ?? 0),
+        lastSeen: Number(obj.lastseen ?? 0),
+        lastPaid: Number(obj.lastpaid ?? 0),
+        rank: Number(obj.rank ?? 0),
       }
-      if (typeof data === 'object' && data !== null) {
-        const obj = data as Record<string, unknown>
-        return { txid, address: String(obj.addr ?? obj.address ?? ''), protocol: Number(obj.version ?? obj.protocol ?? 0), status: String(obj.status ?? 'UNKNOWN'), activeTime: Number(obj.activetime ?? obj.activeTime ?? obj.activeseconds ?? 0), lastSeen: Number(obj.lastseen ?? obj.lastSeen ?? obj.lastpaid ?? 0), pubkey: String(obj.pubkey ?? '') }
-      }
-      return { txid, address: '', protocol: 0, status: 'UNKNOWN', activeTime: 0, lastSeen: 0, pubkey: '' }
     }
 
-    const masternodes = Object.entries(masternodeList).map(([txid, data]) => parseMasternodeEntry(txid, data))
+    const masternodes = (Array.isArray(masternodeList) ? masternodeList : []).map(parseMasternodeEntry)
     const totalSupply = blockHeight > 0 ? blockHeight * BLOCK_REWARD : 33000000
     const totalCollateral = masternodes.length * COLLATERAL_PER_MASTERNODE
     const collateralPercentage = totalSupply > 0 ? (totalCollateral / totalSupply) * 100 : 0
@@ -285,21 +290,30 @@ app.get('/api/stats', async (req, res) => {
   try {
     const network = parseNetwork(req.query.network)
     const BLOCK_REWARD = 10
-    const [blockHeight, blockchainInfo, miningInfo, mempoolInfo, networkInfo, masternodeList] = await Promise.all([
+    const [blockHeight, blockchainInfo, miningInfo, mempoolInfo, networkInfo, masternodeCountRpc] = await Promise.all([
       blockCache.getBlockCount(network).catch(() => 0),
       blockCache.get<Record<string, unknown>>('getblockchaininfo', [], { network, ttl: 300 }).catch(() => null),
       blockCache.getMiningInfo(network).catch(() => null),
       blockCache.getMempoolInfo(network).catch(() => null),
       blockCache.getNetworkInfo(network).catch(() => null),
-      blockCache.getMasternodeList(network).catch(() => ({}))
+      // Use the cheap `masternode count` RPC ({ total, enabled }); never the heavy
+      // `masternodelist` full dump, which hangs and would stall this endpoint.
+      blockCache.getMasternodeCount(network).catch(() => null)
     ])
     const latestBlock = blockHeight > 0 ? await blockCache.getBlock(blockHeight, network, true).catch(() => null) : null
     const totalSupply = blockHeight > 0 ? blockHeight * BLOCK_REWARD : 0
-    const masternodeCount = typeof masternodeList === 'object' ? Object.keys(masternodeList).length : 0
+    // Report enabled (online) masternodes, falling back to total when the daemon
+    // omits the enabled tally.
+    const masternodeCount = masternodeCountRpc?.enabled ?? masternodeCountRpc?.total ?? 0
     const difficulty = miningInfo?.difficulty || 0
     const phase = blockHeight > 10000 ? 'PoS' : 'PoW'
     const hashrate = phase === 'PoW' ? ((miningInfo as Record<string, number>)?.networkhashps || (difficulty as number) * Math.pow(2, 32) / 120) : 0
 
+    // networkWeight / stakePercentage: FairCoin v3.0.0's daemon exposes no
+    // network stake-weight figure — `getstakinginfo` does not exist on this build
+    // (see BlockCache.getStakingInfo) and `getmininginfo` carries no
+    // netstakeweight field. Reported as 0 rather than fabricated until a real RPC
+    // source is available.
     const stats = {
       blockHeight, difficulty, hashrate, totalSupply, circulatingSupply: totalSupply,
       avgBlockTime: 120, memPoolSize: mempoolInfo?.size || 0,

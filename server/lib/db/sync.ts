@@ -182,7 +182,23 @@ export async function getBlockFromCache(height: number): Promise<Record<string, 
 export async function getTransactionFromCache(txid: string): Promise<Record<string, unknown> | null> {
   try {
     await connectToDatabase()
-    return await Transaction.findOne({ txid }).lean()
+    const tx = await Transaction.findOne({ txid }).lean<Record<string, unknown> | null>()
+    if (!tx) {
+      return null
+    }
+
+    // `confirmations` is a live value (it grows with every new block), so the
+    // value captured at sync time is stale the moment the chain advances. Never
+    // serve the stored number — recompute it from the current height so this
+    // indexed read path stays consistent with the live RPC path in cache.ts.
+    const blockheight = typeof tx.blockheight === 'number' ? tx.blockheight : null
+    if (blockheight === null || !tx.blockhash) {
+      // Not yet mined (or height unknown): unconfirmed.
+      return { ...tx, confirmations: 0 }
+    }
+
+    const currentHeight = await getBlockCount()
+    return { ...tx, confirmations: Math.max(currentHeight - blockheight + 1, 1) }
   } catch (error) {
     console.error('Error getting transaction from cache:', error)
     return null

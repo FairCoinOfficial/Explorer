@@ -36,6 +36,16 @@ interface CachedData {
 /** Extra seconds past a document's logical TTL before Mongo physically removes it. */
 const TTL_INDEX_GRACE_SECONDS = 3600
 
+/**
+ * Shape returned by the FairCoin `masternode count` RPC. Fields beyond `total`
+ * and `enabled` (e.g. `inqueue`, `ipv4`) vary by build and are not relied upon.
+ */
+export interface MasternodeCount {
+  total?: number
+  enabled?: number
+  inqueue?: number
+}
+
 export class BlockchainCache {
   private db: Db | null = null
   private client: MongoClient | null = null
@@ -74,11 +84,11 @@ export class BlockchainCache {
     }
   }
 
-  private getCacheKey(method: string, params: any[], network: NetworkType) {
+  protected getCacheKey(method: string, params: any[], network: NetworkType) {
     return `${network}:${method}:${JSON.stringify(params)}`
   }
 
-  private isExpired(cachedData: CachedData): boolean {
+  protected isExpired(cachedData: CachedData): boolean {
     const now = Date.now()
     return now - cachedData.timestamp > cachedData.ttl * 1000
   }
@@ -128,7 +138,7 @@ export class BlockchainCache {
    * Run an RPC call de-duplicated by cache key: if an identical call is already
    * in flight, await the existing promise instead of issuing a second request.
    */
-  private async fetchSingleFlight<T>(
+  protected async fetchSingleFlight<T>(
     cacheKey: string,
     method: string,
     params: RpcParam[],
@@ -188,6 +198,36 @@ export class BlockchainCache {
 /** Freshness window for the precomputed recent-blocks list. */
 const RECENT_BLOCKS_TTL_MS = 30_000
 
+/**
+ * TTL for a transaction that is still in the mempool (no `blockhash` yet). Kept
+ * short so the cached "unconfirmed" snapshot is replaced within seconds of the
+ * tx being mined — never the hour-long window that previously made confirmed
+ * transactions read as unconfirmed.
+ */
+const UNCONFIRMED_TX_TTL_SECONDS = 20
+
+/**
+ * TTL for a confirmed transaction. The immutable body (vin/vout/hex/blockhash)
+ * never changes once mined, so it is safe to cache for a long time. The volatile
+ * `confirmations` count is NOT trusted from this cache — it is always recomputed
+ * live from the current block height (see {@link BlockCache.getTransaction}).
+ */
+const CONFIRMED_TX_TTL_SECONDS = 3600
+
+/**
+ * Shape of the fields `getrawtransaction <txid> true` returns that the explorer
+ * derives confirmation state from. Everything else on the verbose result is
+ * passed through untouched.
+ */
+interface RawTransactionConfirmationFields {
+  blockhash?: string
+  blockheight?: number
+  height?: number
+  confirmations?: number | null
+  time?: number
+  blocktime?: number
+}
+
 // Block-specific caching with different TTLs
 export class BlockCache extends BlockchainCache {
   async getBlock(hashOrHeight: string | number, network: NetworkType, verbose: boolean = true) {
@@ -203,8 +243,159 @@ export class BlockCache extends BlockchainCache {
     }
   }
 
+  /**
+   * Fetch a verbose transaction with correct confirmation state.
+   *
+   * Two correctness rules drive this, both of which the previous blanket
+   * 1-hour cache violated:
+   *
+   *  1. A transaction first seen in the mempool has no `blockhash` and a null
+   *     `confirmations`. That snapshot must NOT be pinned for an hour, or the tx
+   *     keeps reading as "unconfirmed" long after it is mined. We cache the
+   *     mempool snapshot for only {@link UNCONFIRMED_TX_TTL_SECONDS} so it
+   *     refreshes within seconds of confirmation; once a `blockhash` is present
+   *     the immutable body is cached for {@link CONFIRMED_TX_TTL_SECONDS}.
+   *
+   *  2. `confirmations` is a live value (`currentHeight - blockheight + 1`) that
+   *     must never be served from a long-lived cache. We always recompute it (and
+   *     refresh `blockheight`/`time`/`blocktime` from the verbose result) at
+   *     request time using the 30s-cached block height, so a long-cached
+   *     confirmed body still reports an accurate, monotonically growing count.
+   *
+   * The cache is read/written directly here (rather than via {@link get}) because
+   * the TTL must be chosen AFTER fetching, based on whether the tx is confirmed.
+   */
   async getTransaction(txid: string, network: NetworkType, verbose: boolean = true) {
-    return await this.get<any>('getrawtransaction', [txid, verbose], { network, ttl: 3600 }) // 1 hour for transactions
+    assertValidNetwork(network)
+
+    // Non-verbose callers just want the raw hex string; it never carries
+    // confirmation state, so the plain cache path is correct for them.
+    if (!verbose) {
+      return await this.get<any>('getrawtransaction', [txid, verbose], { network, ttl: CONFIRMED_TX_TTL_SECONDS })
+    }
+
+    const db = await this.getDb()
+    const collection = db.collection('cache')
+    const cacheKey = this.getCacheKey('getrawtransaction', [txid, verbose], network)
+
+    let tx: (Record<string, unknown> & RawTransactionConfirmationFields) | null = null
+
+    try {
+      const cached = await collection.findOne({ _id: cacheKey } as any)
+      if (cached && !this.isExpired(cached as any)) {
+        tx = cached.data
+      }
+    } catch (error) {
+      console.error(`Error reading cached transaction ${txid}:`, error)
+    }
+
+    if (!tx) {
+      tx = await this.fetchSingleFlight<Record<string, unknown> & RawTransactionConfirmationFields>(
+        cacheKey,
+        'getrawtransaction',
+        [txid, verbose],
+        network,
+      )
+
+      // FairCoin's `getrawtransaction verbose` returns `blockhash` but NOT the
+      // block height. Resolve the height once (from the long-cached block) and
+      // persist it on the cached body so live-confirmation math works without a
+      // per-request block lookup. Mempool txs have no blockhash and are skipped.
+      if (tx?.blockhash && typeof tx.blockheight !== 'number') {
+        const resolved = await this.resolveBlockHeight(tx.blockhash, network)
+        if (resolved !== null) {
+          tx.blockheight = resolved
+        }
+      }
+
+      // A confirmed tx (has a blockhash) is immutable except for `confirmations`,
+      // so it is safe to cache long; a mempool tx must expire quickly.
+      const ttlSeconds = tx?.blockhash ? CONFIRMED_TX_TTL_SECONDS : UNCONFIRMED_TX_TTL_SECONDS
+      try {
+        const now = Date.now()
+        await collection.replaceOne(
+          { _id: cacheKey } as any,
+          {
+            _id: cacheKey,
+            data: tx,
+            timestamp: now,
+            ttl: ttlSeconds,
+            expiresAt: new Date(now + ttlSeconds * 1000),
+            network,
+          } as any,
+          { upsert: true },
+        )
+      } catch (error) {
+        console.error(`Error caching transaction ${txid}:`, error)
+      }
+    }
+
+    return await this.withLiveConfirmations(tx, network)
+  }
+
+  /**
+   * Overlay live confirmation state onto a (possibly long-cached) verbose tx.
+   * Returns a shallow copy so the cached object is never mutated in place.
+   *
+   *  - Unconfirmed (no `blockhash`): `confirmations` is 0 and block fields stay null.
+   *  - Confirmed: `confirmations = currentHeight - blockheight + 1`, computed from
+   *    the 30s-cached block height, clamped to at least 1.
+   */
+  private async withLiveConfirmations(
+    tx: (Record<string, unknown> & RawTransactionConfirmationFields) | null,
+    network: NetworkType,
+  ): Promise<Record<string, unknown> | null> {
+    if (!tx) {
+      return tx
+    }
+
+    if (!tx.blockhash) {
+      return { ...tx, confirmations: 0 }
+    }
+
+    // Prefer the height persisted at fetch time; tolerate a `height` alias; as a
+    // last resort resolve it from the blockhash (covers bodies cached before the
+    // height was persisted). FairCoin's verbose tx itself carries no height.
+    let blockheight = typeof tx.blockheight === 'number' ? tx.blockheight : tx.height
+    if (typeof blockheight !== 'number') {
+      const resolved = await this.resolveBlockHeight(tx.blockhash, network)
+      if (resolved !== null) {
+        blockheight = resolved
+      }
+    }
+
+    if (typeof blockheight !== 'number') {
+      // Confirmed but height unresolvable: fall back to the daemon's own count
+      // rather than inventing one.
+      return { ...tx, confirmations: typeof tx.confirmations === 'number' ? tx.confirmations : 1 }
+    }
+
+    let currentHeight = 0
+    try {
+      currentHeight = await this.getBlockCount(network)
+    } catch (error) {
+      console.error('Error fetching block height for live confirmations:', error)
+      return { ...tx, blockheight, confirmations: typeof tx.confirmations === 'number' ? tx.confirmations : 1 }
+    }
+
+    const confirmations = Math.max(currentHeight - blockheight + 1, 1)
+    return { ...tx, blockheight, confirmations }
+  }
+
+  /**
+   * Resolve a block's height from its hash via the long-cached `getblock`.
+   * Returns null if the block cannot be fetched. Used to derive a confirmed
+   * transaction's height, since FairCoin's verbose `getrawtransaction` omits it.
+   */
+  private async resolveBlockHeight(blockhash: string, network: NetworkType): Promise<number | null> {
+    try {
+      const block = await this.getBlock(blockhash, network, true)
+      const height = (block as { height?: unknown } | null)?.height
+      return typeof height === 'number' ? height : null
+    } catch (error) {
+      console.error(`Error resolving height for block ${blockhash}:`, error)
+      return null
+    }
   }
 
   async getBlockCount(network: NetworkType) {
@@ -223,8 +414,40 @@ export class BlockCache extends BlockchainCache {
     return await this.get<any>('validateaddress', [address], { network, ttl: 86400 }) // 24 hours for address validation
   }
 
-  async getMasternodeList(network: NetworkType, mode: string = 'full'): Promise<any> {
-    return this.get('masternodelist', [mode], { network, ttl: 3600 }) // 1 hour TTL for masternode list
+  /**
+   * Full masternode list as an array of
+   * `{ rank, txhash, outidx, status, addr, version, lastseen, activetime, lastpaid }`.
+   *
+   * IMPORTANT: FairCoin's `masternodelist` takes an optional search FILTER
+   * (partial match on txhash/status/addr) as its first positional arg — NOT a
+   * Dash-style mode. Passing `'full'` is interpreted as a filter that matches no
+   * node and returns an empty array. We therefore call it with no filter to get
+   * every masternode. A caller-supplied `filter` is forwarded only when non-empty.
+   *
+   * The historical hang that motivated avoiding this call only affected
+   * /api/stats, which shared this cache key; /api/stats now uses the cheap
+   * {@link getMasternodeCount} instead, so the detailed list is safe to fetch here.
+   */
+  async getMasternodeList(network: NetworkType, filter: string = ''): Promise<any> {
+    const params = filter ? [filter] : []
+    return this.get('masternodelist', params, { network, ttl: 600 }) // 10 min TTL for masternode list
+  }
+
+  /**
+   * Cheap masternode tally via the `masternode count` RPC, which returns
+   * `{ total, enabled, ... }` directly from the in-memory masternode manager.
+   *
+   * This is what /api/stats uses for its masternode count: it is effectively free
+   * and never touches the heavier `masternodelist` array, keeping the stats
+   * endpoint fast and isolated from the list call's cost.
+   */
+  async getMasternodeCount(network: NetworkType): Promise<MasternodeCount | null> {
+    try {
+      return await this.get<MasternodeCount>('masternode', ['count'], { network, ttl: 60 })
+    } catch {
+      // `masternode count` is unavailable on this node/network.
+      return null
+    }
   }
 
   async getMempoolInfo(network: NetworkType): Promise<any> {
