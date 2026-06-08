@@ -9,7 +9,7 @@ export const WFAIR_CONFIG = {
   basescanUrl: 'https://basescan.org/address/0xF2853CedDF47A05Fee0B4b24DFf2925d59737fb3',
   bridgeApiUrl: 'https://bridge.fairco.in/api/bridge/reserves',
   landingUrl: 'https://fairco.in/',
-  buyUrl: 'https://buy.fairco.in/',
+  buyUrl: 'https://fairco.in/buy',
   /** Uniswap UI page for the WFAIR/USDC pool — where "View market" points. */
   poolUrl: `https://app.uniswap.org/explore/pools/base/${WFAIR_USDC_POOL_ADDRESS}`,
   repoUrl: 'https://github.com/FairCoinOfficial/faircoin-bridge',

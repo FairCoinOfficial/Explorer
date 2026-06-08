@@ -43,7 +43,7 @@ const WFAIR_DECIMALS = 18
 
 /** External destinations surfaced to the user; named to avoid bare magic URLs. */
 const BRIDGE_LINKS = {
-  buy: 'https://buy.fairco.in',
+  buy: 'https://fairco.in/buy',
   unwrap: 'https://fairco.in/unwrap',
 } as const
 

@@ -373,7 +373,7 @@ export function SiteHeader() {
           <ThemeToggle />
 
           <a
-            href="https://buy.fairco.in/"
+            href="https://fairco.in/buy"
             target="_blank"
             rel="noreferrer"
             className="hidden sm:flex items-center gap-1.5 h-9 px-4 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
