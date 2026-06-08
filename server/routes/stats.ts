@@ -19,14 +19,16 @@ export default async function statsRoute(req: Request, res: Response) {
       miningInfo,
       mempoolInfo,
       networkInfo,
-      masternodeList
+      masternodeCountRpc
     ] = await Promise.all([
       blockCache.getBlockCount(network).catch(() => 0),
       blockCache.get<Record<string, unknown>>('getblockchaininfo', [], { network, ttl: 300 }).catch(() => null),
       blockCache.getMiningInfo(network).catch(() => null),
       blockCache.getMempoolInfo(network).catch(() => null),
       blockCache.getNetworkInfo(network).catch(() => null),
-      blockCache.getMasternodeList(network).catch(() => ({}))
+      // Cheap `masternode count` RPC ({ total, enabled }); never the heavy
+      // `masternodelist` full dump, which hangs and would stall this endpoint.
+      blockCache.getMasternodeCount(network).catch(() => null)
     ])
 
     // Get latest block info from cache
@@ -47,7 +49,9 @@ export default async function statsRoute(req: Request, res: Response) {
       if (remaining > 0) totalSupply += remaining * MIN_REWARD
     }
     const circulatingSupply = totalSupply
-    const masternodeCount = typeof masternodeList === 'object' ? Object.keys(masternodeList).length : 0
+    // Report enabled (online) masternodes, falling back to total when the daemon
+    // omits the enabled tally.
+    const masternodeCount = masternodeCountRpc?.enabled ?? masternodeCountRpc?.total ?? 0
     const avgBlockTime = 120 // FairCoin target block time (2 minutes)
     
     // Determine current phase (PoW blocks 1-10000 mainnet / 1-200 testnet, then PoS)
@@ -65,6 +69,8 @@ export default async function statsRoute(req: Request, res: Response) {
     const currentBlockReward = Math.max(BLOCK_REWARD / Math.pow(2, halvings), MIN_REWARD)
     const masternodeReward = currentBlockReward / 2 // MN gets 50% of block reward
     const stakingRewards = currentBlockReward
+    // No stake-weight RPC on FairCoin v3.0.0 (getstakinginfo absent, getmininginfo
+    // has no netstakeweight). Reported as 0 rather than fabricated. See index.ts.
     const stakePercentage = 0
 
     const txField = latestBlock?.tx

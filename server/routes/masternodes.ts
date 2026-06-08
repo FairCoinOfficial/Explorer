@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { rpcWithNetwork, type NetworkType } from '@fairco.in/rpc-client'
+import { type NetworkType } from '@fairco.in/rpc-client'
 import { blockCache } from '../lib/cache'
 
 // FairCoin v3.0.0 masternode collateral (MASTER_NODE_AMOUNT in protocol.h)
@@ -19,45 +19,19 @@ interface MasternodeEntry {
 }
 
 /**
- * Parse masternode list entries.
- * DASH-format returns space-delimited strings per entry.
- * PIVX-format (FairCoin v3.0.0) may return JSON objects per entry.
- * This handles both gracefully.
+ * Parse a masternode list entry.
+ * FairCoin's `masternodelist` (no filter) returns an array of objects:
+ * `{ rank, txhash, outidx, status, addr, version, lastseen, activetime, lastpaid }`.
  */
-function parseMasternodeEntry(txid: string, data: unknown): MasternodeEntry {
-  if (typeof data === 'string') {
-    const parts = data.trim().split(/\s+/)
-    return {
-      txid,
-      address: parts[0] || '',
-      protocol: parseInt(parts[1]) || 0,
-      status: parts[2] || 'UNKNOWN',
-      activeTime: parseInt(parts[3]) || 0,
-      lastSeen: parseInt(parts[4]) || 0,
-      pubkey: parts[5] || '',
-    }
-  }
-
-  if (typeof data === 'object' && data !== null) {
-    const obj = data as Record<string, unknown>
-    return {
-      txid,
-      address: String(obj.addr ?? obj.address ?? ''),
-      protocol: Number(obj.version ?? obj.protocol ?? 0),
-      status: String(obj.status ?? 'UNKNOWN'),
-      activeTime: Number(obj.activetime ?? obj.activeTime ?? obj.activeseconds ?? 0),
-      lastSeen: Number(obj.lastseen ?? obj.lastSeen ?? obj.lastpaid ?? 0),
-      pubkey: String(obj.pubkey ?? ''),
-    }
-  }
-
+function parseMasternodeEntry(data: unknown): MasternodeEntry {
+  const obj = (typeof data === 'object' && data !== null ? data : {}) as Record<string, unknown>
   return {
-    txid,
-    address: '',
-    protocol: 0,
-    status: 'UNKNOWN',
-    activeTime: 0,
-    lastSeen: 0,
+    txid: String(obj.txhash ?? ''),
+    address: String(obj.addr ?? ''),
+    protocol: Number(obj.version ?? 0),
+    status: String(obj.status ?? 'UNKNOWN'),
+    activeTime: Number(obj.activetime ?? 0),
+    lastSeen: Number(obj.lastseen ?? 0),
     pubkey: '',
   }
 }
@@ -65,19 +39,21 @@ function parseMasternodeEntry(txid: string, data: unknown): MasternodeEntry {
 export default async function masternodesRoute(req: Request, res: Response) {
   try {
     const network = (req.query.network as string || 'mainnet') as NetworkType
-    
+
     const [
       masternodeList,
       masternodeCount,
       blockHeight,
     ] = await Promise.all([
-      blockCache.getMasternodeList(network, 'full').catch(() => ({})),
-      rpcWithNetwork<Record<string, number>>('masternode', ['count'], network).catch(() => null),
+      // No filter → full array of masternodes (passing 'full' would be treated as
+      // a search filter that matches nothing). See BlockCache.getMasternodeList.
+      blockCache.getMasternodeList(network).catch(() => [] as unknown[]),
+      blockCache.getMasternodeCount(network).catch(() => null),
       blockCache.getBlockCount(network).catch(() => 0),
     ])
 
-    const masternodes: MasternodeEntry[] = Object.entries(masternodeList).map(
-      ([txid, data]: [string, unknown]) => parseMasternodeEntry(txid, data)
+    const masternodes: MasternodeEntry[] = (Array.isArray(masternodeList) ? masternodeList : []).map(
+      (data: unknown) => parseMasternodeEntry(data)
     )
 
     const totalSupply = blockHeight > 0 ? blockHeight * BLOCK_REWARD : 33000000
