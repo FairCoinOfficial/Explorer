@@ -85,6 +85,7 @@ function targetFromResponse(data: SearchResponse): SearchTarget | null {
 }
 
 function ThemeToggle() {
+  const t = useTranslations('header')
   const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'))
 
   const toggle = () => {
@@ -98,7 +99,7 @@ function ThemeToggle() {
     <button
       onClick={toggle}
       className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-muted transition-colors cursor-pointer"
-      aria-label="Toggle theme"
+      aria-label={t('toggleTheme')}
     >
       {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </button>

@@ -18,6 +18,7 @@
   "sidebar.expandSidebar": "Expand sidebar",
   "header.searchPlaceholder": "ブロック、トランザクション、アドレスを検索...",
   "header.searchBlockchain": "Search blockchain",
+  "header.toggleTheme": "テーマを切り替え",
   "header.searching": "検索中...",
   "header.noResults": "No results for \"{query}\"",
   "header.noResultsFound": "結果が見つかりません",
@@ -213,6 +214,9 @@
   "address.tryAgain": "Try Again",
   "address.notFound": "Address information not found",
   "address.refresh": "Refresh",
+  "address.previous": "前へ",
+  "address.next": "次へ",
+  "address.pageOf": "{total}ページ中{page}ページ目",
   "stats.title": "Network Statistics",
   "stats.subtitle": "Comprehensive FairCoin blockchain analytics and metrics",
   "stats.loading": "Loading network statistics...",
@@ -898,5 +902,11 @@
   "bridge.repoDesc": "オープンソースのブリッジ実装",
   "bridge.footnote": "WFAIR は Base 上の ERC-20 トークンです（チェーン ID {chainId}）。チェーンの読み取りは公開 Base RPC、保管スナップショットはブリッジサービスから取得します。",
   "bridge.reservesUnavailableTitle": "準備金を取得できません",
-  "bridge.reservesUnavailableBody": "ブリッジの準備金サービスに現在接続できません。オンラインに戻るとペグ監視が再開されます。"
+  "bridge.reservesUnavailableBody": "ブリッジの準備金サービスに現在接続できません。オンラインに戻るとペグ監視が再開されます。",
+  "txIndex.subtitle": "FairCoinのトランザクションを検索・探索",
+  "txIndex.lookupTitle": "トランザクション検索",
+  "txIndex.txidLabel": "トランザクションID",
+  "txIndex.txidPlaceholder": "トランザクションIDを入力...",
+  "txIndex.searchButton": "トランザクションを検索",
+  "txIndex.browseHint": "またはホームページで最新ブロックを閲覧"
 }

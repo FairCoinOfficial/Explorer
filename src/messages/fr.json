@@ -18,6 +18,7 @@
   "sidebar.expandSidebar": "Agrandir la barre latérale",
   "header.searchPlaceholder": "Rechercher blocs, transactions, adresses...",
   "header.searchBlockchain": "Rechercher dans la blockchain",
+  "header.toggleTheme": "Changer de thème",
   "header.searching": "Recherche en cours...",
   "header.noResults": "Aucun résultat pour \"{query}\"",
   "header.noResultsFound": "Aucun résultat trouvé",
@@ -213,6 +214,9 @@
   "address.tryAgain": "Try Again",
   "address.notFound": "Address information not found",
   "address.refresh": "Refresh",
+  "address.previous": "Précédent",
+  "address.next": "Suivant",
+  "address.pageOf": "Page {page} sur {total}",
   "stats.title": "Network Statistics",
   "stats.subtitle": "Comprehensive FairCoin blockchain analytics and metrics",
   "stats.loading": "Loading network statistics...",
@@ -898,5 +902,11 @@
   "bridge.repoDesc": "Implémentation open source du pont",
   "bridge.footnote": "WFAIR est un jeton ERC-20 sur Base (ID de chaîne {chainId}). Les lectures on-chain proviennent de RPC Base publics ; les instantanés de garde, du service du pont.",
   "bridge.reservesUnavailableTitle": "Réserves indisponibles",
-  "bridge.reservesUnavailableBody": "Le service de réserves du pont est injoignable pour le moment. Le suivi de la parité reprendra dès son retour en ligne."
+  "bridge.reservesUnavailableBody": "Le service de réserves du pont est injoignable pour le moment. Le suivi de la parité reprendra dès son retour en ligne.",
+  "txIndex.subtitle": "Rechercher et explorer les transactions FairCoin",
+  "txIndex.lookupTitle": "Recherche de transaction",
+  "txIndex.txidLabel": "ID de transaction",
+  "txIndex.txidPlaceholder": "Saisissez un ID de transaction...",
+  "txIndex.searchButton": "Rechercher la transaction",
+  "txIndex.browseHint": "Ou parcourez les blocs récents sur la page d'accueil"
 }

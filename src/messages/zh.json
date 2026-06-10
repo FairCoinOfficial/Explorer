@@ -18,6 +18,7 @@
   "sidebar.expandSidebar": "Expand sidebar",
   "header.searchPlaceholder": "搜索区块、交易、地址...",
   "header.searchBlockchain": "Search blockchain",
+  "header.toggleTheme": "切换主题",
   "header.searching": "搜索中...",
   "header.noResults": "No results for \"{query}\"",
   "header.noResultsFound": "未找到结果",
@@ -213,6 +214,9 @@
   "address.tryAgain": "Try Again",
   "address.notFound": "Address information not found",
   "address.refresh": "Refresh",
+  "address.previous": "上一页",
+  "address.next": "下一页",
+  "address.pageOf": "第 {page} 页，共 {total} 页",
   "stats.title": "Network Statistics",
   "stats.subtitle": "Comprehensive FairCoin blockchain analytics and metrics",
   "stats.loading": "Loading network statistics...",
@@ -898,5 +902,11 @@
   "bridge.repoDesc": "开源跨链桥实现",
   "bridge.footnote": "WFAIR 是 Base 上的 ERC-20 代币（链 ID {chainId}）。链上读取来自公共 Base RPC；托管快照来自跨链桥服务。",
   "bridge.reservesUnavailableTitle": "储备不可用",
-  "bridge.reservesUnavailableBody": "跨链桥储备服务目前无法访问。服务恢复后将重新开始锚定监控。"
+  "bridge.reservesUnavailableBody": "跨链桥储备服务目前无法访问。服务恢复后将重新开始锚定监控。",
+  "txIndex.subtitle": "搜索和浏览FairCoin交易",
+  "txIndex.lookupTitle": "交易查询",
+  "txIndex.txidLabel": "交易ID",
+  "txIndex.txidPlaceholder": "输入交易ID...",
+  "txIndex.searchButton": "搜索交易",
+  "txIndex.browseHint": "或在首页浏览最新区块"
 }

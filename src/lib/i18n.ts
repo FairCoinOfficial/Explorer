@@ -53,6 +53,11 @@ let currentLocale: Locale = (() => {
   return DEFAULT_LOCALE
 })()
 
+// Keep <html lang> in sync with the active locale (a11y + SEO).
+if (typeof document !== 'undefined') {
+  document.documentElement.lang = currentLocale
+}
+
 const listeners = new Set<() => void>()
 
 function emitChange() {
@@ -74,6 +79,7 @@ export function setLocale(locale: Locale): void {
   if (locale === currentLocale) return
   currentLocale = locale
   localStorage.setItem(STORAGE_KEY, locale)
+  document.documentElement.lang = locale
   emitChange()
 }
 
@@ -104,10 +110,10 @@ export function useTranslations(namespace?: string): (key: string, params?: Reco
 
       let value = getNestedValue(messages, fullKey) ?? getNestedValue(fallback, fullKey) ?? fullKey
 
-      // Interpolate {param} placeholders
+      // Interpolate {param} placeholders (literal replacement, no regex pitfalls)
       if (params) {
         for (const [paramKey, paramValue] of Object.entries(params)) {
-          value = value.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(paramValue))
+          value = value.split(`{${paramKey}}`).join(String(paramValue))
         }
       }
 

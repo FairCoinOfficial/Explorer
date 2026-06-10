@@ -18,6 +18,7 @@
   "sidebar.expandSidebar": "Seitenleiste ausklappen",
   "header.searchPlaceholder": "Blöcke, Transaktionen, Adressen suchen...",
   "header.searchBlockchain": "Blockchain durchsuchen",
+  "header.toggleTheme": "Design umschalten",
   "header.searching": "Suche läuft...",
   "header.noResults": "Keine Ergebnisse für \"{query}\"",
   "header.noResultsFound": "Keine Ergebnisse gefunden",
@@ -213,6 +214,9 @@
   "address.tryAgain": "Try Again",
   "address.notFound": "Address information not found",
   "address.refresh": "Refresh",
+  "address.previous": "Zurück",
+  "address.next": "Weiter",
+  "address.pageOf": "Seite {page} von {total}",
   "stats.title": "Network Statistics",
   "stats.subtitle": "Comprehensive FairCoin blockchain analytics and metrics",
   "stats.loading": "Loading network statistics...",
@@ -898,5 +902,11 @@
   "bridge.repoDesc": "Open-Source-Implementierung der Bridge",
   "bridge.footnote": "WFAIR ist ein ERC-20-Token auf Base (Chain-ID {chainId}). Chain-Daten stammen von öffentlichen Base-RPCs; Verwahr-Snapshots vom Bridge-Dienst.",
   "bridge.reservesUnavailableTitle": "Reserven nicht verfügbar",
-  "bridge.reservesUnavailableBody": "Der Reserven-Dienst der Bridge ist derzeit nicht erreichbar. Die Peg-Überwachung wird fortgesetzt, sobald er wieder online ist."
+  "bridge.reservesUnavailableBody": "Der Reserven-Dienst der Bridge ist derzeit nicht erreichbar. Die Peg-Überwachung wird fortgesetzt, sobald er wieder online ist.",
+  "txIndex.subtitle": "FairCoin-Transaktionen suchen und erkunden",
+  "txIndex.lookupTitle": "Transaktionssuche",
+  "txIndex.txidLabel": "Transaktions-ID",
+  "txIndex.txidPlaceholder": "Transaktions-ID eingeben...",
+  "txIndex.searchButton": "Transaktion suchen",
+  "txIndex.browseHint": "Oder aktuelle Blöcke auf der Startseite durchsuchen"
 }

@@ -18,6 +18,7 @@
   "sidebar.expandSidebar": "Expandir barra lateral",
   "header.searchPlaceholder": "Buscar bloques, transacciones, direcciones...",
   "header.searchBlockchain": "Buscar en la blockchain",
+  "header.toggleTheme": "Cambiar tema",
   "header.searching": "Buscando...",
   "header.noResults": "Sin resultados para \"{query}\"",
   "header.noResultsFound": "No se encontraron resultados",
@@ -213,6 +214,9 @@
   "address.tryAgain": "Reintentar",
   "address.notFound": "Información de dirección no encontrada",
   "address.refresh": "Actualizar",
+  "address.previous": "Anterior",
+  "address.next": "Siguiente",
+  "address.pageOf": "Página {page} de {total}",
   "stats.title": "Estadísticas de red",
   "stats.subtitle": "Análisis y métricas completas de la blockchain FairCoin",
   "stats.loading": "Cargando estadísticas de red...",
@@ -898,5 +902,11 @@
   "bridge.repoDesc": "Implementación de código abierto del puente",
   "bridge.footnote": "WFAIR es un token ERC-20 en Base (ID de cadena {chainId}). Las lecturas de cadena vienen de RPC públicos de Base; las instantáneas de custodia, del servicio del puente.",
   "bridge.reservesUnavailableTitle": "Reservas no disponibles",
-  "bridge.reservesUnavailableBody": "El servicio de reservas del puente no está accesible ahora mismo. La supervisión de la paridad se reanudará cuando vuelva a estar en línea."
+  "bridge.reservesUnavailableBody": "El servicio de reservas del puente no está accesible ahora mismo. La supervisión de la paridad se reanudará cuando vuelva a estar en línea.",
+  "txIndex.subtitle": "Busca y explora transacciones de FairCoin",
+  "txIndex.lookupTitle": "Búsqueda de transacción",
+  "txIndex.txidLabel": "ID de transacción",
+  "txIndex.txidPlaceholder": "Introduce un ID de transacción...",
+  "txIndex.searchButton": "Buscar transacción",
+  "txIndex.browseHint": "O explora los bloques recientes en la página de inicio"
 }

@@ -18,6 +18,7 @@
   "sidebar.expandSidebar": "Expand sidebar",
   "header.searchPlaceholder": "Поиск блоков, транзакций, адресов...",
   "header.searchBlockchain": "Search blockchain",
+  "header.toggleTheme": "Переключить тему",
   "header.searching": "Поиск...",
   "header.noResults": "No results for \"{query}\"",
   "header.noResultsFound": "Результаты не найдены",
@@ -213,6 +214,9 @@
   "address.tryAgain": "Try Again",
   "address.notFound": "Address information not found",
   "address.refresh": "Refresh",
+  "address.previous": "Назад",
+  "address.next": "Далее",
+  "address.pageOf": "Страница {page} из {total}",
   "stats.title": "Network Statistics",
   "stats.subtitle": "Comprehensive FairCoin blockchain analytics and metrics",
   "stats.loading": "Loading network statistics...",
@@ -898,5 +902,11 @@
   "bridge.repoDesc": "Открытая реализация моста",
   "bridge.footnote": "WFAIR — токен ERC-20 на Base (ID сети {chainId}). Чтение цепочки идёт через публичные RPC Base; снимки хранения — от службы моста.",
   "bridge.reservesUnavailableTitle": "Резервы недоступны",
-  "bridge.reservesUnavailableBody": "Служба резервов моста сейчас недоступна. Мониторинг привязки возобновится, когда она снова будет в сети."
+  "bridge.reservesUnavailableBody": "Служба резервов моста сейчас недоступна. Мониторинг привязки возобновится, когда она снова будет в сети.",
+  "txIndex.subtitle": "Поиск и просмотр транзакций FairCoin",
+  "txIndex.lookupTitle": "Поиск транзакции",
+  "txIndex.txidLabel": "ID транзакции",
+  "txIndex.txidPlaceholder": "Введите ID транзакции...",
+  "txIndex.searchButton": "Найти транзакцию",
+  "txIndex.browseHint": "Или просмотрите последние блоки на главной странице"
 }
