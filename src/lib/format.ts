@@ -1,9 +1,20 @@
 // Compact, locale-aware formatters shared across the home dashboard.
 
+import { getLocale, type Locale } from './i18n'
+
+/**
+ * Map our Locale code to a BCP 47 tag for Intl.NumberFormat. The locale codes
+ * happen to be valid BCP 47 already (en, es, fr, de, ru, zh, ja, ko), but route
+ * through this helper so a future tag like `pt-BR` only changes here.
+ */
+function intlTag(locale: Locale): string {
+  return locale
+}
+
 /** Abbreviate large numbers (e.g. 1.23M, 4.5K) with a sensible precision. */
 export function formatCompactNumber(value: number, maximumFractionDigits = 2): string {
   if (!Number.isFinite(value)) return '—'
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat(intlTag(getLocale()), {
     notation: 'compact',
     maximumFractionDigits,
   }).format(value)
@@ -12,7 +23,7 @@ export function formatCompactNumber(value: number, maximumFractionDigits = 2): s
 /** Full grouped integer/decimal formatting (e.g. 11,790). */
 export function formatNumber(value: number, maximumFractionDigits = 0): string {
   if (!Number.isFinite(value)) return '—'
-  return new Intl.NumberFormat('en-US', { maximumFractionDigits }).format(value)
+  return new Intl.NumberFormat(intlTag(getLocale()), { maximumFractionDigits }).format(value)
 }
 
 /** Human-readable byte sizes (e.g. 462 B, 1.2 KB, 3.4 MB). */
@@ -34,7 +45,7 @@ export function shortHash(hash: string, lead = 8, tail = 6): string {
 export function formatUsd(value: number): string {
   if (!Number.isFinite(value)) return '—'
   const fractionDigits = value > 0 && value < 1 ? 4 : 2
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat(intlTag(getLocale()), {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
