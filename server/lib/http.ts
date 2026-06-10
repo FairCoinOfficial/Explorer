@@ -74,6 +74,25 @@ export function escapeRegex(value: string): string {
 }
 
 /**
+ * Base58Check shape check for FairCoin addresses (legacy P2PKH/P2SH style).
+ * This is only a cheap syntactic gate before hitting RPC — full validation is
+ * the daemon's `validateaddress`. Length 25–62 covers mainnet/testnet formats.
+ */
+const ADDRESS_REGEX = /^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{25,62}$/
+
+/**
+ * Validate the `:address` route parameter shape. Throws {@link ValidationError}
+ * (mapped to 400 by {@link handleRouteError}) on malformed input so it never
+ * reaches RPC params or Mongo keys.
+ */
+export function parseAddress(value: unknown): string {
+  if (typeof value !== 'string' || !ADDRESS_REGEX.test(value)) {
+    throw new ValidationError('Invalid address format')
+  }
+  return value
+}
+
+/**
  * Central error responder. Logs the full error server-side (with context) and
  * returns a generic message to the client so internals never leak. When the
  * error is a {@link ValidationError}, responds 400 with its message instead.

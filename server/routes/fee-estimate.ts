@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from "express";
-import { rpcWithNetwork, type NetworkType } from "@fairco.in/rpc-client";
+import { rpcWithNetwork } from "@fairco.in/rpc-client";
+import { handleRouteError, parseNetwork } from "../lib/http";
 
 const router = Router();
 
@@ -15,7 +16,7 @@ const CONFIRMATION_BLOCKS = 6;
  */
 router.get("/", async (req: Request, res: Response) => {
   try {
-    const network = (req.query.network as string || "mainnet") as NetworkType;
+    const network = parseNetwork(req.query.network);
 
     let feePerKb: number;
     try {
@@ -45,9 +46,7 @@ router.get("/", async (req: Request, res: Response) => {
       network,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to estimate fee";
-    console.error("Error estimating fee:", error);
-    res.status(500).json({ error: message });
+    handleRouteError(res, "Error estimating fee", error);
   }
 });
 

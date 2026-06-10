@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { rpcWithNetwork, type NetworkType } from "@fairco.in/rpc-client";
 import { blockCache } from "../lib/cache";
+import { handleRouteError, parseNetwork, parseAddress } from "../lib/http";
 
 const router = Router();
 
@@ -87,14 +88,8 @@ async function tryGetAddressTxids(
  */
 router.get("/:address", async (req: Request, res: Response) => {
   try {
-    const network = (req.query.network as string || "mainnet") as NetworkType;
-    const { address } = req.params;
-
-    // Validate address length
-    if (address.length < 25 || address.length > 62) {
-      res.status(400).json({ error: "Invalid address format" });
-      return;
-    }
+    const network = parseNetwork(req.query.network);
+    const address = parseAddress(req.params.address);
 
     // Try addressindex RPC first
     const balanceResult = await tryGetAddressBalance(address, network);
@@ -148,10 +143,7 @@ router.get("/:address", async (req: Request, res: Response) => {
 
     res.json({ addressInfo, network });
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Failed to fetch address information";
-    console.error("Error fetching address info:", error);
-    res.status(500).json({ error: message });
+    handleRouteError(res, "Error fetching address info", error);
   }
 });
 
@@ -161,13 +153,8 @@ router.get("/:address", async (req: Request, res: Response) => {
  */
 router.get("/:address/utxos", async (req: Request, res: Response) => {
   try {
-    const network = (req.query.network as string || "mainnet") as NetworkType;
-    const { address } = req.params;
-
-    if (address.length < 25 || address.length > 62) {
-      res.status(400).json({ error: "Invalid address format" });
-      return;
-    }
+    const network = parseNetwork(req.query.network);
+    const address = parseAddress(req.params.address);
 
     const utxos = await tryGetAddressUTXOs(address, network);
 
@@ -182,28 +169,21 @@ router.get("/:address/utxos", async (req: Request, res: Response) => {
       note: "addressindex not enabled on node; UTXO data unavailable",
     });
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Failed to fetch UTXOs";
-    console.error("Error fetching UTXOs:", error);
-    res.status(500).json({ error: message });
+    handleRouteError(res, "Error fetching UTXOs", error);
   }
 });
 
 /**
  * GET /api/address/:address/txs?page=1&limit=20
- * Returns paginated transaction history for an address.
+ * Returns paginated transaction history for an address, with the net amount
+ * and direction computed server-side from the enriched prevouts.
  */
 router.get("/:address/txs", async (req: Request, res: Response) => {
   try {
-    const network = (req.query.network as string || "mainnet") as NetworkType;
-    const { address } = req.params;
-    const page = Math.max(1, parseInt(req.query.page as string || "1", 10));
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string || "20", 10)));
-
-    if (address.length < 25 || address.length > 62) {
-      res.status(400).json({ error: "Invalid address format" });
-      return;
-    }
+    const network = parseNetwork(req.query.network);
+    const address = parseAddress(req.params.address);
+    const page = Math.max(1, parseInt(req.query.page as string || "1", 10) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string || "20", 10) || 20));
 
     const txids = await tryGetAddressTxids(address, network);
 
@@ -225,32 +205,42 @@ router.get("/:address/txs", async (req: Request, res: Response) => {
     const startIdx = (page - 1) * limit;
     const pageTxids = reversed.slice(startIdx, startIdx + limit);
 
-    // Fetch transaction details
+    interface TxVout { value?: number; scriptPubKey?: { addresses?: string[] } }
+    interface TxVin { coinbase?: string; prevout?: { value?: number; addresses?: string[] } }
+
+    // Fetch transaction details and compute the address-relative net amount.
     const transactions = [];
     for (const txid of pageTxids) {
       try {
         const tx = await blockCache.getTransaction(txid, network, true);
+        const vouts = (tx.vout ?? []) as TxVout[];
+        const vins = (tx.vin ?? []) as TxVin[];
+
+        const received = vouts.reduce((sum, v) =>
+          v.scriptPubKey?.addresses?.includes(address) ? sum + (v.value ?? 0) : sum, 0);
+        const sent = vins.reduce((sum, v) =>
+          v.prevout?.addresses?.includes(address) ? sum + (v.prevout.value ?? 0) : sum, 0);
+        const amount = received - sent;
+
         transactions.push({
           txid: tx.txid,
           blockhash: tx.blockhash ?? null,
+          blockHeight: typeof tx.blockheight === "number" ? tx.blockheight : null,
           confirmations: tx.confirmations ?? 0,
           time: tx.time ?? tx.blocktime ?? 0,
           size: tx.size ?? 0,
-          vin: tx.vin ?? [],
-          vout: tx.vout ?? [],
+          amount,
+          type: amount >= 0 ? "received" : "sent",
         });
       } catch {
         // Transaction not available, include only the txid
-        transactions.push({ txid, blockhash: null, confirmations: 0, time: 0, size: 0, vin: [], vout: [] });
+        transactions.push({ txid, blockhash: null, blockHeight: null, confirmations: 0, time: 0, size: 0, amount: 0, type: "received" });
       }
     }
 
     res.json({ transactions, page, limit, total, network });
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Failed to fetch transaction history";
-    console.error("Error fetching address transactions:", error);
-    res.status(500).json({ error: message });
+    handleRouteError(res, "Error fetching address transactions", error);
   }
 });
 

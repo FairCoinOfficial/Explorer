@@ -1,10 +1,19 @@
 import { Router, type Request, type Response } from "express";
+import { timingSafeEqual } from "crypto";
 import connectToDatabase from "../lib/db/connect";
 import { Price } from "../lib/db/models/Price";
 import { PricePoint } from "../lib/db/models/PricePoint";
 import { getBasePublicClient } from "../lib/base-client";
 
 const router = Router();
+
+/** Constant-time string comparison to avoid leaking the API key via timing. */
+function safeKeyEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
 
 /**
  * GET /api/price
@@ -482,7 +491,7 @@ router.post("/", async (req: Request, res: Response) => {
     const apiKey = req.headers["x-api-key"] as string | undefined;
     const expectedKey = process.env.EXPLORER_API_KEY;
 
-    if (!expectedKey || apiKey !== expectedKey) {
+    if (!expectedKey || typeof apiKey !== "string" || !safeKeyEqual(apiKey, expectedKey)) {
       res.status(401).json({ error: "Unauthorized: invalid or missing API key" });
       return;
     }
