@@ -12,6 +12,7 @@ import {
   SubscribeEvent,
   UnsubscribeEvent
 } from './websocket-types'
+import { logger } from './logger'
 
 // Initialize WebSocket manager and blockchain monitor
 const wsManager = getWebSocketManager({
@@ -36,7 +37,7 @@ const blockchainMonitor = getBlockchainMonitor(wsManager, {
 // Start blockchain monitor once at module load (this module is evaluated a
 // single time via the lazy import in server/index.ts).
 blockchainMonitor.start().then(() => {
-  console.log('[WebSocketHandler] Blockchain monitor started')
+  logger.info('[WebSocketHandler] Blockchain monitor started')
 }).catch(error => {
   console.error('[WebSocketHandler] Failed to start blockchain monitor:', error)
 })
@@ -53,7 +54,7 @@ export function handleConnection(ws: WebSocket, request: unknown, ip?: string): 
     // Register connection
     connectionId = wsManager.register(ws, currentNetwork, ip)
 
-    console.log(`[WebSocketHandler] New connection: ${connectionId} from ${ip || 'unknown'}`)
+    logger.debug(`[WebSocketHandler] New connection: ${connectionId} from ${ip || 'unknown'}`)
 
     // Send welcome message
     const welcomeEvent: WebSocketEvent = {
@@ -83,7 +84,7 @@ export function handleConnection(ws: WebSocket, request: unknown, ip?: string): 
 
     // Handle connection close
     ws.on('close', (code: number, reason: Buffer) => {
-      console.log(`[WebSocketHandler] Connection closed: ${connectionId} (${code}: ${reason.toString()})`)
+      logger.debug(`[WebSocketHandler] Connection closed: ${connectionId} (${code}: ${reason.toString()})`)
       if (connectionId) {
         wsManager.unregister(connectionId)
       }
@@ -257,7 +258,7 @@ function startHeartbeat(ws: WebSocket, connectionId: string): void {
  * Shutdown handler
  */
 export function shutdown(): void {
-  console.log('[WebSocketHandler] Shutting down...')
+  logger.info('[WebSocketHandler] Shutting down...')
   shutdownBlockchainMonitor()
   shutdownWebSocketManager()
 }

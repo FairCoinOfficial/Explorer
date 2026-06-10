@@ -12,6 +12,7 @@ import {
   NetworkStatsEvent
 } from './websocket-types'
 import { blockCache } from './cache'
+import { logger } from './logger'
 
 export class BlockchainMonitor {
   private wsManager: WebSocketManager
@@ -47,7 +48,7 @@ export class BlockchainMonitor {
       })
     })
 
-    console.log('[BlockchainMonitor] Initialized with config:', this.config)
+    logger.debug('[BlockchainMonitor] Initialized with config:', this.config)
   }
 
   /**
@@ -55,16 +56,16 @@ export class BlockchainMonitor {
    */
   async start(): Promise<void> {
     if (this.isRunning) {
-      console.log('[BlockchainMonitor] Already running')
+      logger.debug('[BlockchainMonitor] Already running')
       return
     }
 
     if (!this.config.enabled) {
-      console.log('[BlockchainMonitor] WebSocket disabled, not starting')
+      logger.debug('[BlockchainMonitor] WebSocket disabled, not starting')
       return
     }
 
-    console.log('[BlockchainMonitor] Starting monitor...')
+    logger.debug('[BlockchainMonitor] Starting monitor...')
     this.isRunning = true
 
     // Initialize states for all networks
@@ -86,7 +87,7 @@ export class BlockchainMonitor {
     await this.pollAllNetworks()
     await this.pollNetworkStats()
 
-    console.log('[BlockchainMonitor] Monitor started successfully')
+    logger.info('[BlockchainMonitor] Monitor started successfully')
   }
 
   /**
@@ -97,7 +98,7 @@ export class BlockchainMonitor {
       return
     }
 
-    console.log('[BlockchainMonitor] Stopping monitor...')
+    logger.debug('[BlockchainMonitor] Stopping monitor...')
     this.isRunning = false
 
     if (this.pollInterval) {
@@ -110,7 +111,7 @@ export class BlockchainMonitor {
       this.statsInterval = null
     }
 
-    console.log('[BlockchainMonitor] Monitor stopped')
+    logger.info('[BlockchainMonitor] Monitor stopped')
   }
 
   /**
@@ -118,7 +119,7 @@ export class BlockchainMonitor {
    */
   private async initializeNetworkState(network: NetworkType): Promise<void> {
     try {
-      console.log(`[BlockchainMonitor] Initializing ${network} state...`)
+      logger.debug(`[BlockchainMonitor] Initializing ${network} state...`)
 
       const blockCount = await blockCache.getBlockCount(network)
       const block = await blockCache.getBlock(blockCount, network, true)
@@ -133,7 +134,7 @@ export class BlockchainMonitor {
         state.lastUpdate = new Date()
       }
 
-      console.log(`[BlockchainMonitor] ${network} initialized: Block ${blockCount}`)
+      logger.debug(`[BlockchainMonitor] ${network} initialized: Block ${blockCount}`)
     } catch (error) {
       console.error(`[BlockchainMonitor] Error initializing ${network}:`, error)
     }
@@ -162,7 +163,7 @@ export class BlockchainMonitor {
       const newBlockCount = await blockCache.getBlockCount(network)
 
       if (newBlockCount > state.blockHeight) {
-        console.log(`[BlockchainMonitor] ${network}: New blocks detected (${state.blockHeight} -> ${newBlockCount})`)
+        logger.debug(`[BlockchainMonitor] ${network}: New blocks detected (${state.blockHeight} -> ${newBlockCount})`)
 
         // Fetch new blocks
         for (let height = state.blockHeight + 1; height <= newBlockCount; height++) {
@@ -207,7 +208,7 @@ export class BlockchainMonitor {
         state.blockHash = block.hash
       }
 
-      console.log(`[BlockchainMonitor] ${network}: Broadcasting new block ${height} (${block.hash})`)
+      logger.debug(`[BlockchainMonitor] ${network}: Broadcasting new block ${height} (${block.hash})`)
 
       // Broadcast new block event
       const newBlockEvent: NewBlockEvent = {
@@ -249,7 +250,7 @@ export class BlockchainMonitor {
         mempoolInfo &&
         (mempoolInfo.size !== state.mempoolSize || mempoolInfo.bytes !== state.mempoolBytes)
       ) {
-        console.log(`[BlockchainMonitor] ${network}: Mempool changed (${state.mempoolSize} -> ${mempoolInfo.size} tx)`)
+        logger.debug(`[BlockchainMonitor] ${network}: Mempool changed (${state.mempoolSize} -> ${mempoolInfo.size} tx)`)
 
         state.mempoolSize = mempoolInfo.size
         state.mempoolBytes = mempoolInfo.bytes
@@ -326,7 +327,7 @@ export class BlockchainMonitor {
         }
         this.wsManager.broadcast(statsEvent, network)
 
-        console.log(`[BlockchainMonitor] ${network}: Broadcasted network stats update`)
+        logger.debug(`[BlockchainMonitor] ${network}: Broadcasted network stats update`)
       }
     } catch (error) {
       console.error(`[BlockchainMonitor] Error polling network stats for ${network}:`, error)

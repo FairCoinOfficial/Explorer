@@ -8,6 +8,7 @@ import {
   WebSocketManagerConfig,
   ServerMessage
 } from './websocket-types'
+import { logger } from './logger'
 
 export class WebSocketManager {
   private connections: Map<string, ConnectionInfo>
@@ -69,7 +70,7 @@ export class WebSocketManager {
       this.connectionsByIP.get(ip)?.add(connectionId)
     }
 
-    console.log(`[WebSocketManager] Registered connection ${connectionId} for ${network} (Total: ${this.connections.size})`)
+    logger.debug(`[WebSocketManager] Registered connection ${connectionId} for ${network} (Total: ${this.connections.size})`)
 
     return connectionId
   }
@@ -100,7 +101,7 @@ export class WebSocketManager {
     // Remove main connection
     this.connections.delete(connectionId)
 
-    console.log(`[WebSocketManager] Unregistered connection ${connectionId} (Remaining: ${this.connections.size})`)
+    logger.debug(`[WebSocketManager] Unregistered connection ${connectionId} (Remaining: ${this.connections.size})`)
 
     return true
   }
@@ -134,7 +135,7 @@ export class WebSocketManager {
     events.forEach(event => connection.subscribedEvents.add(event))
     this.updateActivity(connectionId)
 
-    console.log(`[WebSocketManager] Connection ${connectionId} subscribed to:`, events)
+    logger.debug(`[WebSocketManager] Connection ${connectionId} subscribed to:`, events)
 
     return true
   }
@@ -172,7 +173,7 @@ export class WebSocketManager {
 
     this.updateActivity(connectionId)
 
-    console.log(`[WebSocketManager] Connection ${connectionId} switched to ${newNetwork}`)
+    logger.debug(`[WebSocketManager] Connection ${connectionId} switched to ${newNetwork}`)
 
     return true
   }
@@ -200,7 +201,7 @@ export class WebSocketManager {
     })
 
     if (sentCount > 0) {
-      console.log(`[WebSocketManager] Broadcasted ${event.type} to ${sentCount} connections`)
+      logger.debug(`[WebSocketManager] Broadcasted ${event.type} to ${sentCount} connections`)
     }
 
     return sentCount
@@ -313,7 +314,7 @@ export class WebSocketManager {
     inactiveConnections.forEach(id => {
       const connection = this.connections.get(id)
       if (connection) {
-        console.log(`[WebSocketManager] Closing inactive connection ${id}`)
+        logger.debug(`[WebSocketManager] Closing inactive connection ${id}`)
         try {
           connection.socket.close()
         } catch (error) {
@@ -324,7 +325,7 @@ export class WebSocketManager {
     })
 
     if (inactiveConnections.length > 0) {
-      console.log(`[WebSocketManager] Cleaned up ${inactiveConnections.length} inactive connections`)
+      logger.debug(`[WebSocketManager] Cleaned up ${inactiveConnections.length} inactive connections`)
     }
   }
 
@@ -332,7 +333,7 @@ export class WebSocketManager {
    * Shutdown manager and close all connections
    */
   shutdown(): void {
-    console.log(`[WebSocketManager] Shutting down (${this.connections.size} active connections)`)
+    logger.info(`[WebSocketManager] Shutting down (${this.connections.size} active connections)`)
 
     // Clear cleanup interval
     if (this.cleanupInterval) {
@@ -354,7 +355,7 @@ export class WebSocketManager {
     this.connectionsByIP.clear()
     this.connectionsByNetwork.clear()
 
-    console.log('[WebSocketManager] Shutdown complete')
+    logger.info('[WebSocketManager] Shutdown complete')
   }
 }
 
