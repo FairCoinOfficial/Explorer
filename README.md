@@ -1,6 +1,12 @@
-# FairCoin Explorer (Next.js 14 + Tailwind + MongoDB)
+# FairCoin Explorer
 
-Modern, minimalist, responsive explorer for **FairCoin** using JSON‑RPC with MongoDB caching for improved performance.
+Modern, responsive block explorer for **FairCoin**. Vite + React SPA frontend with an Express API server (run with Bun) that talks JSON-RPC to a FairCoin node and caches responses in MongoDB. Real-time updates are pushed over WebSocket.
+
+## Stack
+
+- **Frontend**: Vite, React 18, TypeScript, TanStack Query, Tailwind CSS 4, shadcn/Radix UI, react-router
+- **Backend**: Express 5 (Bun runtime), WebSocket (`ws`), MongoDB cache, `@fairco.in/rpc-client`
+- **i18n**: 8 languages (en, es, fr, de, ru, zh, ja, ko)
 
 ## Quick start
 
@@ -8,98 +14,89 @@ Modern, minimalist, responsive explorer for **FairCoin** using JSON‑RPC with M
 # 1) Install deps
 npm i
 
-# 2) Set up MongoDB
-# Install MongoDB locally or use a cloud service like MongoDB Atlas
-# Update .env.local with your MongoDB URI
+# 2) Configure environment
+cp .env.example .env
+# edit .env with your RPC and MongoDB credentials
 
-# 3) Copy env and configure
-cp .env.example .env.local
-# edit .env.local with your RPC and MongoDB credentials
+# 3) Run the API server (port 8080)
+npm run server          # or: npm run dev:server (watch mode, requires Bun)
 
-# 4) Sync database (optional but recommended for performance)
-npm run sync-db
-
-# 5) Run
+# 4) Run the frontend dev server (port 5180, proxies /api to :8080)
 npm run dev
 ```
 
-Open http://localhost:3000
+Open http://localhost:5180
+
+For production, build the SPA and let the API server serve it:
+
+```bash
+npm run build           # outputs dist/
+npm run server          # serves dist/ + API + WebSocket on :8080
+```
+
+## Scripts
+
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Vite dev server (frontend, port 5180) |
+| `npm run dev:server` | API server in watch mode (Bun, port 8080) |
+| `npm run server` | API server (Bun) |
+| `npm run build` | Typecheck + production build of the SPA |
+| `npm run typecheck` | Typecheck frontend **and** server |
+| `npm run sync-db` | Full blockchain sync into MongoDB (optional, Bun) |
+| `npm run check-db` | MongoDB health/index check (Bun) |
 
 ## Environment
 
-```
-# RPC Configuration
+```bash
+# RPC Configuration (server-side only; never exposed to the browser)
 FAIRCOIN_RPC_USER=fair
 FAIRCOIN_RPC_PASS=change_me
-FAIRCOIN_RPC_HOST=seed1.fairco.in
+FAIRCOIN_RPC_HOST=127.0.0.1
 FAIRCOIN_RPC_PORT=46373
 FAIRCOIN_RPC_SCHEME=http
 
-# MongoDB Configuration
+# MongoDB
 MONGODB_URI=mongodb://localhost:27017/faircoin-explorer
+
+# WebSocket / realtime monitor
+WEBSOCKET_ENABLED=true
+WEBSOCKET_NETWORKS=mainnet          # comma-separated; add testnet if you run a testnet node
+BLOCKCHAIN_POLL_INTERVAL=10000
+WEBSOCKET_HEARTBEAT_INTERVAL=30000
+WEBSOCKET_MAX_CONNECTIONS_PER_IP=5
+
+# Public origin allowed by the API CORS allowlist
+PUBLIC_BASE_URL=https://explorer.fairco.in
 ```
 
-**Security**: Credentials are never exposed to the browser; all RPC calls are made on the server.
+**Security**: RPC credentials are only read server-side; all RPC calls are proxied through the API.
 
-## MongoDB Setup
+## API overview
 
-### Local MongoDB
-```bash
-# Install MongoDB
-sudo apt-get install mongodb  # Ubuntu/Debian
-# or
-brew install mongodb/brew/mongodb-community  # macOS
+The Express server exposes a read-only JSON API under `/api`:
 
-# Start MongoDB
-sudo systemctl start mongodb  # Linux
-# or
-brew services start mongodb/brew/mongodb-community  # macOS
-```
-
-### MongoDB Atlas (Cloud)
-1. Create account at [MongoDB Atlas](https://www.mongodb.com/atlas)
-2. Create a cluster
-3. Get connection string and update `MONGODB_URI`
-
-### Database Sync
-After setting up MongoDB, run the sync script to populate the database with the entire blockchain:
-
-```bash
-npm run sync-db
-```
-
-This will sync all blocks from genesis (block 0) to the latest block and their transactions to MongoDB for faster access. This may take some time depending on the blockchain size.
+- `GET /api/blocks`, `/api/block/:hashOrHeight`, `/api/blockcount`
+- `GET /api/transaction/:txid`, `POST /api/tx/broadcast`
+- `GET /api/address/:address`, `/api/address/:address/txs?page=&limit=`, `/api/address/:address/utxos` (requires a node with `addressindex` for full data)
+- `GET /api/mempool`, `/api/masternodes`, `/api/peers`, `/api/stats`, `/api/network-info`, `/api/mining-info`
+- `GET /api/search?q=` (block height/hash, txid, or address)
+- `GET /api/validate-address?address=`, `/api/fee-estimate`
+- `GET /api/price`, `/api/price/history`, `/api/stats/history`
+- `GET /api/bridge/reserves` (proxied WFAIR bridge reserves)
+- `WS /api/ws` (new blocks, mempool updates, network stats)
 
 ## Features
 
-- **Dashboard** with latest blocks (cached in MongoDB)
-- **Search** by block height, block hash, or txid (`/search?q=...`)
-- **Block pages** with prev/next links and TX list
-- **Transaction pages** with inputs/outputs
-- **MongoDB caching** for improved performance
-- Clean dark UI, responsive, zero analytics
-
-## Performance Features
-
-- **MongoDB Atlas**: Cloud-hosted database with automatic scaling and high availability
-- **Optimized Indexes**: Compound indexes for fast queries on blocks, transactions, and addresses
-- **Batch Operations**: Efficient bulk inserts and parallel data fetching
-- **Connection Pooling**: Optimized connection management with retry logic
-- **Lean Queries**: Memory-efficient queries excluding unnecessary fields
-- **Caching Strategy**: Database-first approach with RPC fallback for resilience
-
-## Database Indexes
-
-The system automatically creates optimized indexes for:
-- Block height, hash, and timestamp lookups
-- Transaction ID and block relationship queries
-- Address-based transaction searches
-- Time-based queries for recent activity
-- Compound indexes for complex filtering operations
+- Dashboard with live blocks, mempool, price and network stats
+- Block, transaction and address pages (with paginated address history when the node has `addressindex`)
+- Masternode list and reward stats, peers, network status
+- Universal search (height, hash, txid, address)
+- MongoDB-backed RPC caching with single-flight de-duplication and self-healing TTLs
+- Real-time WebSocket updates
+- Dark/light theme, 8 languages, responsive layout
 
 ## Notes
 
-- Assumes Bitcoin‑style RPC compatibility (used by many FairCoin nodes).
-- Address balances require an indexed node; not included here to stay lightweight.
-- Add pagination or mempool via RPC if your node supports it.
-- Database sync is optional but highly recommended for production use.
+- Address balances/history require a FairCoin node with `addressindex=1`; without it the explorer degrades gracefully to validation-only data.
+- The MongoDB cache populates on demand; `npm run sync-db` (full historical sync) is optional.

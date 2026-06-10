@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Typecheck & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck (frontend + server)
+        run: npm run typecheck
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Check i18n locale key parity
+        run: |
+          node --input-type=module -e '
+            import { readFileSync, readdirSync } from "fs";
+            const dir = "src/messages";
+            const files = readdirSync(dir).filter(f => f.endsWith(".json"));
+            const keysByFile = Object.fromEntries(
+              files.map(f => [f, new Set(Object.keys(JSON.parse(readFileSync(`${dir}/${f}`, "utf8"))))])
+            );
+            const ref = keysByFile["en.json"];
+            let failed = false;
+            for (const [file, keys] of Object.entries(keysByFile)) {
+              const missing = [...ref].filter(k => !keys.has(k));
+              const extra = [...keys].filter(k => !ref.has(k));
+              if (missing.length || extra.length) {
+                failed = true;
+                console.error(`${file}: missing=${JSON.stringify(missing)} extra=${JSON.stringify(extra)}`);
+              }
+            }
+            if (failed) process.exit(1);
+            console.log(`All ${files.length} locales have matching keys (${ref.size} keys).`);
+          '

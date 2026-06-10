@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "server": "bun run server/index.ts",
     "dev:server": "bun --watch server/index.ts",
+    "typecheck": "tsc -b && tsc -p server/tsconfig.json",
     "sync-db": "bun scripts/sync-db.ts",
     "check-db": "bun scripts/check-db.ts"
   },

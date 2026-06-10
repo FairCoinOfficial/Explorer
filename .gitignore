@@ -19,3 +19,7 @@ yarn-error.log*
 .pnpm-store/
 # Vite
 dist/
+
+# TypeScript incremental build info
+tsconfig.tsbuildinfo
+*.tsbuildinfo
