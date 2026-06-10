@@ -12,6 +12,7 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { blockCache } from './lib/cache'
 import { handleRouteError, parseNetwork, parseLimit, ValidationError } from './lib/http'
+import { computeCirculatingSupply, currentBlockReward } from './lib/supply'
 import { rpcWithNetwork } from '@fairco.in/rpc-client'
 import priceRouter from './routes/price'
 import statsHistoryRouter from './routes/stats-history'
@@ -194,7 +195,9 @@ app.get('/api/mempool', async (req, res) => {
           time: Number(entry.time ?? Date.now() / 1000), depends: (entry.depends as string[]) ?? []
         })
       } catch {
-        detailedTxs.push({ txid, size: 250, fee: 0.0001, feeRate: 1.0, time: Date.now() / 1000, depends: [] })
+        // getmempoolentry can fail for a tx that just left the mempool; record
+        // the txid with zeroed metrics rather than fabricated placeholder values.
+        detailedTxs.push({ txid, size: 0, fee: 0, feeRate: 0, time: Date.now() / 1000, depends: [] })
       }
     }
 
@@ -218,7 +221,6 @@ app.get('/api/masternodes', async (req, res) => {
   try {
     const network = parseNetwork(req.query.network)
     const COLLATERAL_PER_MASTERNODE = 5000
-    const BLOCK_REWARD = 10
 
     const [masternodeList, masternodeCount, blockHeight] = await Promise.all([
       blockCache.getMasternodeList(network).catch(() => [] as unknown[]),
@@ -246,7 +248,8 @@ app.get('/api/masternodes', async (req, res) => {
     }
 
     const masternodes = (Array.isArray(masternodeList) ? masternodeList : []).map(parseMasternodeEntry)
-    const totalSupply = blockHeight > 0 ? blockHeight * BLOCK_REWARD : 33000000
+    // Real supply schedule (premine + halvings), not a naive height*reward guess.
+    const totalSupply = computeCirculatingSupply(blockHeight)
     const totalCollateral = masternodes.length * COLLATERAL_PER_MASTERNODE
     const collateralPercentage = totalSupply > 0 ? (totalCollateral / totalSupply) * 100 : 0
 
@@ -289,7 +292,6 @@ app.get('/api/peers', async (req, res) => {
 app.get('/api/stats', async (req, res) => {
   try {
     const network = parseNetwork(req.query.network)
-    const BLOCK_REWARD = 10
     const [blockHeight, blockchainInfo, miningInfo, mempoolInfo, networkInfo, masternodeCountRpc] = await Promise.all([
       blockCache.getBlockCount(network).catch(() => 0),
       blockCache.get<Record<string, unknown>>('getblockchaininfo', [], { network, ttl: 300 }).catch(() => null),
@@ -301,12 +303,15 @@ app.get('/api/stats', async (req, res) => {
       blockCache.getMasternodeCount(network).catch(() => null)
     ])
     const latestBlock = blockHeight > 0 ? await blockCache.getBlock(blockHeight, network, true).catch(() => null) : null
-    const totalSupply = blockHeight > 0 ? blockHeight * BLOCK_REWARD : 0
+    // Real supply schedule (premine + halvings), matching src/lib/supply.ts.
+    const totalSupply = computeCirculatingSupply(blockHeight)
     // Report enabled (online) masternodes, falling back to total when the daemon
     // omits the enabled tally.
     const masternodeCount = masternodeCountRpc?.enabled ?? masternodeCountRpc?.total ?? 0
     const difficulty = miningInfo?.difficulty || 0
-    const phase = blockHeight > 10000 ? 'PoS' : 'PoW'
+    // PoW phase: blocks 1-10000 on mainnet, 1-200 on testnet; PoS afterwards.
+    const lastPowBlock = network === 'testnet' ? 200 : 10000
+    const phase = blockHeight > lastPowBlock ? 'PoS' : 'PoW'
     const hashrate = phase === 'PoW' ? ((miningInfo as Record<string, number>)?.networkhashps || (difficulty as number) * Math.pow(2, 32) / 120) : 0
 
     // networkWeight / stakePercentage: FairCoin v3.0.0's daemon exposes no
@@ -319,7 +324,7 @@ app.get('/api/stats', async (req, res) => {
       avgBlockTime: 120, memPoolSize: mempoolInfo?.size || 0,
       totalTransactions: blockHeight * (latestBlock?.nTx || 1), networkWeight: 0,
       avgTransactionsPerBlock: latestBlock?.nTx || 1, masternodeCount,
-      stakingRewards: BLOCK_REWARD, stakePercentage: 0,
+      stakingRewards: currentBlockReward(blockHeight), stakePercentage: 0,
       connections: networkInfo?.connections || 0, phase,
       lastBlock: { height: latestBlock?.height || blockHeight, hash: latestBlock?.hash || '', time: latestBlock?.time || Date.now() / 1000, size: latestBlock?.size || 0 }
     }
@@ -387,9 +392,28 @@ app.get('/api/search', async (req, res) => {
           if (transaction) { searchType = 'transaction'; searchResults = { txid: transaction.txid, blockhash: transaction.blockhash, confirmations: transaction.confirmations, time: transaction.time, vin: transaction.vin || [], vout: transaction.vout || [] } }
         } catch { /* not found */ }
       }
-    } else if (/^[fFmn2][123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{24,61}$/i.test(q)) {
+    } else if (/^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{25,62}$/.test(q)) {
       searchType = 'address'
-      searchResults = { address: q, balance: 0, totalReceived: 0, totalSent: 0, txCount: 0, transactions: [], isValid: true, network }
+      // Validate against the daemon instead of blindly trusting the shape, and
+      // enrich with addressindex data when the node exposes it.
+      const validation = await blockCache.validateAddress(q, network).catch(() => null)
+      const isValid = Boolean(validation?.isvalid)
+      if (isValid) {
+        const [balanceRpc, txids] = await Promise.all([
+          rpcWithNetwork<{ balance: number; received: number }>('getaddressbalance', [{ addresses: [q] }], network).catch(() => null),
+          rpcWithNetwork<string[]>('getaddresstxids', [{ addresses: [q] }], network).catch(() => null),
+        ])
+        const SATS = 100_000_000
+        searchResults = {
+          address: q,
+          balance: balanceRpc ? balanceRpc.balance / SATS : 0,
+          totalReceived: balanceRpc ? balanceRpc.received / SATS : 0,
+          totalSent: balanceRpc ? (balanceRpc.received - balanceRpc.balance) / SATS : 0,
+          txCount: txids?.length ?? 0,
+          isValid: true,
+          network,
+        }
+      }
     }
 
     if (searchResults) {
@@ -509,8 +533,25 @@ server.on('upgrade', (request, socket, head) => {
 })
 
 type WebSocketHandlerModule = typeof import('./lib/websocket-handler')
-let wsHandler: WebSocketHandlerModule | null = null
-let wsHandlerFailed = false
+let wsHandlerPromise: Promise<WebSocketHandlerModule | null> | null = null
+
+/**
+ * Lazily load the WebSocket handler module exactly once. The first caller kicks
+ * off the import; every connection (including the first) awaits the same
+ * promise, so no client is ever rejected just because the module is still
+ * loading. On import failure the promise resolves to null and is reset so a
+ * later connection can retry.
+ */
+function loadWsHandler(): Promise<WebSocketHandlerModule | null> {
+  if (!wsHandlerPromise) {
+    wsHandlerPromise = import('./lib/websocket-handler').catch(error => {
+      console.error('WebSocket handler not available:', (error as Error).message)
+      wsHandlerPromise = null
+      return null
+    })
+  }
+  return wsHandlerPromise
+}
 
 /**
  * Resolve the client IP for the per-IP WebSocket connection cap.
@@ -538,15 +579,8 @@ function resolveClientIp(request: { headers: NodeJS.Dict<string | string[]>; soc
   return socketAddress
 }
 
-wss.on('connection', (ws, request) => {
-  if (!wsHandler && !wsHandlerFailed) {
-    import('./lib/websocket-handler').then(mod => {
-      wsHandler = mod
-    }).catch(error => {
-      console.error('WebSocket handler not available:', (error as Error).message)
-      wsHandlerFailed = true
-    })
-  }
+wss.on('connection', async (ws, request) => {
+  const wsHandler = await loadWsHandler()
   if (!wsHandler) { ws.close(); return }
   try {
     const ip = resolveClientIp(request)
