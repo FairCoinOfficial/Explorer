@@ -25,7 +25,6 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
-const BLOCKS_LIMIT = 100
 const BLOCKS_PER_PAGE = 20
 
 type TimeFilter = 'all' | '1h' | '24h' | '7d'
@@ -47,15 +46,25 @@ export function BlocksContent() {
   const t = useTranslations('blocks')
   const common = useTranslations('common')
   const { networkConfig } = useNetwork()
-  const { data, isLoading, isError, error, refetch, isFetching } = useRecentBlocks(BLOCKS_LIMIT)
 
+  const [page, setPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('all')
-  const [page, setPage] = useState(1)
+
+  const offset = (page - 1) * BLOCKS_PER_PAGE
+  const { data, isLoading, isError, error, refetch, isFetching } = useRecentBlocks(
+    BLOCKS_PER_PAGE,
+    offset,
+  )
 
   const blocks = data?.blocks
   const height = data?.height ?? 0
+  const total = data?.total ?? height + 1
+  const totalPages = Math.max(1, Math.ceil(total / BLOCKS_PER_PAGE))
 
+  // Search/time filters operate on the currently loaded page only — server-side
+  // filtering would require an indexed historical store, which the explorer
+  // intentionally doesn't depend on.
   const filteredBlocks = useMemo(() => {
     if (!blocks) return []
     const query = searchQuery.trim().toLowerCase()
@@ -73,20 +82,12 @@ export function BlocksContent() {
     })
   }, [blocks, searchQuery, timeFilter])
 
-  const totalPages = Math.max(1, Math.ceil(filteredBlocks.length / BLOCKS_PER_PAGE))
-  // Derive the effective page in render so we never need an effect to clamp it.
-  const currentPage = Math.min(page, totalPages)
-  const pageBlocks = useMemo(() => {
-    const start = (currentPage - 1) * BLOCKS_PER_PAGE
-    return filteredBlocks.slice(start, start + BLOCKS_PER_PAGE)
-  }, [filteredBlocks, currentPage])
-
   const filterLabel = useMemo(() => {
     if (timeFilter === 'all') return t('allTime')
     return t('last', { period: t(TIME_FILTERS.find((f) => f.key === timeFilter)?.labelKey ?? 'all') })
   }, [timeFilter, t])
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return <BlocksSkeleton />
   }
 
@@ -156,10 +157,7 @@ export function BlocksContent() {
           <Input
             placeholder={t('searchPlaceholder')}
             value={searchQuery}
-            onChange={(event) => {
-              setSearchQuery(event.target.value)
-              setPage(1)
-            }}
+            onChange={(event) => setSearchQuery(event.target.value)}
             className="w-full pl-10"
           />
         </div>
@@ -173,10 +171,7 @@ export function BlocksContent() {
                 variant={timeFilter === key ? 'default' : 'outline'}
                 size="sm"
                 className="h-8 px-3 text-xs"
-                onClick={() => {
-                  setTimeFilter(key)
-                  setPage(1)
-                }}
+                onClick={() => setTimeFilter(key)}
               >
                 {t(labelKey)}
               </Button>
@@ -196,7 +191,7 @@ export function BlocksContent() {
           </span>
         }
       >
-        {pageBlocks.length > 0 ? (
+        {filteredBlocks.length > 0 ? (
           <>
             {/* Column header — aligns the row columns and adds list legibility. */}
             <div className="hidden items-center gap-3 border-b px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:flex">
@@ -215,7 +210,7 @@ export function BlocksContent() {
               </span>
             </div>
             <ul className="divide-y">
-              {pageBlocks.map((block) => (
+              {filteredBlocks.map((block) => (
                 <BlockRow key={block.height} block={block} t={t} />
               ))}
             </ul>
@@ -232,26 +227,22 @@ export function BlocksContent() {
         {totalPages > 1 ? (
           <div className="flex items-center justify-between gap-2 border-t px-4 py-3">
             <span className="text-xs text-muted-foreground tabular-nums">
-              {t('pageOf', {
-                current: currentPage,
-                total: totalPages,
-                count: filteredBlocks.length,
-              })}
+              {t('pageOf', { current: page, total: totalPages, count: total })}
             </span>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                disabled={currentPage <= 1}
-                onClick={() => setPage(currentPage - 1)}
+                disabled={page <= 1 || isFetching}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
                 {common('previous')}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                disabled={currentPage >= totalPages}
-                onClick={() => setPage(currentPage + 1)}
+                disabled={page >= totalPages || isFetching}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               >
                 {common('next')}
               </Button>

@@ -56,7 +56,7 @@ export class BlockchainCache {
    * In-flight RPC promises keyed by cache key. Concurrent identical cache
    * misses share a single upstream call (stampede protection).
    */
-  private readonly inFlight = new Map<string, Promise<unknown>>()
+  protected readonly inFlight = new Map<string, Promise<unknown>>()
 
   protected async getDb(): Promise<Db> {
     if (!this.db) {
@@ -637,11 +637,13 @@ export class BlockCache extends BlockchainCache {
   }
 
   // Get recent blocks with caching
-  async getRecentBlocks(network: NetworkType, limit: number = 20): Promise<any[]> {
+  async getRecentBlocks(network: NetworkType, limit: number = 20, offset: number = 0): Promise<any[]> {
     assertValidNetwork(network)
+    const safeOffset = Math.max(0, Math.floor(offset))
+    const safeLimit = Math.max(1, Math.floor(limit))
     const db = await this.getDb()
     const collection = db.collection('recent_blocks')
-    const cacheKey = `${network}:recent:${limit}`
+    const cacheKey = `${network}:recent:${safeLimit}:${safeOffset}`
 
     // Check cache first
     const cached = await collection.findOne({ _id: cacheKey } as any)
@@ -649,42 +651,57 @@ export class BlockCache extends BlockchainCache {
       return cached.blocks
     }
 
-    // Fetch fresh data
-    const height = await this.getBlockCount(network)
-    const blocks = []
-    const startHeight = Math.max(0, height - limit + 1)
-
-    for (let i = height; i >= startHeight && blocks.length < limit; i--) {
-      try {
-        const block = await this.getBlock(i, network, true)
-        blocks.push({
-          height: block.height,
-          hash: block.hash,
-          time: block.time,
-          nTx: block.nTx || block.tx?.length || 0,
-          size: block.size,
-          tx: block.tx || []
-        })
-      } catch (error) {
-        console.error(`Error fetching block ${i}:`, error)
-      }
+    // Single-flight: dedupe concurrent misses for the same window so N parallel
+    // requests don't each trigger up to `limit` serial RPC `getblock` calls.
+    const existing = this.inFlight.get(cacheKey)
+    if (existing) {
+      return existing as Promise<any[]>
     }
 
-    // Cache the result. `expiresAt` powers the Mongo TTL index on recent_blocks.
-    const cachedAt = Date.now()
-    await collection.replaceOne(
-      { _id: cacheKey } as any,
-      {
-        _id: cacheKey,
-        blocks,
-        timestamp: cachedAt,
-        expiresAt: new Date(cachedAt + RECENT_BLOCKS_TTL_MS),
-        network
-      } as any,
-      { upsert: true }
-    )
+    const fetchPromise = (async () => {
+      try {
+        const height = await this.getBlockCount(network)
+        const startHeight = Math.max(0, height - safeOffset)
+        const blocks = []
 
-    return blocks
+        for (let i = startHeight; i >= 0 && blocks.length < safeLimit; i--) {
+          try {
+            const block = await this.getBlock(i, network, true)
+            blocks.push({
+              height: block.height,
+              hash: block.hash,
+              time: block.time,
+              nTx: block.nTx || block.tx?.length || 0,
+              size: block.size,
+              tx: block.tx || []
+            })
+          } catch (error) {
+            console.error(`Error fetching block ${i}:`, error)
+          }
+        }
+
+        // Cache the result. `expiresAt` powers the Mongo TTL index on recent_blocks.
+        const cachedAt = Date.now()
+        await collection.replaceOne(
+          { _id: cacheKey } as any,
+          {
+            _id: cacheKey,
+            blocks,
+            timestamp: cachedAt,
+            expiresAt: new Date(cachedAt + RECENT_BLOCKS_TTL_MS),
+            network
+          } as any,
+          { upsert: true }
+        )
+
+        return blocks
+      } finally {
+        this.inFlight.delete(cacheKey)
+      }
+    })()
+
+    this.inFlight.set(cacheKey, fetchPromise)
+    return await fetchPromise
   }
 }
 

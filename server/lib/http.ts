@@ -68,6 +68,18 @@ export function parseLimit(value: unknown): number {
   return Math.min(MAX_LIMIT, Math.max(MIN_LIMIT, result.data))
 }
 
+/**
+ * Coerce the `offset` query parameter into a non-negative integer (no upper
+ * bound — callers may legitimately page far back into the chain). Returns 0
+ * when absent or non-numeric; clamps negatives to 0.
+ */
+export function parseOffset(value: unknown): number {
+  if (value === undefined || value === null || value === '') return 0
+  const result = limitSchema.safeParse(value)
+  if (!result.success) return 0
+  return Math.max(0, result.data)
+}
+
 /** Escape a string for safe interpolation into a MongoDB `$regex` pattern. */
 export function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

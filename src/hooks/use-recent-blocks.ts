@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useQuery, type UseQueryResult } from '@tanstack/react-query'
+import { useQuery, keepPreviousData, type UseQueryResult } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
 
 export interface RecentBlock {
@@ -15,12 +15,18 @@ interface BlocksResponse {
   blocks: RecentBlock[]
   height: number
   total: number
+  offset?: number
+  limit?: number
   network: string
 }
 
 export interface RecentBlocksData {
   blocks: RecentBlock[]
   height: number
+  /** Tip height + 1 (i.e. total number of blocks including genesis). */
+  total: number
+  offset: number
+  limit: number
 }
 
 export interface AggregatedTransaction {
@@ -31,22 +37,39 @@ export interface AggregatedTransaction {
 
 const DEFAULT_LIMIT = 20
 
-export function useRecentBlocks(limit: number = DEFAULT_LIMIT): UseQueryResult<RecentBlocksData> {
+/**
+ * Fetch a window of blocks from the tip backwards. The `offset` is the number
+ * of blocks skipped from the tip (so offset=0 returns the most recent blocks,
+ * offset=100 returns blocks tip-100 down to tip-100-limit+1, etc).
+ */
+export function useRecentBlocks(
+  limit: number = DEFAULT_LIMIT,
+  offset: number = 0,
+): UseQueryResult<RecentBlocksData> {
   const { currentNetwork } = useNetwork()
 
   return useQuery<RecentBlocksData>({
-    queryKey: ['recent-blocks', currentNetwork, limit],
+    queryKey: ['recent-blocks', currentNetwork, limit, offset],
     queryFn: async (): Promise<RecentBlocksData> => {
-      const response = await fetch(`/api/blocks?network=${currentNetwork}&limit=${limit}`, {
-        headers: { Accept: 'application/json' },
-      })
+      const response = await fetch(
+        `/api/blocks?network=${currentNetwork}&limit=${limit}&offset=${offset}`,
+        { headers: { Accept: 'application/json' } },
+      )
       if (!response.ok) {
         throw new Error(`Failed to load blocks (${response.status})`)
       }
       const data = (await response.json()) as BlocksResponse
-      return { blocks: data.blocks ?? [], height: data.height ?? 0 }
+      return {
+        blocks: data.blocks ?? [],
+        height: data.height ?? 0,
+        total: data.total ?? (data.height ?? 0) + 1,
+        offset: data.offset ?? offset,
+        limit: data.limit ?? limit,
+      }
     },
-    refetchInterval: 30_000,
+    placeholderData: keepPreviousData,
+    // Only auto-refresh the tip window; deeper pages are stable history.
+    refetchInterval: offset === 0 ? 30_000 : false,
     retry: 1,
   })
 }

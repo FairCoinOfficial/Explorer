@@ -11,7 +11,7 @@ import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { blockCache } from './lib/cache'
-import { handleRouteError, parseNetwork, parseLimit, ValidationError } from './lib/http'
+import { handleRouteError, parseNetwork, parseLimit, parseOffset, ValidationError } from './lib/http'
 import { computeCirculatingSupply, currentBlockReward } from './lib/supply'
 import { rpcWithNetwork } from '@fairco.in/rpc-client'
 import priceRouter from './routes/price'
@@ -118,9 +118,19 @@ app.get('/api/blocks', async (req, res) => {
   try {
     const network = parseNetwork(req.query.network)
     const limit = parseLimit(req.query.limit)
-    const blocks = await blockCache.getRecentBlocks(network, limit)
-    const height = await blockCache.getBlockCount(network)
-    res.json({ blocks, height, total: blocks.length, network })
+    const offset = parseOffset(req.query.offset)
+    const [blocks, height] = await Promise.all([
+      blockCache.getRecentBlocks(network, limit, offset),
+      blockCache.getBlockCount(network),
+    ])
+    res.json({
+      blocks,
+      height,
+      total: height + 1, // genesis + all blocks
+      offset,
+      limit,
+      network,
+    })
   } catch (error) {
     handleRouteError(res, 'Error fetching blocks', error)
   }
@@ -220,6 +230,8 @@ const BUDGET_REWARD_PERCENT = 0
 app.get('/api/masternodes', async (req, res) => {
   try {
     const network = parseNetwork(req.query.network)
+    const limit = parseLimit(req.query.limit)
+    const offset = parseOffset(req.query.offset)
     const COLLATERAL_PER_MASTERNODE = 5000
 
     const [masternodeList, masternodeCount, blockHeight] = await Promise.all([
@@ -266,7 +278,17 @@ app.get('/api/masternodes', async (req, res) => {
       networkSecurity: { masternodeRewards: MASTERNODE_REWARD_PERCENT, stakingRewards: STAKING_REWARD_PERCENT, budgetRewards: BUDGET_REWARD_PERCENT }
     }
 
-    res.json({ masternodes: masternodes.slice(0, 100), stats, network, pagination: { total: masternodes.length, limit: 100, offset: 0 } })
+    // Sort by rank (active masternodes first) so pagination is stable and useful.
+    masternodes.sort((a, b) => a.rank - b.rank)
+    const total = masternodes.length
+    const pageItems = masternodes.slice(offset, offset + limit)
+
+    res.json({
+      masternodes: pageItems,
+      stats,
+      network,
+      pagination: { total, limit, offset },
+    })
   } catch (error) {
     handleRouteError(res, 'Error fetching masternode data', error)
   }
