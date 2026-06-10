@@ -1,14 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
-import { useNetwork } from '@/contexts/network-context'
-
-interface PeerEntry {
-  inbound: boolean
-}
-
-interface PeersResponse {
-  peers: PeerEntry[]
-  network: string
-}
+// Derived view over use-peers so both hooks share ONE React Query cache entry
+// (queryKey ['peers', network]) instead of fetching the full peer list twice
+// every 30s under two different keys.
+import { usePeers } from './use-peers'
 
 export interface PeersCount {
   total: number
@@ -17,23 +10,9 @@ export interface PeersCount {
 }
 
 export function usePeersCount() {
-  const { currentNetwork } = useNetwork()
-
-  return useQuery<PeersCount>({
-    queryKey: ['peers-count', currentNetwork],
-    queryFn: async (): Promise<PeersCount> => {
-      const response = await fetch(`/api/peers?network=${currentNetwork}`, {
-        headers: { Accept: 'application/json' },
-      })
-      if (!response.ok) {
-        throw new Error(`Failed to load peers (${response.status})`)
-      }
-      const data = (await response.json()) as PeersResponse
-      const peers = data.peers ?? []
-      const inbound = peers.filter((peer) => peer.inbound).length
-      return { total: peers.length, inbound, outbound: peers.length - inbound }
-    },
-    refetchInterval: 30_000,
-    retry: 1,
-  })
+  const query = usePeers()
+  const data: PeersCount | undefined = query.data
+    ? { total: query.data.total, inbound: query.data.inbound, outbound: query.data.outbound }
+    : undefined
+  return { ...query, data }
 }

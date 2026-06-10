@@ -14,7 +14,7 @@ export function NetworkStatus() {
                 const response = await fetch(`/api/blockcount?network=${currentNetwork}`)
                 if (response.ok) {
                     const data = await response.json()
-                    setBlockCount(data.blockCount)
+                    setBlockCount(data.blockcount)
                     setIsConnected(true)
                 } else {
                     setIsConnected(false)
