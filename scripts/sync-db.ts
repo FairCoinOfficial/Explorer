@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-import { syncEntireBlockchain } from '../lib/db/sync';
+import { syncEntireBlockchain } from '../server/lib/db/sync';
 
 // Load environment variables from .env file
 config();

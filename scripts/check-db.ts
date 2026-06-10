@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
-import connectToDatabase from '../lib/db/connect';
-import Block from '../lib/db/models/Block';
-import Transaction from '../lib/db/models/Transaction';
+import connectToDatabase from '../server/lib/db/connect';
+import Block from '../server/lib/db/models/Block';
+import Transaction from '../server/lib/db/models/Transaction';
 
 // Load environment variables
 config();
@@ -43,13 +43,13 @@ async function checkDatabase() {
 
     // Test block lookup
     if (blockCount > 0) {
-      const latestBlock = await Block.findOne().sort({ height: -1 }).lean() as any;
+      const latestBlock = await Block.findOne().sort({ height: -1 }).lean() as { height?: number } | null;
       console.log(`Latest block: #${latestBlock?.height} (${Date.now() - startTime}ms)`);
     }
 
     // Test transaction lookup
     if (txCount > 0) {
-      const sampleTx = await Transaction.findOne().lean() as any;
+      const sampleTx = await Transaction.findOne().lean() as { txid?: string } | null;
       if (sampleTx) {
         const txLookupTime = Date.now();
         await Transaction.findOne({ txid: sampleTx.txid }).lean();

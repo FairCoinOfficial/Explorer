@@ -17,7 +17,7 @@ export async function syncBlock(height: number): Promise<void> {
     const hash = await getBlockHash(height)
 
     // Get block data
-    const blockData = await getBlock(hash)
+    const blockData = (await getBlock(hash)) as Record<string, unknown>
 
     // Save block to MongoDB
     const block = new Block({
@@ -64,7 +64,7 @@ export async function syncTransactionsBatch(txids: string[], blockhash: string, 
       const result = transactionData[i]
       if (result.status === 'fulfilled') {
         transactionsToSave.push({
-          ...result.value,
+          ...(result.value as Record<string, unknown>),
           blockhash,
           blockheight
         })
@@ -95,7 +95,7 @@ export async function syncTransaction(txid: string, blockhash?: string, blockhei
     }
 
     // Get transaction data
-    const txData = await getRawTransactionVerbose(txid)
+    const txData = (await getRawTransactionVerbose(txid)) as Record<string, unknown>
 
     // Save transaction to MongoDB
     const transaction = new Transaction({
@@ -172,7 +172,7 @@ export async function syncEntireBlockchain(): Promise<void> {
 export async function getBlockFromCache(height: number): Promise<Record<string, unknown> | null> {
   try {
     await connectToDatabase()
-    return await Block.findOne({ height }).lean()
+    return await Block.findOne({ height }).lean<Record<string, unknown> | null>()
   } catch (error) {
     console.error('Error getting block from cache:', error)
     return null
