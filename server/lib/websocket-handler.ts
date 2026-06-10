@@ -20,27 +20,32 @@ const wsManager = getWebSocketManager({
   connectionTimeout: 300000 // 5 minutes
 })
 
+// Networks the monitor polls. Configurable so deployments without a testnet
+// node aren't stuck logging RPC failures every poll cycle.
+const MONITOR_NETWORKS = (process.env.WEBSOCKET_NETWORKS || 'mainnet,testnet')
+  .split(',')
+  .map(n => n.trim())
+  .filter((n): n is NetworkType => n === 'mainnet' || n === 'testnet')
+
 const blockchainMonitor = getBlockchainMonitor(wsManager, {
   pollInterval: parseInt(process.env.BLOCKCHAIN_POLL_INTERVAL || '10000'),
-  networks: ['mainnet', 'testnet'],
+  networks: MONITOR_NETWORKS.length > 0 ? MONITOR_NETWORKS : ['mainnet'],
   enabled: process.env.WEBSOCKET_ENABLED !== 'false'
 })
 
-// Start blockchain monitor
-let monitorStarted = false
-if (!monitorStarted) {
-  blockchainMonitor.start().then(() => {
-    console.log('[WebSocketHandler] Blockchain monitor started')
-    monitorStarted = true
-  }).catch(error => {
-    console.error('[WebSocketHandler] Failed to start blockchain monitor:', error)
-  })
-}
+// Start blockchain monitor once at module load (this module is evaluated a
+// single time via the lazy import in server/index.ts).
+blockchainMonitor.start().then(() => {
+  console.log('[WebSocketHandler] Blockchain monitor started')
+}).catch(error => {
+  console.error('[WebSocketHandler] Failed to start blockchain monitor:', error)
+})
 
 /**
  * Handle new WebSocket connection
  */
-export function handleConnection(ws: WebSocket, request: any, ip?: string): void {
+export function handleConnection(ws: WebSocket, request: unknown, ip?: string): void {
+  void request
   let connectionId: string | null = null
   let currentNetwork: NetworkType = 'mainnet'
 
