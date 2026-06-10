@@ -2,6 +2,8 @@ import {
   AlertTriangle,
   ArrowDownLeft,
   ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
   Hash,
   Info,
   Receipt,
@@ -9,9 +11,10 @@ import {
   TrendingUp,
   Wallet,
 } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslations } from '@/lib/i18n'
-import { useAddress, type AddressInfo, type AddressTransaction } from '@/hooks/use-address'
+import { useAddress, useAddressTransactions, type AddressTransaction } from '@/hooks/use-address'
 import { formatNumber } from '@/lib/format'
 import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
@@ -142,49 +145,87 @@ export function AddressContent({ address }: { address: string }) {
       ) : null}
 
       {/* Transaction history */}
-      <SectionCard
-        title={t('transactionHistory')}
-        icon={Receipt}
-        flush
-        action={
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
-            {t('transactionsCount', { count: info.transactions?.length ?? 0 })}
-          </span>
-        }
-      >
-        <AddressTransactions info={info} t={t} />
-      </SectionCard>
+      <AddressTransactionsSection address={address} t={t} />
     </div>
   )
 }
 
-function AddressTransactions({
-  info,
+const TXS_PER_PAGE = 20
+
+function AddressTransactionsSection({
+  address,
   t,
 }: {
-  info: AddressInfo
+  address: string
   t: (key: string, params?: Record<string, string | number>) => string
 }) {
-  const transactions = info.transactions ?? []
+  const [page, setPage] = useState(1)
+  const { data, isLoading } = useAddressTransactions(address, page, TXS_PER_PAGE)
 
-  if (transactions.length === 0) {
-    return (
-      <div className="flex min-h-[140px] flex-col items-center justify-center gap-2 px-4 py-8 text-center">
-        <span className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
-          <Receipt className="size-5" />
-        </span>
-        <p className="text-sm font-medium">{t('noTransactions')}</p>
-        <p className="text-xs text-muted-foreground">{t('noTransactionsDesc')}</p>
-      </div>
-    )
-  }
+  const transactions = data?.transactions ?? []
+  const total = data?.total ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / TXS_PER_PAGE))
 
   return (
-    <ul className="divide-y">
-      {transactions.map((tx) => (
-        <AddressTransactionRow key={tx.txid} tx={tx} t={t} />
-      ))}
-    </ul>
+    <SectionCard
+      title={t('transactionHistory')}
+      icon={Receipt}
+      flush
+      action={
+        <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+          {t('transactionsCount', { count: total })}
+        </span>
+      }
+    >
+      {isLoading ? (
+        <div className="space-y-2 p-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 rounded-lg" />
+          ))}
+        </div>
+      ) : transactions.length === 0 ? (
+        <div className="flex min-h-[140px] flex-col items-center justify-center gap-2 px-4 py-8 text-center">
+          <span className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <Receipt className="size-5" />
+          </span>
+          <p className="text-sm font-medium">{t('noTransactions')}</p>
+          <p className="text-xs text-muted-foreground">{t('noTransactionsDesc')}</p>
+        </div>
+      ) : (
+        <>
+          <ul className="divide-y">
+            {transactions.map((tx) => (
+              <AddressTransactionRow key={tx.txid} tx={tx} t={t} />
+            ))}
+          </ul>
+          {totalPages > 1 ? (
+            <div className="flex items-center justify-between border-t px-4 py-2.5">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className="size-4" />
+                {t('previous')}
+              </Button>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {t('pageOf', { page, total: totalPages })}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                {t('next')}
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          ) : null}
+        </>
+      )}
+    </SectionCard>
   )
 }
 

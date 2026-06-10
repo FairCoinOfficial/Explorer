@@ -1,4 +1,4 @@
-import { useQuery, type UseQueryResult } from '@tanstack/react-query'
+import { useQuery, keepPreviousData, type UseQueryResult } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
 
 export interface AddressTransaction {
@@ -7,7 +7,7 @@ export interface AddressTransaction {
   confirmations: number
   amount: number
   type: 'received' | 'sent'
-  blockHeight?: number
+  blockHeight?: number | null
 }
 
 export interface AddressUtxo {
@@ -53,6 +53,45 @@ export function useAddress(address: string): UseQueryResult<AddressInfo> {
       const data = (await response.json()) as AddressResponse
       return data.addressInfo
     },
+    refetchInterval: 30_000,
+    retry: 1,
+  })
+}
+
+export interface AddressTxsPage {
+  transactions: AddressTransaction[]
+  page: number
+  limit: number
+  total: number
+  /** Set by the API when the node lacks addressindex, limiting available data. */
+  note?: string
+}
+
+/**
+ * Paginated transaction history for an address, served by
+ * `/api/address/:address/txs`. The server computes the address-relative net
+ * `amount` and `type` ('received' | 'sent') from enriched prevouts.
+ */
+export function useAddressTransactions(
+  address: string,
+  page: number,
+  limit = 20,
+): UseQueryResult<AddressTxsPage> {
+  const { currentNetwork } = useNetwork()
+
+  return useQuery<AddressTxsPage>({
+    queryKey: ['address-txs', address, page, limit, currentNetwork],
+    queryFn: async (): Promise<AddressTxsPage> => {
+      const response = await fetch(
+        `/api/address/${address}/txs?page=${page}&limit=${limit}&network=${currentNetwork}`,
+        { headers: { Accept: 'application/json' } },
+      )
+      if (!response.ok) {
+        throw new Error(await readErrorMessage(response))
+      }
+      return (await response.json()) as AddressTxsPage
+    },
+    placeholderData: keepPreviousData,
     refetchInterval: 30_000,
     retry: 1,
   })
