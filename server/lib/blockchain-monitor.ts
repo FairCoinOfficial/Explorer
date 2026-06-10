@@ -11,13 +11,7 @@ import {
   MempoolUpdateEvent,
   NetworkStatsEvent
 } from './websocket-types'
-import {
-  getCachedBlockCount,
-  getCachedBlock,
-  getCachedNetworkInfo,
-  getCachedMiningInfo
-} from './cached-rpc'
-import { BlockCache } from './cache'
+import { blockCache } from './cache'
 
 export class BlockchainMonitor {
   private wsManager: WebSocketManager
@@ -26,11 +20,9 @@ export class BlockchainMonitor {
   private statsInterval: NodeJS.Timeout | null = null
   private config: BlockchainMonitorConfig
   private isRunning: boolean = false
-  private blockCache: BlockCache
 
   constructor(wsManager: WebSocketManager, config?: Partial<BlockchainMonitorConfig>) {
     this.wsManager = wsManager
-    this.blockCache = new BlockCache()
 
     this.config = {
       pollInterval: config?.pollInterval ?? parseInt(process.env.BLOCKCHAIN_POLL_INTERVAL || '10000'),
@@ -128,9 +120,9 @@ export class BlockchainMonitor {
     try {
       console.log(`[BlockchainMonitor] Initializing ${network} state...`)
 
-      const blockCount = await getCachedBlockCount(network)
-      const block = await getCachedBlock(blockCount, network)
-      const mempoolInfo = await this.blockCache.getMempoolInfo(network)
+      const blockCount = await blockCache.getBlockCount(network)
+      const block = await blockCache.getBlock(blockCount, network, true)
+      const mempoolInfo = await blockCache.getMempoolInfo(network)
 
       const state = this.networkStates.get(network)
       if (state) {
@@ -167,7 +159,7 @@ export class BlockchainMonitor {
       }
 
       // Check block count
-      const newBlockCount = await getCachedBlockCount(network)
+      const newBlockCount = await blockCache.getBlockCount(network)
 
       if (newBlockCount > state.blockHeight) {
         console.log(`[BlockchainMonitor] ${network}: New blocks detected (${state.blockHeight} -> ${newBlockCount})`)
@@ -208,7 +200,7 @@ export class BlockchainMonitor {
    */
   private async handleNewBlock(network: NetworkType, height: number): Promise<void> {
     try {
-      const block = await getCachedBlock(height, network)
+      const block = await blockCache.getBlock(height, network, true)
 
       const state = this.networkStates.get(network)
       if (state) {
@@ -250,7 +242,7 @@ export class BlockchainMonitor {
         return
       }
 
-      const mempoolInfo = await this.blockCache.getMempoolInfo(network)
+      const mempoolInfo = await blockCache.getMempoolInfo(network)
 
       // Check if mempool changed
       if (
@@ -304,8 +296,8 @@ export class BlockchainMonitor {
 
       // Get network info and mining info
       const [networkInfo, miningInfo] = await Promise.all([
-        getCachedNetworkInfo(network).catch(() => null),
-        getCachedMiningInfo(network).catch(() => null)
+        blockCache.getNetworkInfo(network).catch(() => null),
+        blockCache.getMiningInfo(network).catch(() => null)
       ])
 
       if (networkInfo || miningInfo) {
