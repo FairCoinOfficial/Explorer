@@ -6,7 +6,7 @@
       "name": "faircoin-explorer",
       "dependencies": {
         "@base-ui/react": "^1.1.0",
-        "@fairco.in/rpc-client": "^0.1.0",
+        "@fairco.in/rpc-client": "^0.1.1",
         "@hugeicons/core-free-icons": "^3.1.1",
         "@hugeicons/react": "^1.1.4",
         "@radix-ui/react-avatar": "^1.1.10",
@@ -229,7 +229,7 @@
 
     "@exodus/bytes": ["@exodus/bytes@1.15.1", "", { "peerDependencies": { "@noble/hashes": "^1.8.0 || ^2.0.0" }, "optionalPeers": ["@noble/hashes"] }, "sha512-S6mL0yNB/Abt9Ei4tq8gDhcczc4S3+vQ4ra7vxnAf+YHC02srtqxKKZghx2Dq6p0e66THKwR6r8N6P95wEty7Q=="],
 
-    "@fairco.in/rpc-client": ["@fairco.in/rpc-client@0.1.0", "", {}, "sha512-NfsYyc9Djn6MhNUGRvalQA2Y5wXEFjRD+2b/2x8iYYRGG8uRwGo7S+4eO0VkzrDasCZPNVkJuvxBfL7kBfqifA=="],
+    "@fairco.in/rpc-client": ["@fairco.in/rpc-client@0.1.1", "", {}, "sha512-U0z0ctDuQhuqlgrQwMIOPzEbWZYGLuJEDCG9H+sud2PJ2m/thRfC2tnm8wjSiGSltIxzyUwqEYxFSCd3mtaKRA=="],
 
     "@floating-ui/core": ["@floating-ui/core@1.7.5", "", { "dependencies": { "@floating-ui/utils": "^0.2.11" } }, "sha512-1Ih4WTWyw0+lKyFMcBHGbb5U5FtuHJuujoyyr5zTaWS5EYMeT6Jb2AuDeftsCsEuchO+mM2ij5+q9crhydzLhQ=="],
 
