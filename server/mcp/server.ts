@@ -21,6 +21,7 @@ import { computeCirculatingSupply, currentBlockReward, MAX_SUPPLY } from "../lib
 import { getPrice } from "../lib/price-service";
 import { logger } from "../lib/logger";
 import { registerWalletTools } from "./wallet-tools";
+import { toolDescription } from "./tool-catalog";
 
 /** Public web base for explorer page links surfaced in `search`/`fetch` results. */
 const EXPLORER_WEB_BASE = (process.env.PUBLIC_BASE_URL || "https://explorer.fairco.in").replace(/\/+$/, "");
@@ -433,8 +434,7 @@ export function createFaircoinMcpServer(version: string): McpServer {
     "search",
     {
       title: "Search the FairCoin blockchain",
-      description:
-        "Resolve a query (block height, block hash, transaction id, or address) into a list of linkable results. Returns a human-readable summary and structured results shaped as { id, title, url }; pass a returned id to `fetch` for the full record.",
+      description: toolDescription("search"),
       inputSchema: {
         query: z.string().min(1).describe("Block height, block hash, transaction id, or FairCoin address."),
         ...networkArg,
@@ -469,8 +469,7 @@ export function createFaircoinMcpServer(version: string): McpServer {
     "fetch",
     {
       title: "Fetch a FairCoin record by id",
-      description:
-        "Given an id returned by `search` (e.g. 'block:12345', 'tx:<hash>', 'address:<addr>'), return the full record as { id, title, text, url, metadata }.",
+      description: toolDescription("fetch"),
       inputSchema: {
         id: z.string().min(1).describe("An id from `search`, e.g. 'tx:<hash>'."),
         ...networkArg,
@@ -521,8 +520,7 @@ export function createFaircoinMcpServer(version: string): McpServer {
     "get_network_stats",
     {
       title: "Get FairCoin network stats",
-      description:
-        "Current chain stats: block height, difficulty, circulating/max supply, peer connections, mempool size, masternode count, and PoW/PoS phase.",
+      description: toolDescription("get_network_stats"),
       inputSchema: { ...networkArg },
     },
     async ({ network }) => {
@@ -540,7 +538,7 @@ export function createFaircoinMcpServer(version: string): McpServer {
     "get_latest_blocks",
     {
       title: "Get latest FairCoin blocks",
-      description: "Return the most recent blocks (summaries: height, hash, time, size, tx count).",
+      description: toolDescription("get_latest_blocks"),
       inputSchema: {
         limit: z
           .number()
@@ -571,7 +569,7 @@ export function createFaircoinMcpServer(version: string): McpServer {
     "get_block",
     {
       title: "Get a FairCoin block",
-      description: "Fetch a full block by height (digits) or block hash (64 hex chars).",
+      description: toolDescription("get_block"),
       inputSchema: {
         hashOrHeight: z.string().min(1).describe("Block height (e.g. '12345') or 64-char block hash."),
         ...networkArg,
@@ -597,8 +595,7 @@ export function createFaircoinMcpServer(version: string): McpServer {
     "get_transaction",
     {
       title: "Get a FairCoin transaction",
-      description:
-        "Fetch a full transaction by txid, including inputs/outputs with resolved prevouts and live confirmations.",
+      description: toolDescription("get_transaction"),
       inputSchema: {
         txid: z.string().min(1).describe("Transaction id (64-char hex)."),
         ...networkArg,
@@ -628,8 +625,7 @@ export function createFaircoinMcpServer(version: string): McpServer {
     "get_address",
     {
       title: "Get a FairCoin address summary",
-      description:
-        "Balance and totals for an address. Full transaction history requires a node with addressindex; without it the tool degrades gracefully to validation-only data.",
+      description: toolDescription("get_address"),
       inputSchema: {
         address: z.string().min(1).describe("FairCoin address (base58)."),
         ...networkArg,
@@ -655,7 +651,7 @@ export function createFaircoinMcpServer(version: string): McpServer {
     "get_mempool",
     {
       title: "Get the FairCoin mempool",
-      description: "Current mempool: total size, byte size, and detail for the most recent pending transactions.",
+      description: toolDescription("get_mempool"),
       inputSchema: { ...networkArg },
     },
     async ({ network }) => {
@@ -673,7 +669,7 @@ export function createFaircoinMcpServer(version: string): McpServer {
     "get_masternodes",
     {
       title: "Get FairCoin masternodes",
-      description: "Masternode list (sorted by rank) plus aggregate stats (total, enabled, collateral).",
+      description: toolDescription("get_masternodes"),
       inputSchema: { ...networkArg },
     },
     async ({ network }) => {
@@ -691,8 +687,7 @@ export function createFaircoinMcpServer(version: string): McpServer {
     "get_price",
     {
       title: "Get the FAIR price",
-      description:
-        "Live USD price of FAIR (via the wrapped-FAIR WFAIR/USDC pool on Base), with 24h change, volume, liquidity, and market cap when available.",
+      description: toolDescription("get_price"),
       inputSchema: {},
     },
     async () => {
@@ -715,7 +710,7 @@ export function createFaircoinMcpServer(version: string): McpServer {
     "get_supply",
     {
       title: "Get FairCoin supply",
-      description: "Circulating and max supply at the current height, plus the current block reward and percent mined.",
+      description: toolDescription("get_supply"),
       inputSchema: { ...networkArg },
     },
     async ({ network }) => {

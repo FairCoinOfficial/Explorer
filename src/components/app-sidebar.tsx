@@ -10,6 +10,7 @@ import {
   Users,
   Network,
   Wrench,
+  Plug,
   Waypoints,
   ChevronsLeft,
   ChevronsRight,
@@ -142,6 +143,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
 
   const toolsNav = [
     { icon: Wrench, label: t('tools'), to: '/tools/fee-calculator' },
+    { icon: Plug, label: t('mcp'), to: '/tools/mcp' },
   ]
 
   return (

@@ -20,6 +20,7 @@ import addressRouter from './routes/address'
 import broadcastRouter from './routes/broadcast'
 import feeEstimateRouter from './routes/fee-estimate'
 import githubRouter from './routes/github'
+import mcpInfoRouter from './routes/mcp-info'
 import { createMcpPostHandler, handleMcpMethodNotAllowed, handleMcpOptions } from './mcp/http'
 import packageJson from '../package.json' with { type: 'json' }
 
@@ -187,6 +188,9 @@ app.use('/api/fee-estimate', feeEstimateRouter)
 
 // GitHub route (latest release + star count, server-side cached)
 app.use('/api/github', githubRouter)
+
+// MCP server metadata (endpoint + transport + tool catalog) for the /tools/mcp page
+app.use('/api/mcp/info', mcpInfoRouter)
 
 app.get('/api/mempool', async (req, res) => {
   try {

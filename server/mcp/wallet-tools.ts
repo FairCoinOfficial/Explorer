@@ -21,6 +21,7 @@ import { rpcWithNetwork, type NetworkType, type RpcParam } from "@fairco.in/rpc-
 import { parseNetwork, ValidationError } from "../lib/http";
 import { logger } from "../lib/logger";
 import { addressFromWif, generateWallet, WalletError } from "./wallet";
+import { toolDescription } from "./tool-catalog";
 
 /** Satoshis per FAIR (matches the rest of the explorer). */
 const SATS_PER_FAIR = 100_000_000;
@@ -273,8 +274,7 @@ export function registerWalletTools(server: McpServer): void {
     "create_wallet",
     {
       title: "Create a FairCoin wallet (non-custodial)",
-      description:
-        "Generate a brand-new FairCoin keypair for the given network and return the address and private key (WIF). The server stores NOTHING — you are the sole holder of the key. Store it securely; it cannot be recovered.",
+      description: toolDescription("create_wallet"),
       inputSchema: { ...networkArg },
     },
     async ({ network }) => {
@@ -299,8 +299,7 @@ export function registerWalletTools(server: McpServer): void {
     "get_balance",
     {
       title: "Get a FairCoin address balance",
-      description:
-        "Return the confirmed + unconfirmed balance and UTXO count for an address via getaddressbalance/getaddressutxos. Requires a node with addressindex enabled; returns a clear error otherwise.",
+      description: toolDescription("get_balance"),
       inputSchema: {
         address: addressSchema,
         ...networkArg,
@@ -354,8 +353,7 @@ export function registerWalletTools(server: McpServer): void {
     "send",
     {
       title: "Send FAIR (non-custodial)",
-      description:
-        "Send a FAIR amount from the address controlled by your private key (WIF) to a destination address. Inputs are selected to cover the amount plus a flat 0.001 FAIR fee; change returns to your address (dust change is dropped into the fee). The transaction is built and signed by the node (your key is used transiently, never imported or stored). Returns { txid, amount, fee }.",
+      description: toolDescription("send"),
       inputSchema: {
         privateKey: wifSchema,
         toAddress: addressSchema,
@@ -394,8 +392,7 @@ export function registerWalletTools(server: McpServer): void {
     "sweep",
     {
       title: "Sweep an entire FairCoin balance (non-custodial)",
-      description:
-        "Send the ENTIRE balance of the address controlled by your private key (WIF) to a destination address, minus a flat 0.001 FAIR fee. Built and signed by the node (your key is used transiently, never imported or stored). Returns { txid, amount, fee }.",
+      description: toolDescription("sweep"),
       inputSchema: {
         privateKey: wifSchema,
         toAddress: addressSchema,

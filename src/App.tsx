@@ -26,6 +26,7 @@ const StatsPage = lazy(() => import('./pages/stats'))
 const PeersPage = lazy(() => import('./pages/peers'))
 const FeeCalculatorPage = lazy(() => import('./pages/fee-calculator'))
 const AddressValidatorPage = lazy(() => import('./pages/address-validator'))
+const McpPage = lazy(() => import('./pages/mcp'))
 const BridgePage = lazy(() => import('./pages/bridge'))
 const NotFoundPage = lazy(() => import('./pages/not-found'))
 
@@ -139,6 +140,14 @@ export default function App() {
                     element={
                       <Suspense fallback={<PageLoading />}>
                         <AddressValidatorPage />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="tools/mcp"
+                    element={
+                      <Suspense fallback={<PageLoading />}>
+                        <McpPage />
                       </Suspense>
                     }
                   />
