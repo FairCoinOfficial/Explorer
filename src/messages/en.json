@@ -9,6 +9,7 @@
   "nav.peers": "Peers",
   "nav.network": "Network",
   "nav.tools": "Tools",
+  "nav.feeCalculator": "Fee Calculator",
   "nav.bridge": "Bridge",
   "sidebar.mainnet": "Mainnet",
   "sidebar.testnet": "Testnet",

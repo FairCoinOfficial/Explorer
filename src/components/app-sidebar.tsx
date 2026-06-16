@@ -1,3 +1,4 @@
+import * as React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   Home,
@@ -11,9 +12,11 @@ import {
   Network,
   Wrench,
   Plug,
+  Calculator,
   Waypoints,
   ChevronsLeft,
   ChevronsRight,
+  ChevronRight,
   type LucideIcon,
 } from "lucide-react"
 import {
@@ -116,6 +119,97 @@ function NavItem({ icon: Icon, label, to, onSelect, collapsed }: NavItemProps) {
   )
 }
 
+interface ToolsSubItem {
+  icon: LucideIcon
+  label: string
+  to: string
+}
+
+interface ToolsMenuProps {
+  label: string
+  items: ToolsSubItem[]
+}
+
+/**
+ * Expanded-sidebar collapsible parent for the Tools section.
+ * Open state is derived: always open while on a `/tools/*` route, otherwise
+ * follows the user's manual toggle. No `useEffect` — purely derived state.
+ */
+function ToolsMenu({ label, items }: ToolsMenuProps) {
+  const location = useLocation()
+  const { setOpenMobile } = useSidebar()
+  const toolsActive = location.pathname.startsWith('/tools')
+  const [userOpen, setUserOpen] = React.useState(() => toolsActive)
+  const isOpen = userOpen || toolsActive
+
+  const parentClassName = cn(
+    "flex flex-row items-center gap-2 overflow-hidden rounded-full text-left h-[36px] w-full px-3 transition-colors cursor-pointer",
+    toolsActive ? "bg-primary text-primary-foreground" : "hover:bg-muted active:bg-muted/80",
+  )
+
+  return (
+    <div className="relative flex w-full min-w-0 flex-col px-1.5 py-0.5 shrink-0">
+      <div className="flex w-full min-w-0 flex-col gap-px">
+        <div className="group/menu-item whitespace-nowrap font-semibold mx-1 relative">
+          <button
+            type="button"
+            onClick={() => setUserOpen((prev) => !prev)}
+            aria-expanded={isOpen}
+            className={parentClassName}
+          >
+            <div className="w-6 h-6 flex items-center justify-center shrink-0">
+              <Wrench size={18} className={toolsActive ? "text-primary-foreground" : "text-foreground"} />
+            </div>
+            <span className={cn(
+              "text-sm select-none font-semibold",
+              toolsActive ? "text-primary-foreground" : "text-foreground",
+            )}>
+              {label}
+            </span>
+            <ChevronRight
+              size={18}
+              className={cn(
+                "ms-auto shrink-0 transition-transform",
+                isOpen ? "rotate-90" : "rotate-0",
+                toolsActive ? "text-primary-foreground" : "text-muted-foreground",
+              )}
+            />
+          </button>
+        </div>
+        {isOpen && (
+          <div className="flex w-full min-w-0 flex-col gap-px ps-4">
+            {items.map(({ icon: SubIcon, label: subLabel, to }) => {
+              const isSubActive = location.pathname === to
+              return (
+                <div key={to} className="group/menu-item whitespace-nowrap font-semibold mx-1 relative">
+                  <Link
+                    to={to}
+                    onClick={() => setOpenMobile(false)}
+                    className={cn(
+                      "flex flex-row items-center gap-2 overflow-hidden rounded-full text-left h-[34px] w-full px-3 transition-colors",
+                      isSubActive ? "bg-primary text-primary-foreground" : "hover:bg-muted active:bg-muted/80",
+                    )}
+                  >
+                    <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                      <SubIcon size={16} className={isSubActive ? "text-primary-foreground" : "text-foreground"} />
+                    </div>
+                    <span className={cn(
+                      "text-sm select-none font-medium",
+                      isSubActive ? "text-primary-foreground" : "text-foreground",
+                    )}>
+                      {subLabel}
+                    </span>
+                  </Link>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { state, isMobile, toggleSidebar } = useSidebar()
   const { currentNetwork, setNetwork } = useNetwork()
@@ -141,8 +235,8 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     { icon: Waypoints, label: t('bridge'), to: '/bridge' },
   ]
 
-  const toolsNav = [
-    { icon: Wrench, label: t('tools'), to: '/tools/fee-calculator' },
+  const toolsSubNav: ToolsSubItem[] = [
+    { icon: Calculator, label: t('feeCalculator'), to: '/tools/fee-calculator' },
     { icon: Plug, label: t('mcp'), to: '/tools/mcp' },
   ]
 
@@ -250,8 +344,8 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             </div>
             <div className="w-8 mx-auto my-1" style={{ borderTop: '1px solid hsl(var(--border) / 0.3)' }} />
             <div className="flex flex-col items-center gap-1 py-1 shrink-0">
-              {toolsNav.map((item) => (
-                <NavItem key={item.label} {...item} collapsed />
+              {toolsSubNav.map((item) => (
+                <NavItem key={item.to} {...item} collapsed />
               ))}
             </div>
           </>
@@ -271,9 +365,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             </div>
             <div className="mx-2 my-1" style={{ borderTop: '1px solid hsl(var(--border) / 0.3)' }} />
             <div className="shrink-0">
-              {toolsNav.map((item) => (
-                <NavItem key={item.label} {...item} />
-              ))}
+              <ToolsMenu label={t('tools')} items={toolsSubNav} />
             </div>
           </>
         )}

@@ -9,6 +9,7 @@
   "nav.peers": "Пиры",
   "nav.network": "Сеть",
   "nav.tools": "Инструменты",
+  "nav.feeCalculator": "Калькулятор комиссий",
   "nav.bridge": "Мост",
   "sidebar.mainnet": "Основная сеть",
   "sidebar.testnet": "Тестовая сеть",
