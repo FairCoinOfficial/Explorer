@@ -1,57 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://explorer.fairco.in/</loc>
-    <lastmod>2024-01-01</lastmod>
-    <changefreq>daily</changefreq>
+    <lastmod>2026-06-16</lastmod>
+    <changefreq>hourly</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://explorer.fairco.in/images/explorer-meta.svg</image:loc>
+      <image:title>FairCoin Explorer</image:title>
+      <image:caption>Real-time FairCoin blockchain analytics and Explorer preview image.</image:caption>
+    </image:image>
   </url>
-  <url>
-    <loc>https://explorer.fairco.in/blocks</loc>
-    <lastmod>2024-01-01</lastmod>
-    <changefreq>hourly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://explorer.fairco.in/tx</loc>
-    <lastmod>2024-01-01</lastmod>
-    <changefreq>hourly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://explorer.fairco.in/stats</loc>
-    <lastmod>2024-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://explorer.fairco.in/search</loc>
-    <lastmod>2024-01-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://explorer.fairco.in/masternodes</loc>
-    <lastmod>2024-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://explorer.fairco.in/network-status</loc>
-    <lastmod>2024-01-01</lastmod>
-    <changefreq>hourly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://explorer.fairco.in/tools</loc>
-    <lastmod>2024-01-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://explorer.fairco.in/mempool</loc>
-    <lastmod>2024-01-01</lastmod>
-    <changefreq>hourly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  <url><loc>https://explorer.fairco.in/blocks</loc><lastmod>2026-06-16</lastmod><changefreq>hourly</changefreq><priority>0.95</priority></url>
+  <url><loc>https://explorer.fairco.in/tx</loc><lastmod>2026-06-16</lastmod><changefreq>hourly</changefreq><priority>0.95</priority></url>
+  <url><loc>https://explorer.fairco.in/mempool</loc><lastmod>2026-06-16</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://explorer.fairco.in/stats</loc><lastmod>2026-06-16</lastmod><changefreq>daily</changefreq><priority>0.85</priority></url>
+  <url><loc>https://explorer.fairco.in/masternodes</loc><lastmod>2026-06-16</lastmod><changefreq>daily</changefreq><priority>0.85</priority></url>
+  <url><loc>https://explorer.fairco.in/network-status</loc><lastmod>2026-06-16</lastmod><changefreq>hourly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://explorer.fairco.in/peers</loc><lastmod>2026-06-16</lastmod><changefreq>hourly</changefreq><priority>0.75</priority></url>
+  <url><loc>https://explorer.fairco.in/bridge</loc><lastmod>2026-06-16</lastmod><changefreq>daily</changefreq><priority>0.75</priority></url>
+  <url><loc>https://explorer.fairco.in/tools/fee-calculator</loc><lastmod>2026-06-16</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://explorer.fairco.in/tools/address-validator</loc><lastmod>2026-06-16</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://explorer.fairco.in/tools/mcp</loc><lastmod>2026-06-16</lastmod><changefreq>weekly</changefreq><priority>0.65</priority></url>
 </urlset>

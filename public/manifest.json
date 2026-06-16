@@ -1,7 +1,7 @@
 {
   "name": "FairCoin Explorer",
   "short_name": "FairCoin",
-  "description": "Fast, friendly FairCoin blockchain explorer",
+  "description": "Real-time FairCoin blockchain explorer for blocks, transactions, addresses, masternodes, fees, mempool activity, bridge reserves, peers, supply, price, and network health.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0d1a0f",
@@ -9,13 +9,46 @@
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
-  "categories": ["finance", "utilities"],
+  "categories": [
+    "finance",
+    "utilities",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "/images/FairCoin-Logo.jpg",
       "sizes": "any",
       "type": "image/jpeg",
       "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/explorer-meta.svg",
+      "sizes": "1600x900",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "FairCoin Explorer social preview with blockchain analytics nodes"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Blocks",
+      "short_name": "Blocks",
+      "description": "View recent FairCoin blocks",
+      "url": "/blocks"
+    },
+    {
+      "name": "Transactions",
+      "short_name": "Tx",
+      "description": "Search FairCoin transactions",
+      "url": "/tx"
+    },
+    {
+      "name": "Network Status",
+      "short_name": "Status",
+      "description": "Monitor FairCoin network health",
+      "url": "/network-status"
     }
   ]
 }
