@@ -109,6 +109,22 @@ Every blockchain tool accepts an optional `network` argument (`"mainnet"` by def
 | `get_masternodes` | Masternode list (by rank) plus aggregate stats. |
 | `get_price` | Live FAIR price (via the WFAIR/USDC pool on Base). |
 | `get_supply` | Circulating/max supply, block reward, percent mined. |
+| `create_wallet` | Generate a new FairCoin keypair and return `{ address, privateKey (WIF) }`. **Non-custodial** — the server stores nothing. |
+| `get_balance` | Confirmed + unconfirmed balance and UTXO count for an address (needs a node with `addressindex`). |
+| `send` | Send a FAIR `amount` from the address controlled by your `privateKey` (WIF) to `toAddress`. Returns `{ txid, amount, fee }`. |
+| `sweep` | Send the entire balance of your `privateKey`'s address to `toAddress` (minus fee). Returns `{ txid, amount, fee }`. |
+
+### Agent wallets (non-custodial)
+
+The wallet tools let AI agents **receive and spend FAIR autonomously** on both mainnet and testnet, with a strictly **non-custodial** design:
+
+- `create_wallet` generates a keypair **in-process** and returns the address and private key (WIF) **once**. The server keeps **no copy** — no database, no file, no in-memory cache. The agent is the sole holder of the key.
+- `get_balance` reads an address balance + UTXOs from the node.
+- `send` / `sweep` accept the agent's WIF **as a parameter**, derive the from-address, build the raw transaction, and hand the key to the node's `signrawtransaction` (which signs **without importing** the key to the wallet) before broadcasting. The key is used transiently and never persisted.
+
+Only key generation is done in-process (using the audited `@noble/curves` secp256k1 implementation); all transaction construction, signing, and broadcasting are delegated to the FairCoin node (`createrawtransaction` / `signrawtransaction` / `sendrawtransaction`) so FairCoin's exact transaction and sighash format is always correct. `send` and `sweep` use a flat **0.001 FAIR** network fee; change below the dust threshold (0.0001 FAIR) is dropped into the fee rather than creating an uneconomical output.
+
+> **Security caveat — the key is the holder's responsibility.** The private key is returned to and supplied by the caller. The server **never logs, echoes, or stores it**, and it cannot recover a lost key. Anyone holding the key controls the funds. Store it securely. `send`/`sweep` and `get_balance` require a FairCoin node started with `-addressindex=1`.
 
 ### Add to Claude / ChatGPT
 

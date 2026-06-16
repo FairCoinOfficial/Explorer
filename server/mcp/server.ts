@@ -20,6 +20,7 @@ import { parseNetwork, MAX_LIMIT, ValidationError } from "../lib/http";
 import { computeCirculatingSupply, currentBlockReward, MAX_SUPPLY } from "../lib/supply";
 import { getPrice } from "../lib/price-service";
 import { logger } from "../lib/logger";
+import { registerWalletTools } from "./wallet-tools";
 
 /** Public web base for explorer page links surfaced in `search`/`fetch` results. */
 const EXPLORER_WEB_BASE = (process.env.PUBLIC_BASE_URL || "https://explorer.fairco.in").replace(/\/+$/, "");
@@ -407,11 +408,12 @@ async function resolveSearch(
 // ---------------------------------------------------------------------------
 
 const SERVER_INSTRUCTIONS = [
-  "Read-only MCP server for the FairCoin blockchain explorer (mainnet + testnet).",
-  "Exposes blocks, transactions, addresses, masternodes, network stats, supply, and the live FAIR price.",
-  'Every blockchain tool accepts an optional `network` argument ("mainnet" by default; "testnet" is also supported).',
+  "MCP server for the FairCoin blockchain explorer (mainnet + testnet).",
+  "Read tools expose blocks, transactions, addresses, masternodes, network stats, supply, and the live FAIR price.",
+  "Non-custodial agent-wallet tools (`create_wallet`, `get_balance`, `send`, `sweep`) let you hold your OWN FairCoin key and transact autonomously: the server stores NOTHING — `create_wallet` returns the private key once and never keeps a copy; `send`/`sweep` take your key as a parameter, sign via the node, and never persist or log it.",
+  'Every tool accepts an optional `network` argument ("mainnet" by default; "testnet" is also supported).',
   "Use `search` to resolve a block height, block hash, transaction id, or address into linkable results, then `fetch` with a returned id to retrieve the full record.",
-  "Address balances and history require a node with addressindex enabled; without it those tools degrade gracefully to validation-only data.",
+  "Address balances/history and the wallet send/sweep tools require a node with addressindex enabled; read tools degrade gracefully to validation-only data without it.",
 ].join(" ");
 
 /**
@@ -702,6 +704,10 @@ export function createFaircoinMcpServer(version: string): McpServer {
       }
     },
   );
+
+  // ---- Non-custodial agent wallets (create / balance / send / sweep) ----
+
+  registerWalletTools(server);
 
   // ---- Supply ----
 
