@@ -1,42 +1,35 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /static/
+Disallow: /*?*
 
-# Allow all major search engines
+# Explicitly surface crawlable Explorer sections
+Allow: /blocks
+Allow: /tx
+Allow: /mempool
+Allow: /stats
+Allow: /masternodes
+Allow: /network-status
+Allow: /peers
+Allow: /bridge
+Allow: /tools/fee-calculator
+Allow: /tools/address-validator
+Allow: /tools/mcp
+Allow: /images/explorer-meta.svg
+
+# Major search engines
 User-agent: Googlebot
 Allow: /
 
 User-agent: Bingbot
 Allow: /
 
-User-agent: Slurp
-Allow: /
-
 User-agent: DuckDuckBot
-Allow: /
-
-User-agent: Baiduspider
 Allow: /
 
 User-agent: YandexBot
 Allow: /
 
-# Disallow admin and API endpoints
-Disallow: /api/
-Disallow: /admin/
-Disallow: /_next/
-Disallow: /static/
-
-# Allow important pages
-Allow: /blocks
-Allow: /tx
-Allow: /stats
-Allow: /search
-Allow: /masternodes
-Allow: /network-status
-Allow: /tools
-
-# Sitemap location
 Sitemap: https://explorer.fairco.in/sitemap.xml
-
-# Crawl delay (optional)
-Crawl-delay: 1
