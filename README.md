@@ -90,7 +90,7 @@ The Express server exposes a read-only JSON API under `/api`:
 
 The explorer also speaks the [Model Context Protocol](https://modelcontextprotocol.io), so AI assistants (Claude, ChatGPT, Cursor, …) can query the FairCoin blockchain directly.
 
-- **Endpoint**: `https://mcp.explorer.fairco.in/mcp` (also reachable at `https://explorer.fairco.in/mcp`)
+- **Endpoint**: `https://explorer.fairco.in/mcp`
 - **Transport**: Streamable HTTP, stateless (a fresh server is built per request — no session store). `POST` carries the JSON-RPC request; `GET`/`DELETE` return `405` (there is no SSE stream or session to address).
 - **Access**: read-only. No API key required.
 
@@ -112,7 +112,7 @@ Every blockchain tool accepts an optional `network` argument (`"mainnet"` by def
 
 ### Add to Claude / ChatGPT
 
-- **Claude** (Desktop/Code): add a custom connector / MCP server with URL `https://mcp.explorer.fairco.in/mcp` (transport: HTTP/Streamable HTTP).
+- **Claude** (Desktop/Code): add a custom connector / MCP server with URL `https://explorer.fairco.in/mcp` (transport: HTTP/Streamable HTTP).
 - **ChatGPT** (deep research / connectors): add a connector pointing at the same URL. The required `search` and `fetch` tools are implemented, so it works out of the box.
 - **Cursor / other clients**: configure a Streamable HTTP MCP server with the same URL.
 
