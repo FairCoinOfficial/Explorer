@@ -20,6 +20,8 @@ import addressRouter from './routes/address'
 import broadcastRouter from './routes/broadcast'
 import feeEstimateRouter from './routes/fee-estimate'
 import githubRouter from './routes/github'
+import { createMcpPostHandler, handleMcpMethodNotAllowed, handleMcpOptions } from './mcp/http'
+import packageJson from '../package.json' with { type: 'json' }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -520,6 +522,19 @@ app.get('/api/bridge/reserves', async (_req, res) => {
     bridgeReservesInFlight = null
   }
 })
+
+// ---- MCP (Model Context Protocol) server ----
+// Remote MCP endpoint for AI assistants (Claude, ChatGPT, Cursor, …), exposing
+// the explorer's read-only blockchain data over the Streamable HTTP transport in
+// stateless mode (a fresh server + transport per request). Mounted before the
+// SPA fallback so the catch-all never swallows `/mcp`. Its own permissive CORS
+// (set by the handlers) is required because AI clients connect cross-origin,
+// which the SPA's same-origin allowlist above does not cover.
+const SERVER_VERSION = packageJson.version
+app.options('/mcp', handleMcpOptions)
+app.post('/mcp', createMcpPostHandler(SERVER_VERSION))
+app.get('/mcp', handleMcpMethodNotAllowed)
+app.delete('/mcp', handleMcpMethodNotAllowed)
 
 // ---- Static Files + SPA Fallback ----
 // Serve static files with correct MIME types and long cache for hashed assets
