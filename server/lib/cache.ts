@@ -279,7 +279,16 @@ export interface ResolvedPrevout {
  * Inputs beyond the cap are returned without a `prevout` and the frontend
  * degrades gracefully (it falls back to the unenriched display).
  */
-const MAX_PREVOUT_LOOKUPS = 60
+const MAX_PREVOUT_LOOKUPS = 12
+const MAX_PREVOUT_LOOKUPS_PER_ADDRESS_PAGE = 40
+
+interface PrevoutLookupBudget {
+  remaining: number
+}
+
+interface TransactionLookupOptions {
+  prevoutLookupBudget?: PrevoutLookupBudget
+}
 
 // Block-specific caching with different TTLs
 export class BlockCache extends BlockchainCache {
@@ -318,7 +327,14 @@ export class BlockCache extends BlockchainCache {
    * The cache is read/written directly here (rather than via {@link get}) because
    * the TTL must be chosen AFTER fetching, based on whether the tx is confirmed.
    */
-  async getTransaction(txid: string, network: NetworkType, verbose: boolean = true) {
+  readonly maxPrevoutLookupsPerAddressPage = MAX_PREVOUT_LOOKUPS_PER_ADDRESS_PAGE
+
+  async getTransaction(
+    txid: string,
+    network: NetworkType,
+    verbose: boolean = true,
+    options: TransactionLookupOptions = {},
+  ) {
     assertValidNetwork(network)
 
     // Non-verbose callers just want the raw hex string; it never carries
@@ -384,7 +400,7 @@ export class BlockCache extends BlockchainCache {
     }
 
     const withConfirmations = await this.withLiveConfirmations(tx, network)
-    return await this.enrichInputPrevouts(withConfirmations, network)
+    return await this.enrichInputPrevouts(withConfirmations, network, options.prevoutLookupBudget)
   }
 
   /**
@@ -410,6 +426,7 @@ export class BlockCache extends BlockchainCache {
   private async enrichInputPrevouts(
     tx: Record<string, unknown> | null,
     network: NetworkType,
+    budget?: PrevoutLookupBudget,
   ): Promise<Record<string, unknown> | null> {
     if (!tx || !Array.isArray(tx.vin)) {
       return tx
@@ -427,12 +444,17 @@ export class BlockCache extends BlockchainCache {
       const parentTxid = input.txid
       if (!parentTxid || parentTxid === ZERO_HASH || seen.has(parentTxid)) continue
       seen.add(parentTxid)
-      if (parentTxids.length >= MAX_PREVOUT_LOOKUPS) break
+      const aggregateRemaining = budget?.remaining ?? MAX_PREVOUT_LOOKUPS
+      if (parentTxids.length >= MAX_PREVOUT_LOOKUPS || parentTxids.length >= aggregateRemaining) break
       parentTxids.push(parentTxid)
     }
 
     if (parentTxids.length === 0) {
       return tx
+    }
+
+    if (budget) {
+      budget.remaining = Math.max(0, budget.remaining - parentTxids.length)
     }
 
     // Fetch every needed parent transaction once, in parallel. A failed lookup
