@@ -5,6 +5,31 @@ All notable changes to the FairCoin Explorer are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-06-25
+
+### Security
+
+- **Stop using the Uniswap V3 `slot0` spot price as the FAIR price oracle.** An
+  instantaneous pool tick on a low-liquidity pool is manipulable within a block.
+  The price now comes from GeckoTerminal's indexed price for the WFAIR/USDC pool
+  (`base_token_price_usd`, with a base/quote-token guard) — available and not a
+  raw on-chain spot read (#11).
+- **Cap prevout-lookup fan-out and rate-limit RPC-heavy paths.** `getTransaction`
+  enforces a per-request prevout-lookup budget (and a tighter per-address-page
+  aggregate), and `/api/transaction` + `/api/address` now run through the strict
+  limiter, preventing RPC-amplification abuse (#10).
+- **Bound public block pagination.** `/api/blocks` clamps the `offset` to a maximum
+  so a remote client can't request arbitrarily deep pages (#9).
+- **Validate the WFAIR reserves API response** before rendering it; malformed or
+  unexpected payloads degrade to "unavailable" instead of being trusted (#14).
+
+### Changed
+
+- **Scope the stats-history sparklines to mainnet views**, so testnet/other-network
+  pages don't pull mainnet history (#12).
+
+[0.3.2]: https://github.com/FairCoinOfficial/Explorer/releases/tag/v0.3.2
+
 ## [0.3.1] - 2026-06-25
 
 ### Security
