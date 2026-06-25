@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import type { NetworkType } from '@/contexts/network-context'
 
 /**
  * A single sampled snapshot of the network's time-varying stats, written by the
@@ -23,9 +24,21 @@ interface StatHistoryResponse {
  * in place and the tiles fill in their background sparklines automatically once
  * points exist.
  */
-export function useStatsHistory() {
+interface UseStatsHistoryOptions {
+  /**
+   * The stats-history endpoint is intentionally sampled for mainnet only.
+   * Network-aware pages pass their selected network so testnet views do not
+   * accidentally render cached mainnet history alongside live testnet values.
+   */
+  network?: NetworkType
+}
+
+export function useStatsHistory(options: UseStatsHistoryOptions = {}) {
+  const network = options.network ?? 'mainnet'
+
   return useQuery<StatHistoryPoint[]>({
-    queryKey: ['stats-history'],
+    queryKey: ['stats-history', network],
+    enabled: network === 'mainnet',
     queryFn: async (): Promise<StatHistoryPoint[]> => {
       const response = await fetch('/api/stats/history', {
         headers: { Accept: 'application/json' },

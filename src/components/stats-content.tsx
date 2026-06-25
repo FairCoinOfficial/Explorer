@@ -18,6 +18,7 @@ import {
 import { useTranslations } from '@/lib/i18n'
 import { useStats } from '@/hooks/use-stats'
 import { useStatsHistory } from '@/hooks/use-stats-history'
+import { useNetwork } from '@/contexts/network-context'
 import { computeSupplyInfo } from '@/lib/supply'
 import { formatBytes, formatCompactNumber, formatNumber } from '@/lib/format'
 import { DetailHeader } from '@/components/detail/detail-header'
@@ -41,10 +42,11 @@ const SUPPLY_BAR_GRADIENT = 'linear-gradient(90deg, hsl(var(--primary)), hsl(var
 export function StatsContent() {
   const t = useTranslations('stats')
   const common = useTranslations('common')
+  const { currentNetwork } = useNetwork()
   const { data: stats, isLoading, isError, error, refetch, isFetching } = useStats()
-  const { data: statsHistory } = useStatsHistory()
+  const { data: statsHistory } = useStatsHistory({ network: currentNetwork })
 
-  // Per-metric background series from the sampled history. Series shorter than
+  // Per-metric background series from the mainnet-only sampled history. Series shorter than
   // MIN_SPARK_POINTS are dropped so the tile renders clean (never a placeholder).
   const sparks = useMemo(() => {
     const points = statsHistory ?? []
