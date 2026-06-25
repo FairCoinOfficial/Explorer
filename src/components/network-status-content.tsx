@@ -44,9 +44,9 @@ export function NetworkStatusContent() {
   const common = useTranslations('common')
   const { currentNetwork } = useNetwork()
   const { data: status, isLoading, isError, error, refetch, isFetching } = useNodeStatus()
-  const { data: statsHistory } = useStatsHistory()
+  const { data: statsHistory } = useStatsHistory({ network: currentNetwork })
 
-  // Background series for the time-varying tiles (Connections, Difficulty).
+  // Mainnet-only background series for the time-varying tiles (Connections, Difficulty).
   // Series shorter than MIN_SPARK_POINTS are dropped so the tile stays clean.
   const sparks = useMemo(() => {
     const points = statsHistory ?? []
