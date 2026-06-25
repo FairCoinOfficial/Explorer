@@ -11,7 +11,7 @@ import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { blockCache } from './lib/cache'
-import { handleRouteError, parseNetwork, parseLimit, parseOffset, ValidationError } from './lib/http'
+import { handleRouteError, parseNetwork, parseLimit, parseOffset, parseBlockOffset, ValidationError } from './lib/http'
 import { computeCirculatingSupply, currentBlockReward } from './lib/supply'
 import { rpcWithNetwork } from '@fairco.in/rpc-client'
 import priceRouter from './routes/price'
@@ -122,7 +122,7 @@ app.get('/api/blocks', async (req, res) => {
   try {
     const network = parseNetwork(req.query.network)
     const limit = parseLimit(req.query.limit)
-    const offset = parseOffset(req.query.offset)
+    const offset = parseBlockOffset(req.query.offset)
     const [blocks, height] = await Promise.all([
       blockCache.getRecentBlocks(network, limit, offset),
       blockCache.getBlockCount(network),

@@ -16,6 +16,7 @@ import type { NetworkType } from '@fairco.in/rpc-client'
 /** Inclusive bounds for any list `limit` query parameter. */
 export const MIN_LIMIT = 1
 export const MAX_LIMIT = 100
+export const MAX_BLOCK_OFFSET = 10_000
 const DEFAULT_LIMIT = 20
 
 const NETWORKS = ['mainnet', 'testnet'] as const
@@ -69,8 +70,7 @@ export function parseLimit(value: unknown): number {
 }
 
 /**
- * Coerce the `offset` query parameter into a non-negative integer (no upper
- * bound — callers may legitimately page far back into the chain). Returns 0
+ * Coerce the `offset` query parameter into a non-negative integer. Returns 0
  * when absent or non-numeric; clamps negatives to 0.
  */
 export function parseOffset(value: unknown): number {
@@ -78,6 +78,15 @@ export function parseOffset(value: unknown): number {
   const result = limitSchema.safeParse(value)
   if (!result.success) return 0
   return Math.max(0, result.data)
+}
+
+/**
+ * Coerce the public block-list `offset` into a bounded range. Block windows are
+ * expensive to materialize on cache misses, so keeping this edge-bounded limits
+ * attacker-controlled recent-block cache keys and RPC walks.
+ */
+export function parseBlockOffset(value: unknown): number {
+  return Math.min(MAX_BLOCK_OFFSET, parseOffset(value))
 }
 
 /** Escape a string for safe interpolation into a MongoDB `$regex` pattern. */
