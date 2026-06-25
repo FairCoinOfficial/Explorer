@@ -6,6 +6,7 @@ import {
   parseBlockOffset,
   parseAddress,
   escapeRegex,
+  sanitizeAddressValidation,
   ValidationError,
   MIN_LIMIT,
   MAX_LIMIT,
@@ -100,5 +101,25 @@ describe('escapeRegex', () => {
 
   it('leaves plain text unchanged', () => {
     expect(escapeRegex('mainnet:abc123')).toBe('mainnet:abc123')
+  })
+})
+
+describe('sanitizeAddressValidation', () => {
+  it('keeps only public address validation fields', () => {
+    expect(sanitizeAddressValidation({
+      isvalid: true,
+      address: 'fExampleAddress',
+      ismine: true,
+      iswatchonly: true,
+      isscript: true,
+      pubkey: 'secret-local-pubkey',
+      account: 'operator-wallet',
+      labels: ['operator'],
+    })).toEqual({ isvalid: true, address: 'fExampleAddress' })
+  })
+
+  it('normalizes malformed RPC responses to an invalid public result', () => {
+    expect(sanitizeAddressValidation(null)).toEqual({ isvalid: false })
+    expect(sanitizeAddressValidation({ isvalid: 'yes', address: 42 })).toEqual({ isvalid: false })
   })
 })

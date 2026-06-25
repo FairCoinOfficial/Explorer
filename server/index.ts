@@ -12,7 +12,7 @@ import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { blockCache } from './lib/cache'
-import { handleRouteError, parseNetwork, parseLimit, parseOffset, parseBlockOffset, ValidationError } from './lib/http'
+import { handleRouteError, parseNetwork, parseLimit, parseOffset, parseBlockOffset, parseAddress, ValidationError } from './lib/http'
 import { computeCirculatingSupply, currentBlockReward } from './lib/supply'
 import { rpcWithNetwork } from '@fairco.in/rpc-client'
 import priceRouter from './routes/price'
@@ -459,9 +459,8 @@ app.get('/api/mining-info', async (req, res) => {
 
 app.get('/api/validate-address', async (req, res) => {
   try {
-    const address = req.query.address as string
     const network = parseNetwork(req.query.network)
-    if (!address) { res.status(400).json({ error: 'Address parameter is required' }); return }
+    const address = parseAddress(req.query.address)
     const validation = await blockCache.validateAddress(address, network)
     res.json(validation)
   } catch (error) {

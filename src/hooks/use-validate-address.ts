@@ -1,16 +1,10 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
 
-/**
- * Result of the node-side `validateaddress` RPC call exposed by `/api/validate-address`.
- * Fields beyond `isvalid` are only present when the node recognises/owns the address.
- */
+/** Public, wallet-metadata-free result exposed by `/api/validate-address`. */
 export interface NodeAddressValidation {
   isvalid: boolean
   address?: string
-  ismine?: boolean
-  iswatchonly?: boolean
-  isscript?: boolean
 }
 
 /**
