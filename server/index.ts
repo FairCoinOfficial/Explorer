@@ -427,17 +427,18 @@ app.get('/api/search', async (req, res) => {
       const validation = await blockCache.validateAddress(q, network).catch(() => null)
       const isValid = Boolean(validation?.isvalid)
       if (isValid) {
-        const [balanceRpc, txids] = await Promise.all([
-          rpcWithNetwork<{ balance: number; received: number }>('getaddressbalance', [{ addresses: [q] }], network).catch(() => null),
-          rpcWithNetwork<string[]>('getaddresstxids', [{ addresses: [q] }], network).catch(() => null),
-        ])
+        const balanceRpc = await rpcWithNetwork<{ balance: number; received: number }>(
+          'getaddressbalance',
+          [{ addresses: [q] }],
+          network,
+        ).catch(() => null)
         const SATS = 100_000_000
         searchResults = {
           address: q,
           balance: balanceRpc ? balanceRpc.balance / SATS : 0,
           totalReceived: balanceRpc ? balanceRpc.received / SATS : 0,
           totalSent: balanceRpc ? (balanceRpc.received - balanceRpc.balance) / SATS : 0,
-          txCount: txids?.length ?? 0,
+          txCount: 0,
           isValid: true,
           network,
         }
