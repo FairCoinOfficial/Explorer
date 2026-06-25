@@ -19,6 +19,47 @@ export type ReservesResult =
   | { status: 'ok'; data: ReservesSnapshot }
   | { status: 'unavailable' }
 
+const INTEGER_STRING_PATTERN = /^-?\d+$/
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isIntegerString(value: unknown): value is string {
+  return typeof value === 'string' && INTEGER_STRING_PATTERN.test(value)
+}
+
+function isValidDateString(value: unknown): value is string {
+  return typeof value === 'string' && !Number.isNaN(Date.parse(value))
+}
+
+function parseReservesSnapshot(value: unknown): ReservesSnapshot | null {
+  if (!isRecord(value)) {
+    return null
+  }
+
+  const { at, fairCustodySats, wfairSupplyWei, deltaSats, pegHealthy } = value
+  if (
+    !isValidDateString(at) ||
+    !isIntegerString(fairCustodySats) ||
+    !isIntegerString(wfairSupplyWei) ||
+    !isIntegerString(deltaSats) ||
+    typeof pegHealthy !== 'boolean'
+  ) {
+    return null
+  }
+
+  try {
+    BigInt(fairCustodySats)
+    BigInt(wfairSupplyWei)
+    BigInt(deltaSats)
+  } catch {
+    return null
+  }
+
+  return { at, fairCustodySats, wfairSupplyWei, deltaSats, pegHealthy }
+}
+
 export function useWfairReserves() {
   return useQuery<ReservesResult>({
     queryKey: ['wfair', 'reserves', RESERVES_ENDPOINT],
@@ -31,7 +72,11 @@ export function useWfairReserves() {
         if (!response.ok) {
           return { status: 'unavailable' }
         }
-        const data = (await response.json()) as ReservesSnapshot
+        const data = parseReservesSnapshot(await response.json())
+        if (!data) {
+          console.warn('[wfair-reserves] reserves API returned invalid data')
+          return { status: 'unavailable' }
+        }
         return { status: 'ok', data }
       } catch (error) {
         console.error('[wfair-reserves] reserves API unreachable:', error)
