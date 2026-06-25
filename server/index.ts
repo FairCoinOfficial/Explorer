@@ -306,11 +306,13 @@ app.get('/api/peers', async (req, res) => {
     const network = parseNetwork(req.query.network)
     interface PeerInfo { addr: string; version: number; subver: string; pingtime: number; conntime: number; startingheight: number; banscore: number; bytessent: number; bytesrecv: number; inbound: boolean; synced_headers: number; synced_blocks: number }
     const rawPeers = await rpcWithNetwork<PeerInfo[]>('getpeerinfo', [], network)
-    const peers = rawPeers.map(p => ({
-      addr: p.addr ?? '', version: p.version ?? 0, subver: p.subver ?? '', pingtime: p.pingtime ?? 0,
-      conntime: p.conntime ?? 0, startingheight: p.startingheight ?? 0, banscore: p.banscore ?? 0,
-      bytessent: p.bytessent ?? 0, bytesrecv: p.bytesrecv ?? 0, inbound: Boolean(p.inbound),
-      synced_headers: p.synced_headers ?? 0, synced_blocks: p.synced_blocks ?? 0,
+    const peers = rawPeers.map((p, index) => ({
+      // Do not expose raw peer addresses, client strings, or detailed per-peer
+      // metadata publicly; getpeerinfo may include private topology details.
+      addr: `Peer ${index + 1}`, version: 0, subver: '', pingtime: 0,
+      conntime: 0, startingheight: 0, banscore: 0,
+      bytessent: 0, bytesrecv: 0, inbound: Boolean(p.inbound),
+      synced_headers: 0, synced_blocks: 0,
     }))
     res.json({ peers, network })
   } catch (error) {
