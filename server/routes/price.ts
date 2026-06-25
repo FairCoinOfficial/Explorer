@@ -3,7 +3,7 @@ import { timingSafeEqual } from "crypto";
 import connectToDatabase from "../lib/db/connect";
 import { Price } from "../lib/db/models/Price";
 import { PricePoint } from "../lib/db/models/PricePoint";
-import { getPrice, loadPoolPrice, PRICE_SOURCE_POOL } from "../lib/price-service";
+import { getPrice, PRICE_SOURCE_INDEXER } from "../lib/price-service";
 
 const router = Router();
 
@@ -21,8 +21,8 @@ function safeKeyEqual(a: string, b: string): boolean {
  * Returns the live USD price of FAIR, sourced from WFAIR — the wrapped-FAIR
  * bridge token on Base L2 (1:1 peg, so WFAIR's market price represents FAIR's).
  *
- * The price computation (on-chain pool spot price + indexer fallbacks, cached
- * and single-flighted) lives in {@link getPrice} in `lib/price-service.ts` so the
+ * The price computation (indexer-sourced, cached and single-flighted) lives in
+ * {@link getPrice} in `lib/price-service.ts` so the
  * REST route and the MCP server share one implementation. This route adds the
  * history sampler and the protected manual-price POST below.
  *
@@ -32,11 +32,9 @@ function safeKeyEqual(a: string, b: string): boolean {
 
 // ---- Price history sampler (accumulates a real series over time) ----
 //
-// The pool has a real on-chain spot price even though it is single-sided and
-// un-traded, so no OHLCV indexer will chart it. To build a genuine history we
-// sample that spot price ourselves: a server-side interval reads the pool and
-// upserts one point per fixed time window into Mongo. The accumulated series
-// backs the home price-card sparkline via GET /api/price/history.
+// To build a genuine history we sample the same trusted public price feed used
+// by GET /api/price and upsert one point per fixed time window into Mongo. The
+// accumulated series backs the home price-card sparkline via GET /api/price/history.
 
 /** One sample per 5-minute window. */
 const SAMPLE_INTERVAL_MS = 5 * 60 * 1000;
@@ -60,7 +58,7 @@ function currentSampleBucket(now: number): Date {
 }
 
 /**
- * Read the pool spot price once and upsert it as this window's sample, then
+ * Read the current public price once and upsert it as this window's sample, then
  * prune in two tiers: inside {@link FINE_RETENTION_MS} every 5-minute sample is
  * kept; between fine and {@link COARSE_RETENTION_MS} only on-the-hour samples
  * survive (long-horizon charts need no finer grain); beyond coarse everything
@@ -69,9 +67,10 @@ function currentSampleBucket(now: number): Date {
  */
 async function sampleAndStorePrice(): Promise<void> {
   try {
-    const price = await loadPoolPrice();
+    const payload = await getPrice();
+    const price = payload.price;
     if (price === null) {
-      // No usable spot price this tick (e.g. transient RPC issue); skip quietly.
+      // No usable indexed price this tick; skip quietly.
       return;
     }
 
@@ -80,7 +79,7 @@ async function sampleAndStorePrice(): Promise<void> {
     const bucket = currentSampleBucket(Date.now());
     await PricePoint.updateOne(
       { timestamp: bucket },
-      { $set: { price_usd: price, source: PRICE_SOURCE_POOL } },
+      { $set: { price_usd: price, source: PRICE_SOURCE_INDEXER } },
       { upsert: true },
     );
 
@@ -154,7 +153,7 @@ const PERIOD_WINDOW_MS: Record<string, number> = {
 /**
  * GET /api/price/history?period=24h|7d|30d|1y|all
  *
- * Returns the stored WFAIR/USDC spot-price series accumulated by the sampler
+ * Returns the stored WFAIR indexed-price series accumulated by the sampler
  * above, oldest→newest, for the requested period (defaults to 7d). When the
  * window holds more than {@link HISTORY_MAX_POINTS} samples the series is thinned
  * evenly (keeping the last point) so the payload stays bounded. The series is
@@ -191,11 +190,11 @@ router.get("/history", async (req: Request, res: Response) => {
       timestamp: doc.timestamp.toISOString(),
     }));
 
-    res.json({ history, period, source: PRICE_SOURCE_POOL });
+    res.json({ history, period, source: PRICE_SOURCE_INDEXER });
   } catch (error: unknown) {
     console.error("Error fetching price history:", error);
     // Honest empty series rather than a 5xx so the sparkline degrades gracefully.
-    res.json({ history: [], source: PRICE_SOURCE_POOL });
+    res.json({ history: [], source: PRICE_SOURCE_INDEXER });
   }
 });
 
