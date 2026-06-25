@@ -29,6 +29,7 @@ import packageJson from '../package.json' with { type: 'json' }
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 const PORT = parseInt(process.env.PORT || '8080', 10)
+const WEBSOCKET_MAX_PAYLOAD_BYTES = parseInt(process.env.WEBSOCKET_MAX_PAYLOAD_BYTES || '65536', 10)
 
 // Trust X-Forwarded-* headers only when the direct TCP peer is an explicitly
 // configured reverse proxy. Leave TRUSTED_PROXY_CIDRS empty when the backend can
@@ -638,7 +639,12 @@ app.use((_req, res) => {
 const server = createServer(app)
 
 // WebSocket setup
-const wss = new WebSocketServer({ noServer: true })
+const wss = new WebSocketServer({
+  noServer: true,
+  maxPayload: Number.isFinite(WEBSOCKET_MAX_PAYLOAD_BYTES) && WEBSOCKET_MAX_PAYLOAD_BYTES > 0
+    ? WEBSOCKET_MAX_PAYLOAD_BYTES
+    : 65536,
+})
 
 server.on('upgrade', (request, socket, head) => {
   const { pathname } = parse(request.url || '', true)

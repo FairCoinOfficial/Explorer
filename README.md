@@ -65,6 +65,7 @@ WEBSOCKET_NETWORKS=mainnet          # comma-separated; add testnet if you run a 
 BLOCKCHAIN_POLL_INTERVAL=10000
 WEBSOCKET_HEARTBEAT_INTERVAL=30000
 WEBSOCKET_MAX_CONNECTIONS_PER_IP=5
+WEBSOCKET_MAX_PAYLOAD_BYTES=65536
 
 # Public origin allowed by the API CORS allowlist
 PUBLIC_BASE_URL=https://explorer.fairco.in
