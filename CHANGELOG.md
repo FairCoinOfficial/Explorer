@@ -5,6 +5,25 @@ All notable changes to the FairCoin Explorer are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-06-25
+
+### Security
+
+- **Rate-limit the public `/mcp` endpoint.** `POST /mcp` is mounted outside `/api`,
+  so it previously bypassed all rate limiting; it now runs through the global and
+  strict limiters, throttling abuse of the daemon-backed wallet tools
+  (`send`/`sweep`) and other node-hitting MCP calls (#5).
+- **Bound `GET /api/price/history`.** Long windows (`1y`/`all`) no longer load every
+  matching point into memory; the handler issues a bounded query and samples the
+  range with indexed lookups, capping work at `HISTORY_MAX_POINTS` (#6).
+- **Drop the unbounded address-txid scan in `GET /api/search`.** Address search now
+  calls only `getaddressbalance` and no longer invokes the unbounded
+  `getaddresstxids` RPC (which a remote client could abuse to force large responses).
+  Address search results report `txCount: 0` — use the address pages for full
+  history (#8).
+
+[0.3.1]: https://github.com/FairCoinOfficial/Explorer/releases/tag/v0.3.1
+
 ## [0.3.0] - 2026-06-16
 
 ### Added

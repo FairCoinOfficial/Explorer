@@ -70,7 +70,7 @@ WEBSOCKET_MAX_CONNECTIONS_PER_IP=5
 PUBLIC_BASE_URL=https://explorer.fairco.in
 ```
 
-**Security**: RPC credentials are only read server-side; all RPC calls are proxied through the API.
+**Security**: RPC credentials are only read server-side; all RPC calls are proxied through the API. The `/api` surface is rate-limited (a global limiter on `/api`, plus stricter limits on `/api/search`, `/api/tx/broadcast`, and the public `/mcp` endpoint, which can drive daemon-backed wallet tools). Expensive lookups are bounded: `/api/price/history` samples long windows with indexed queries instead of full-range scans, and `/api/search` on an address returns balance only (it no longer triggers an unbounded address-txid scan, so `txCount` is `0` there — use the address pages for full history).
 
 ## API overview
 
