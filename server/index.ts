@@ -14,6 +14,7 @@ import { fileURLToPath } from 'url'
 import { blockCache } from './lib/cache'
 import { handleRouteError, parseNetwork, parseLimit, parseOffset, parseBlockOffset, parseAddress, ValidationError } from './lib/http'
 import { computeCirculatingSupply, currentBlockReward } from './lib/supply'
+import { toPublicNetworkInfo } from './lib/network-info'
 import { rpcWithNetwork } from '@fairco.in/rpc-client'
 import priceRouter from './routes/price'
 import statsHistoryRouter from './routes/stats-history'
@@ -441,7 +442,7 @@ app.get('/api/network-info', async (req, res) => {
   try {
     const network = parseNetwork(req.query.network)
     const networkInfo = await blockCache.getNetworkInfo(network)
-    res.json(networkInfo)
+    res.json(toPublicNetworkInfo(networkInfo))
   } catch (error) {
     handleRouteError(res, 'Failed to get network info', error)
   }
