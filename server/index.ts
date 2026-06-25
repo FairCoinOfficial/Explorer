@@ -111,9 +111,12 @@ app.use(express.json({ limit: '64kb' }))
 // Apply the global rate limit to the API surface only (static assets are exempt).
 app.use('/api', globalLimiter)
 
-// Stricter limits on the expensive search path, broadcast write path, and
-// public MCP endpoint, which can invoke daemon-backed wallet tools.
+// Stricter limits on the expensive RPC fan-out paths (search, transaction and
+// address lookups), the broadcast write path, and the public MCP endpoint, which
+// can invoke daemon-backed wallet tools.
 app.use('/api/search', strictLimiter)
+app.use('/api/transaction', strictLimiter)
+app.use('/api/address', strictLimiter)
 app.use('/api/tx/broadcast', strictLimiter)
 
 // ---- API Routes ----

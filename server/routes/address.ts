@@ -209,10 +209,13 @@ router.get("/:address/txs", async (req: Request, res: Response) => {
     interface TxVin { coinbase?: string; prevout?: { value?: number; addresses?: string[] } }
 
     // Fetch transaction details and compute the address-relative net amount.
+    // Share one prevout lookup budget across the page so a high `limit` cannot
+    // multiply parent-transaction RPC/cache lookups without bound.
+    const prevoutLookupBudget = { remaining: blockCache.maxPrevoutLookupsPerAddressPage };
     const transactions = [];
     for (const txid of pageTxids) {
       try {
-        const tx = await blockCache.getTransaction(txid, network, true);
+        const tx = await blockCache.getTransaction(txid, network, true, { prevoutLookupBudget });
         const vouts = (tx.vout ?? []) as TxVout[];
         const vins = (tx.vin ?? []) as TxVin[];
 
