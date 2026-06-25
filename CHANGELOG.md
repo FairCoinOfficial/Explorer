@@ -5,6 +5,24 @@ All notable changes to the FairCoin Explorer are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] - 2026-06-25
+
+### Security
+
+- **Sanitize public address validation.** `GET /api/validate-address` now validates
+  its input and strips wallet-specific fields (`ismine`, `iswatchonly`, …) from the
+  `validateaddress` RPC response, returning only public validity fields (#18).
+- **Limit `GET /api/network-info` to public fields** (`version`, `subversion`,
+  `protocolversion`, `connections`, `relayfee`); node topology, proxy config, local
+  addresses and warnings are no longer disclosed (#19).
+- **Cap WebSocket frame size.** The WS server sets `maxPayload`
+  (`WEBSOCKET_MAX_PAYLOAD_BYTES`, default 64 KiB) so oversized frames can't exhaust
+  memory (#20). (The PR's proposal to key the per-IP WS cap on the raw TCP peer was
+  intentionally **not** taken — behind the reverse proxy that collapses every client
+  to the proxy IP; the trusted-proxy IP resolution from #16 is retained.)
+
+[0.3.4]: https://github.com/FairCoinOfficial/Explorer/releases/tag/v0.3.4
+
 ## [0.3.3] - 2026-06-25
 
 ### Security
