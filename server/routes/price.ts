@@ -157,38 +157,35 @@ const PERIOD_WINDOW_MS: Record<string, number> = {
 };
 
 async function fetchBoundedPriceHistory(cutoff: Date, windowEndMs: number): Promise<PriceHistoryDoc[]> {
-  const firstPage = await PricePoint.find({ timestamp: { $gte: cutoff } })
+  const docs = await PricePoint.find({ timestamp: { $gte: cutoff } })
     .sort({ timestamp: 1 })
-    .limit(HISTORY_MAX_POINTS + 1)
     .lean<PriceHistoryDoc[]>()
     .exec();
 
-  if (firstPage.length <= HISTORY_MAX_POINTS) {
-    return firstPage;
+  if (docs.length <= HISTORY_MAX_POINTS) {
+    return docs;
   }
 
   const cutoffMs = cutoff.getTime();
   const stepMs = (windowEndMs - cutoffMs) / HISTORY_MAX_POINTS;
   const targetTimes = Array.from({ length: HISTORY_MAX_POINTS - 1 }, (_unused, index) => cutoffMs + index * stepMs);
 
-  const sampledDocs = await Promise.all(
-    targetTimes.map((targetTime) =>
-      PricePoint.findOne({ timestamp: { $gte: new Date(targetTime) } })
-        .sort({ timestamp: 1 })
-        .lean<PriceHistoryDoc>()
-        .exec(),
-    ),
-  );
-  const lastDoc = await PricePoint.findOne({ timestamp: { $gte: cutoff } })
-    .sort({ timestamp: -1 })
-    .lean<PriceHistoryDoc>()
-    .exec();
-
   const docsByTimestamp = new Map<string, PriceHistoryDoc>();
-  for (const doc of [...sampledDocs, lastDoc]) {
-    if (doc) {
+
+  let docIndex = 0;
+  for (const targetTime of targetTimes) {
+    while (docIndex < docs.length && docs[docIndex].timestamp.getTime() < targetTime) {
+      docIndex += 1;
+    }
+
+    if (docIndex < docs.length) {
+      const doc = docs[docIndex];
       docsByTimestamp.set(doc.timestamp.toISOString(), doc);
     }
+  }
+  const lastDoc = docs.at(-1);
+  if (lastDoc) {
+    docsByTimestamp.set(lastDoc.timestamp.toISOString(), lastDoc);
   }
 
   return Array.from(docsByTimestamp.values()).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
