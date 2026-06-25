@@ -143,6 +143,11 @@ interface PriceHistoryPoint {
   timestamp: string;
 }
 
+interface PriceHistoryDoc {
+  price_usd: number;
+  timestamp: Date;
+}
+
 /** Lookback window per `period` query value, in milliseconds. */
 const PERIOD_WINDOW_MS: Record<string, number> = {
   "24h": 24 * 60 * 60 * 1000,
@@ -150,6 +155,44 @@ const PERIOD_WINDOW_MS: Record<string, number> = {
   "30d": 30 * 24 * 60 * 60 * 1000,
   "1y": 365 * 24 * 60 * 60 * 1000,
 };
+
+async function fetchBoundedPriceHistory(cutoff: Date, windowEndMs: number): Promise<PriceHistoryDoc[]> {
+  const firstPage = await PricePoint.find({ timestamp: { $gte: cutoff } })
+    .sort({ timestamp: 1 })
+    .limit(HISTORY_MAX_POINTS + 1)
+    .lean<PriceHistoryDoc[]>()
+    .exec();
+
+  if (firstPage.length <= HISTORY_MAX_POINTS) {
+    return firstPage;
+  }
+
+  const cutoffMs = cutoff.getTime();
+  const stepMs = (windowEndMs - cutoffMs) / HISTORY_MAX_POINTS;
+  const targetTimes = Array.from({ length: HISTORY_MAX_POINTS - 1 }, (_unused, index) => cutoffMs + index * stepMs);
+
+  const sampledDocs = await Promise.all(
+    targetTimes.map((targetTime) =>
+      PricePoint.findOne({ timestamp: { $gte: new Date(targetTime) } })
+        .sort({ timestamp: 1 })
+        .lean<PriceHistoryDoc>()
+        .exec(),
+    ),
+  );
+  const lastDoc = await PricePoint.findOne({ timestamp: { $gte: cutoff } })
+    .sort({ timestamp: -1 })
+    .lean<PriceHistoryDoc>()
+    .exec();
+
+  const docsByTimestamp = new Map<string, PriceHistoryDoc>();
+  for (const doc of [...sampledDocs, lastDoc]) {
+    if (doc) {
+      docsByTimestamp.set(doc.timestamp.toISOString(), doc);
+    }
+  }
+
+  return Array.from(docsByTimestamp.values()).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+}
 
 /**
  * GET /api/price/history?period=24h|7d|30d|1y|all
@@ -167,24 +210,10 @@ router.get("/history", async (req: Request, res: Response) => {
 
     const period = String(req.query.period ?? "7d");
     const windowMs = period === "all" ? COARSE_RETENTION_MS : PERIOD_WINDOW_MS[period] ?? PERIOD_WINDOW_MS["7d"];
-    const cutoff = new Date(Date.now() - windowMs);
+    const now = Date.now();
+    const cutoff = new Date(now - windowMs);
 
-    const docs = await PricePoint.find({ timestamp: { $gte: cutoff } })
-      .sort({ timestamp: 1 })
-      .lean<{ price_usd: number; timestamp: Date }[]>()
-      .exec();
-
-    // Thin evenly to at most HISTORY_MAX_POINTS, always keeping the last point.
-    let series = docs;
-    if (docs.length > HISTORY_MAX_POINTS) {
-      const step = docs.length / HISTORY_MAX_POINTS;
-      const thinned: typeof docs = [];
-      for (let i = 0; i < HISTORY_MAX_POINTS; i++) {
-        thinned.push(docs[Math.floor(i * step)]);
-      }
-      thinned[thinned.length - 1] = docs[docs.length - 1];
-      series = thinned;
-    }
+    const series = await fetchBoundedPriceHistory(cutoff, now);
 
     const history: PriceHistoryPoint[] = series.map((doc) => ({
       price_usd: doc.price_usd,
