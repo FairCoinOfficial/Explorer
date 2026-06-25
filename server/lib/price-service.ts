@@ -1,9 +1,9 @@
 // Shared FAIR/WFAIR price service.
 //
 // The live USD price of FAIR is sourced from WFAIR — the wrapped-FAIR bridge
-// token on Base L2 (1:1 peg). The primary source is the on-chain spot price of
-// the WFAIR/USDC Uniswap V3 pool read via `slot0()`, with GeckoTerminal and
-// Dexscreener as supplementary context and price fallbacks.
+// token on Base L2 (1:1 peg). The only trusted price source is the on-chain
+// spot price of the allowlisted WFAIR/USDC Uniswap V3 pool read via `slot0()`.
+// Public DEX indexers are used only for non-authoritative display context.
 //
 // This module is the single source of truth for the price computation. Both the
 // REST route (`routes/price.ts`) and the MCP server consume `getPrice()` here so
@@ -46,11 +46,9 @@ const UNISWAP_V3_POOL_ABI = [
 
 const WFAIR_NETWORK = "base";
 export const PRICE_SOURCE_POOL = "wfair-usdc-pool" as const;
-export const PRICE_SOURCE_FALLBACK = "wfair-base" as const;
-export type PriceSource = typeof PRICE_SOURCE_POOL | typeof PRICE_SOURCE_FALLBACK;
+export type PriceSource = typeof PRICE_SOURCE_POOL;
 
 const GECKOTERMINAL_BASE = "https://api.geckoterminal.com/api/v2";
-const DEXSCREENER_BASE = "https://api.dexscreener.com/latest/dex";
 
 /** 60s — fresh enough for a spot price while staying well under rate limits. */
 const CACHE_TTL_MS = 60 * 1000;
@@ -88,7 +86,6 @@ const EMPTY_CONTEXT: PriceContext = {
 interface GeckoTerminalTokenResponse {
   data?: {
     attributes?: {
-      price_usd?: string | null;
       volume_usd?: { h24?: string | null } | null;
       market_cap_usd?: string | null;
       fdv_usd?: string | null;
@@ -97,17 +94,6 @@ interface GeckoTerminalTokenResponse {
   } | null;
 }
 
-interface DexscreenerPair {
-  priceUsd?: string | null;
-  priceChange?: { h24?: number | null } | null;
-  liquidity?: { usd?: number | null } | null;
-  volume?: { h24?: number | null } | null;
-  marketCap?: number | null;
-}
-
-interface DexscreenerTokenResponse {
-  pairs?: DexscreenerPair[] | null;
-}
 
 /**
  * Parse a numeric upstream field that may arrive as a string, number, null, or
@@ -168,52 +154,27 @@ export async function loadPoolPrice(): Promise<number | null> {
 
 /**
  * Supplementary context from GeckoTerminal: 24h volume, on-chain reserve value
- * (surfaced as liquidity), market cap. Also returns a price we can fall back to
- * if the pool read failed.
+ * (surfaced as liquidity), and market cap. GeckoTerminal prices are deliberately
+ * ignored: token-level indexer prices can be influenced by arbitrary low-liquidity
+ * pools, so only the allowlisted on-chain pool may set the displayed FAIR price.
  */
-async function loadFromGeckoTerminal(): Promise<{ price: number | null; context: PriceContext }> {
+async function loadFromGeckoTerminal(): Promise<PriceContext> {
   const body = await fetchJson<GeckoTerminalTokenResponse>(
     `${GECKOTERMINAL_BASE}/networks/${WFAIR_NETWORK}/tokens/${WFAIR_ADDRESS}`,
   );
   const attrs = body.data?.attributes ?? null;
 
   return {
-    price: parseNumeric(attrs?.price_usd),
-    context: {
-      change24h: null,
-      volume24h: parseNumeric(attrs?.volume_usd?.h24),
-      liquidityUsd: parseNumeric(attrs?.total_reserve_in_usd),
-      marketCapUsd: parseNumeric(attrs?.market_cap_usd),
-    },
-  };
-}
-
-/**
- * Last-ditch price + context from Dexscreener. Only consulted when both the
- * pool read and GeckoTerminal failed to produce a price.
- */
-async function loadFromDexscreener(): Promise<{ price: number; context: PriceContext } | null> {
-  const body = await fetchJson<DexscreenerTokenResponse>(`${DEXSCREENER_BASE}/tokens/${WFAIR_ADDRESS}`);
-  const pair = body.pairs?.[0];
-  if (!pair) return null;
-
-  const price = parseNumeric(pair.priceUsd);
-  if (price === null) return null;
-
-  return {
-    price,
-    context: {
-      change24h: parseNumeric(pair.priceChange?.h24),
-      volume24h: parseNumeric(pair.volume?.h24),
-      liquidityUsd: parseNumeric(pair.liquidity?.usd),
-      marketCapUsd: parseNumeric(pair.marketCap),
-    },
+    change24h: null,
+    volume24h: parseNumeric(attrs?.volume_usd?.h24),
+    liquidityUsd: parseNumeric(attrs?.total_reserve_in_usd),
+    marketCapUsd: parseNumeric(attrs?.market_cap_usd),
   };
 }
 
 async function loadPrice(): Promise<PricePayload> {
-  // 1. On-chain pool spot price (primary). Supplementary context comes from the
-  //    indexers below, fetched in parallel so a slow indexer never delays price.
+  // On-chain pool spot price is authoritative. Supplementary context comes from
+  // GeckoTerminal, but indexer prices are intentionally never used as fallbacks.
   const [poolPrice, gecko] = await Promise.all([
     loadPoolPrice().catch((error: unknown) => {
       console.error("WFAIR/USDC pool slot0 read failed:", error);
@@ -221,37 +182,13 @@ async function loadPrice(): Promise<PricePayload> {
     }),
     loadFromGeckoTerminal().catch((error: unknown) => {
       console.error("GeckoTerminal context fetch failed for WFAIR:", error);
-      return { price: null as number | null, context: EMPTY_CONTEXT };
+      return EMPTY_CONTEXT;
     }),
   ]);
 
-  let price = poolPrice;
-  let context = gecko.context;
-  let source: PriceSource = PRICE_SOURCE_POOL;
-
-  // 2. Pool unavailable → fall back to GeckoTerminal's indexed price.
-  if (price === null && gecko.price !== null) {
-    price = gecko.price;
-    source = PRICE_SOURCE_FALLBACK;
-  }
-
-  // 3. Still no price → last-ditch Dexscreener (also enriches context).
-  if (price === null) {
-    const dex = await loadFromDexscreener().catch((error: unknown) => {
-      console.error("Dexscreener fallback failed for WFAIR price:", error);
-      return null;
-    });
-    if (dex) {
-      price = dex.price;
-      source = PRICE_SOURCE_FALLBACK;
-      context = {
-        change24h: dex.context.change24h ?? context.change24h,
-        volume24h: dex.context.volume24h ?? context.volume24h,
-        liquidityUsd: dex.context.liquidityUsd ?? context.liquidityUsd,
-        marketCapUsd: dex.context.marketCapUsd ?? context.marketCapUsd,
-      };
-    }
-  }
+  const price = poolPrice;
+  const context = gecko;
+  const source: PriceSource = PRICE_SOURCE_POOL;
 
   return {
     price,
