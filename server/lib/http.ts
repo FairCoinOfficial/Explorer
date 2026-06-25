@@ -113,6 +113,27 @@ export function parseAddress(value: unknown): string {
   return value
 }
 
+export interface PublicAddressValidation {
+  isvalid: boolean
+  address?: string
+}
+
+/**
+ * Remove wallet-local fields from daemon `validateaddress` output before it is
+ * exposed by public APIs. Some FairCoin/Bitcoin-family daemons include values
+ * such as ownership, watch-only state, public keys, labels, or account names.
+ */
+export function sanitizeAddressValidation(value: unknown): PublicAddressValidation {
+  const result = value && typeof value === 'object' ? value as Record<string, unknown> : {}
+  const sanitized: PublicAddressValidation = { isvalid: result.isvalid === true }
+
+  if (typeof result.address === 'string') {
+    sanitized.address = result.address
+  }
+
+  return sanitized
+}
+
 /**
  * Central error responder. Logs the full error server-side (with context) and
  * returns a generic message to the client so internals never leak. When the

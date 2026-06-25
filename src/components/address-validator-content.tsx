@@ -227,27 +227,6 @@ export function AddressValidatorContent() {
                         common={common}
                         highlight
                       />
-                      {nodeValidation.ismine !== undefined ? (
-                        <NodeRow
-                          label={t('networkValidation.isMine')}
-                          ok={nodeValidation.ismine}
-                          common={common}
-                        />
-                      ) : null}
-                      {nodeValidation.iswatchonly !== undefined ? (
-                        <NodeRow
-                          label={t('networkValidation.watchOnly')}
-                          ok={nodeValidation.iswatchonly}
-                          common={common}
-                        />
-                      ) : null}
-                      {nodeValidation.isscript !== undefined ? (
-                        <NodeRow
-                          label={t('networkValidation.scriptAddress')}
-                          ok={nodeValidation.isscript}
-                          common={common}
-                        />
-                      ) : null}
                     </div>
                   </div>
                 ) : null}

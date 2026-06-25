@@ -1,6 +1,6 @@
 import { MongoClient, Db } from 'mongodb'
 import { rpcWithNetwork, type NetworkType, type RpcParam } from '@fairco.in/rpc-client'
-import { escapeRegex, MAX_BLOCK_OFFSET } from './http'
+import { escapeRegex, MAX_BLOCK_OFFSET, sanitizeAddressValidation } from './http'
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/faircoin-explorer'
 
@@ -602,7 +602,8 @@ export class BlockCache extends BlockchainCache {
   }
 
   async validateAddress(address: string, network: NetworkType) {
-    return await this.get<any>('validateaddress', [address], { network, ttl: 86400 }) // 24 hours for address validation
+    const validation = await this.get<any>('validateaddress', [address], { network, ttl: 86400 }) // 24 hours for address validation
+    return sanitizeAddressValidation(validation)
   }
 
   /**
