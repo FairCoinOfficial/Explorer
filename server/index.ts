@@ -6,6 +6,7 @@ import compression from 'compression'
 import rateLimit from 'express-rate-limit'
 import { createServer } from 'http'
 import { parse } from 'url'
+import net from 'net'
 import { WebSocketServer } from 'ws'
 import path from 'path'
 import fs from 'fs'
@@ -28,11 +29,79 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 const PORT = parseInt(process.env.PORT || '8080', 10)
 
-// Behind one reverse proxy (e.g. nginx/DO app platform): trust a single hop so
-// `req.ip` and the rate limiter use the real client IP, not a spoofable header.
-// The same hop count is used to resolve the WebSocket client IP (see resolveClientIp).
-const TRUST_PROXY_HOPS = 1
-app.set('trust proxy', TRUST_PROXY_HOPS)
+// Trust X-Forwarded-* headers only when the direct TCP peer is an explicitly
+// configured reverse proxy. Leave TRUSTED_PROXY_CIDRS empty when the backend can
+// be reached directly; set it to comma-separated proxy IP/CIDR ranges (for
+// example: "127.0.0.1,10.0.0.0/8,::1") when every request arrives through those
+// proxies. Express and the WebSocket path both use this same trust decision.
+const TRUSTED_PROXY_CIDRS = (process.env.TRUSTED_PROXY_CIDRS || '')
+  .split(',')
+  .map(value => value.trim())
+  .filter(Boolean)
+
+interface TrustedProxyRange {
+  network: bigint
+  mask: bigint
+  family: 4 | 6
+}
+
+function normalizeIp(ip: string | undefined): string | undefined {
+  if (!ip) return undefined
+  if (ip.startsWith('::ffff:') && net.isIP(ip.slice(7)) === 4) {
+    return ip.slice(7)
+  }
+  return ip
+}
+
+function ipToBigInt(ip: string): bigint | null {
+  const normalized = normalizeIp(ip)
+  if (!normalized) return null
+  const family = net.isIP(normalized)
+  if (family === 4) {
+    return normalized.split('.').reduce((acc, part) => (acc << 8n) + BigInt(Number(part)), 0n)
+  }
+  if (family === 6) {
+    const [headRaw, tailRaw] = normalized.split('::')
+    const head = headRaw ? headRaw.split(':').filter(Boolean) : []
+    const tail = tailRaw ? tailRaw.split(':').filter(Boolean) : []
+    const fill = new Array(8 - head.length - tail.length).fill('0')
+    const parts = [...head, ...fill, ...tail]
+    if (parts.length !== 8) return null
+    return parts.reduce((acc, part) => (acc << 16n) + BigInt(parseInt(part || '0', 16)), 0n)
+  }
+  return null
+}
+
+function parseTrustedProxy(value: string): TrustedProxyRange | null {
+  const [rawIp, rawPrefix] = value.split('/')
+  const ip = normalizeIp(rawIp)
+  if (!ip) return null
+  const family = net.isIP(ip)
+  if (family !== 4 && family !== 6) return null
+  const bits = family === 4 ? 32 : 128
+  const prefix = rawPrefix === undefined ? bits : Number(rawPrefix)
+  if (!Number.isInteger(prefix) || prefix < 0 || prefix > bits) return null
+  const ipValue = ipToBigInt(ip)
+  if (ipValue === null) return null
+  const mask = prefix === 0 ? 0n : ((1n << BigInt(prefix)) - 1n) << BigInt(bits - prefix)
+  return { network: ipValue & mask, mask, family }
+}
+
+const TRUSTED_PROXY_RANGES = TRUSTED_PROXY_CIDRS
+  .map(parseTrustedProxy)
+  .filter((range): range is TrustedProxyRange => Boolean(range))
+
+function isTrustedProxy(ip: string | undefined): boolean {
+  const normalized = normalizeIp(ip)
+  if (!normalized) return false
+  const family = net.isIP(normalized)
+  if (family !== 4 && family !== 6) return false
+  const value = ipToBigInt(normalized)
+  if (value === null) return false
+  return TRUSTED_PROXY_RANGES.some(range => range.family === family && (value & range.mask) === range.network)
+}
+
+app.set('trust proxy', isTrustedProxy)
 
 // ---- Security & performance middleware ----
 
@@ -602,29 +671,31 @@ function loadWsHandler(): Promise<WebSocketHandlerModule | null> {
 }
 
 /**
- * Resolve the client IP for the per-IP WebSocket connection cap.
- *
- * A raw client can put any value in `X-Forwarded-For`, so trusting its left-most
- * entry lets attackers bypass the per-IP limit. With one trusted proxy
- * (`trust proxy = 1`), the authoritative client address is the entry our proxy
- * appended — the right-most XFF value — falling back to the real TCP peer
- * address (`socket.remoteAddress`) when there is no proxy header.
+ * Resolve the client IP for the per-IP WebSocket connection cap using the same
+ * trusted-proxy policy as Express. Direct clients and untrusted peers cannot
+ * spoof their identity with X-Forwarded-For; only configured proxy peers can
+ * contribute forwarded addresses.
  */
 function resolveClientIp(request: { headers: NodeJS.Dict<string | string[]>; socket: { remoteAddress?: string } }): string | undefined {
-  const socketAddress = request.socket.remoteAddress
-  if (!TRUST_PROXY_HOPS) {
+  const socketAddress = normalizeIp(request.socket.remoteAddress)
+  if (!isTrustedProxy(socketAddress)) {
     return socketAddress
   }
+
   const forwarded = request.headers['x-forwarded-for']
   const raw = Array.isArray(forwarded) ? forwarded.join(',') : forwarded
-  if (raw) {
-    const parts = raw.split(',').map(part => part.trim()).filter(Boolean)
-    const trusted = parts[parts.length - 1]
-    if (trusted) {
-      return trusted
+  const parts = raw?.split(',').map(part => normalizeIp(part.trim())).filter(Boolean) as string[] | undefined
+  if (!parts?.length) {
+    return socketAddress
+  }
+
+  for (let index = parts.length - 1; index >= 0; index -= 1) {
+    const candidate = parts[index]
+    if (!isTrustedProxy(candidate)) {
+      return candidate
     }
   }
-  return socketAddress
+  return parts[0]
 }
 
 wss.on('connection', async (ws, request) => {
