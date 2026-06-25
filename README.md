@@ -70,7 +70,9 @@ WEBSOCKET_MAX_CONNECTIONS_PER_IP=5
 PUBLIC_BASE_URL=https://explorer.fairco.in
 ```
 
-**Security**: RPC credentials are only read server-side; all RPC calls are proxied through the API. The `/api` surface is rate-limited (a global limiter on `/api`, plus stricter limits on `/api/search`, `/api/tx/broadcast`, and the public `/mcp` endpoint, which can drive daemon-backed wallet tools). Expensive lookups are bounded: `/api/price/history` samples long windows with indexed queries instead of full-range scans, and `/api/search` on an address returns balance only (it no longer triggers an unbounded address-txid scan, so `txCount` is `0` there — use the address pages for full history).
+**Security**: RPC credentials are only read server-side; all RPC calls are proxied through the API. The `/api` surface is rate-limited (a global limiter on `/api`, plus stricter limits on `/api/search`, `/api/transaction`, `/api/address`, `/api/tx/broadcast`, and the public `/mcp` endpoint, which can drive daemon-backed wallet tools). Expensive lookups are bounded: `/api/price/history` samples long windows in memory from a bounded, two-tier-pruned series, and `/api/search` on an address returns balance only (it no longer triggers an unbounded address-txid scan, so `txCount` is `0` there — use the address pages for full history). `/api/peers` is redacted (no raw peer addresses or topology).
+
+Behind a reverse proxy (e.g. nginx/Cloudflare), set `TRUSTED_PROXY_CIDRS` to the proxy's IP/CIDR(s) so the rate limiter keys on the real client IP — `X-Forwarded-For` is trusted **only** from those peers, never from arbitrary clients. Leave it blank when the API is reached directly.
 
 ## API overview
 

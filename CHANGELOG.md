@@ -5,6 +5,25 @@ All notable changes to the FairCoin Explorer are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2026-06-25
+
+### Security
+
+- **Restrict trusted proxy headers.** `X-Forwarded-*` is now trusted only when the
+  direct TCP peer is an explicitly configured proxy (`TRUSTED_PROXY_CIDRS`), instead
+  of a blind single-hop trust, so a direct client cannot spoof its IP and bypass the
+  per-IP rate limiter. The WebSocket per-IP cap uses the same trust decision (#16).
+- **Redact public peer topology.** `GET /api/peers` no longer exposes raw peer
+  addresses, client versions, or per-peer metadata (#17).
+
+### Changed
+
+- **Price history sampling is a single bounded query.** `fetchBoundedPriceHistory`
+  loads the (two-tier-pruned, bounded) point set once and thins it in memory,
+  removing the per-request `findOne` fan-out introduced earlier (#15).
+
+[0.3.3]: https://github.com/FairCoinOfficial/Explorer/releases/tag/v0.3.3
+
 ## [0.3.2] - 2026-06-25
 
 ### Security
