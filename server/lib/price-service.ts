@@ -2,9 +2,11 @@
 //
 // The live USD price of FAIR is sourced from WFAIR — the wrapped-FAIR bridge
 // token on Base L2 (1:1 peg). Public price responses deliberately rely on
-// indexed market data instead of the current Uniswap V3 pool slot0 spot price:
-// the pool can be low-liquidity or single-sided, so its instantaneous tick is
-// not a safe oracle for the official explorer price.
+// GeckoTerminal's indexed price for the WFAIR/USDC pool instead of reading the
+// pool's current Uniswap V3 slot0 spot price on-chain: an instantaneous tick on
+// a low-liquidity pool is manipulable within a block and is not a safe oracle.
+// (GeckoTerminal's token-level price for WFAIR is null, so we read the pool, not
+// the token, endpoint.)
 //
 // This module is the single source of truth for the price computation. Both the
 // REST route (`routes/price.ts`) and the MCP server consume `getPrice()` here so
@@ -12,6 +14,9 @@
 
 /** WFAIR on Base, 18 decimals. */
 const WFAIR_ADDRESS = "0xF2853CedDF47A05Fee0B4b24DFf2925d59737fb3" as const;
+
+/** WFAIR/USDC Uniswap V3 pool on Base — the pool GeckoTerminal indexes a price for. */
+const WFAIR_USDC_POOL_ADDRESS = "0x9F4F694390c60b51e30461c785C1345A1545b7ca" as const;
 
 const WFAIR_NETWORK = "base";
 export const PRICE_SOURCE_INDEXER = "wfair-base" as const;
@@ -53,14 +58,18 @@ const EMPTY_CONTEXT: PriceContext = {
 
 // ---- Upstream response shapes (only the fields we consume) ----
 
-interface GeckoTerminalTokenResponse {
+interface GeckoTerminalPoolResponse {
   data?: {
     attributes?: {
-      price_usd?: string | null;
-      volume_usd?: { h24?: string | null } | null;
+      base_token_price_usd?: string | null;
+      quote_token_price_usd?: string | null;
+      reserve_in_usd?: string | null;
       market_cap_usd?: string | null;
-      fdv_usd?: string | null;
-      total_reserve_in_usd?: string | null;
+      volume_usd?: { h24?: string | null } | null;
+      price_change_percentage?: { h24?: string | null } | null;
+    } | null;
+    relationships?: {
+      base_token?: { data?: { id?: string | null } | null } | null;
     } | null;
   } | null;
 }
@@ -105,21 +114,26 @@ async function fetchJson<T>(url: string): Promise<T> {
 }
 
 /**
- * Preferred public price and context from GeckoTerminal: price, 24h volume,
- * on-chain reserve value (surfaced as liquidity), and market cap.
+ * Preferred public price and context from GeckoTerminal's WFAIR/USDC pool:
+ * the indexed token price, 24h volume and change, pool reserve value (surfaced
+ * as liquidity), and market cap. WFAIR is the pool's base token, but we resolve
+ * base-vs-quote from the response so a reordered pool still reads the right side.
  */
 async function loadFromGeckoTerminal(): Promise<{ price: number | null; context: PriceContext }> {
-  const body = await fetchJson<GeckoTerminalTokenResponse>(
-    `${GECKOTERMINAL_BASE}/networks/${WFAIR_NETWORK}/tokens/${WFAIR_ADDRESS}`,
+  const body = await fetchJson<GeckoTerminalPoolResponse>(
+    `${GECKOTERMINAL_BASE}/networks/${WFAIR_NETWORK}/pools/${WFAIR_USDC_POOL_ADDRESS}`,
   );
   const attrs = body.data?.attributes ?? null;
+  const baseTokenId = body.data?.relationships?.base_token?.data?.id ?? "";
+  const wfairIsBaseToken = baseTokenId.toLowerCase().endsWith(WFAIR_ADDRESS.toLowerCase());
+  const wfairPriceUsd = wfairIsBaseToken ? attrs?.base_token_price_usd : attrs?.quote_token_price_usd;
 
   return {
-    price: parseNumeric(attrs?.price_usd),
+    price: parseNumeric(wfairPriceUsd),
     context: {
-      change24h: null,
+      change24h: parseNumeric(attrs?.price_change_percentage?.h24),
       volume24h: parseNumeric(attrs?.volume_usd?.h24),
-      liquidityUsd: parseNumeric(attrs?.total_reserve_in_usd),
+      liquidityUsd: parseNumeric(attrs?.reserve_in_usd),
       marketCapUsd: parseNumeric(attrs?.market_cap_usd),
     },
   };
