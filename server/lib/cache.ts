@@ -1,6 +1,6 @@
 import { MongoClient, Db } from 'mongodb'
 import { rpcWithNetwork, type NetworkType, type RpcParam } from '@fairco.in/rpc-client'
-import { escapeRegex } from './http'
+import { escapeRegex, MAX_BLOCK_OFFSET } from './http'
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/faircoin-explorer'
 
@@ -639,7 +639,7 @@ export class BlockCache extends BlockchainCache {
   // Get recent blocks with caching
   async getRecentBlocks(network: NetworkType, limit: number = 20, offset: number = 0): Promise<any[]> {
     assertValidNetwork(network)
-    const safeOffset = Math.max(0, Math.floor(offset))
+    const safeOffset = Math.min(MAX_BLOCK_OFFSET, Math.max(0, Math.floor(offset)))
     const safeLimit = Math.max(1, Math.floor(limit))
     const db = await this.getDb()
     const collection = db.collection('recent_blocks')

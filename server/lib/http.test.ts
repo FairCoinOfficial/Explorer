@@ -3,11 +3,13 @@ import {
   parseNetwork,
   parseLimit,
   parseOffset,
+  parseBlockOffset,
   parseAddress,
   escapeRegex,
   ValidationError,
   MIN_LIMIT,
   MAX_LIMIT,
+  MAX_BLOCK_OFFSET,
 } from './http'
 
 describe('parseNetwork', () => {
@@ -51,6 +53,14 @@ describe('parseOffset', () => {
   it('clamps negatives to 0 and accepts large values', () => {
     expect(parseOffset('-10')).toBe(0)
     expect(parseOffset('1000000')).toBe(1_000_000)
+  })
+})
+
+describe('parseBlockOffset', () => {
+  it('bounds public block pagination offsets', () => {
+    expect(parseBlockOffset('-10')).toBe(0)
+    expect(parseBlockOffset('25')).toBe(25)
+    expect(parseBlockOffset(String(MAX_BLOCK_OFFSET + 1))).toBe(MAX_BLOCK_OFFSET)
   })
 })
 
