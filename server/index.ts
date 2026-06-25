@@ -111,7 +111,7 @@ app.use(express.json({ limit: '64kb' }))
 // Apply the global rate limit to the API surface only (static assets are exempt).
 app.use('/api', globalLimiter)
 
-// Stricter limits on the expensive search path and the broadcast write path.
+// Stricter limits on expensive node-hitting paths.
 app.use('/api/search', strictLimiter)
 app.use('/api/tx/broadcast', strictLimiter)
 
@@ -536,7 +536,7 @@ app.get('/api/bridge/reserves', async (_req, res) => {
 // which the SPA's same-origin allowlist above does not cover.
 const SERVER_VERSION = packageJson.version
 app.options('/mcp', handleMcpOptions)
-app.post('/mcp', createMcpPostHandler(SERVER_VERSION))
+app.post('/mcp', strictLimiter, createMcpPostHandler(SERVER_VERSION))
 app.get('/mcp', handleMcpMethodNotAllowed)
 app.delete('/mcp', handleMcpMethodNotAllowed)
 
