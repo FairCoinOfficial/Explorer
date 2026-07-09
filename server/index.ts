@@ -107,20 +107,7 @@ app.set('trust proxy', isTrustedProxy)
 
 // ---- Security & performance middleware ----
 
-const DEFAULT_PUBLIC_ORIGIN = 'https://explorer.fairco.in'
-const EXTRA_CORS_ORIGINS = (process.env.CORS_ALLOWED_ORIGINS || '')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean)
-const CORS_ALLOWLIST = [
-  ...new Set([
-    process.env.PUBLIC_BASE_URL || DEFAULT_PUBLIC_ORIGIN,
-    'https://oxy.so',
-    'http://localhost:5180',
-    'http://localhost:5173',
-    ...EXTRA_CORS_ORIGINS,
-  ]),
-]
+// Public read-only API: allow any browser origin. Rate limits still apply.
 
 // Global API rate limit and a stricter one for sensitive/expensive endpoints.
 // The read-only GET endpoints are cached (low backend cost) and the explorer
@@ -184,7 +171,7 @@ const DIST_CANDIDATES = [
 const DIST_DIR = DIST_CANDIDATES.find(d => fs.existsSync(d)) ?? path.resolve(process.cwd(), 'dist')
 console.log(`> Static files from: ${DIST_DIR} (exists: ${fs.existsSync(DIST_DIR)})`)
 
-app.use(cors({ origin: CORS_ALLOWLIST }))
+app.use(cors({ origin: true }))
 app.use(express.json({ limit: '64kb' }))
 
 // Apply the global rate limit to the API surface only (static assets are exempt).
