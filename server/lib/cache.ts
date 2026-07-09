@@ -1,8 +1,10 @@
-import { MongoClient, Db } from 'mongodb'
+import { MongoClient, Db, type Collection, type Document, type Filter } from 'mongodb'
 import { rpcWithNetwork, type NetworkType, type RpcParam } from '@fairco.in/rpc-client'
 import { escapeRegex, MAX_BLOCK_OFFSET, sanitizeAddressValidation } from './http'
+import { getDefaultMongoUri, getMongoDatabaseName } from './db/name'
+import { logger } from './logger'
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/faircoin-explorer'
+const MONGODB_URI = process.env.MONGODB_URI || getDefaultMongoUri()
 
 /** Networks accepted for cache keys; guards values that flow into Mongo `$regex`. */
 const VALID_NETWORKS: readonly NetworkType[] = ['mainnet', 'testnet']
@@ -18,18 +20,38 @@ interface CacheOptions {
   network: NetworkType
 }
 
-interface CachedDocument {
+/** Document stored in the `cache` collection. */
+interface CacheDocument extends Document {
   _id: string
-  data: any
+  data: unknown
+  timestamp: number
+  ttl: number
+  expiresAt: Date
+  network: NetworkType
+}
+
+interface CachedData {
+  data: unknown
   timestamp: number
   ttl: number
   network: NetworkType
 }
 
-interface CachedData {
-  data: any
+/** Summary row stored in the `recent_blocks` collection. */
+interface RecentBlockSummary {
+  height: number
+  hash: string
+  time: number
+  nTx: number
+  size: number
+  tx: string[]
+}
+
+interface RecentBlocksDocument extends Document {
+  _id: string
+  blocks: RecentBlockSummary[]
   timestamp: number
-  ttl: number
+  expiresAt: Date
   network: NetworkType
 }
 
@@ -40,6 +62,12 @@ const TTL_INDEX_GRACE_SECONDS = 3600
 const ZERO_HASH = '0000000000000000000000000000000000000000000000000000000000000000'
 
 /**
+ * Max concurrent `getblock` RPCs when rebuilding the recent-blocks window on a
+ * cache miss. Keeps latency low without stampeding the daemon.
+ */
+const RECENT_BLOCKS_CONCURRENCY = 6
+
+/**
  * Shape returned by the FairCoin `masternode count` RPC. Fields beyond `total`
  * and `enabled` (e.g. `inqueue`, `ipv4`) vary by build and are not relied upon.
  */
@@ -47,6 +75,34 @@ export interface MasternodeCount {
   total?: number
   enabled?: number
   inqueue?: number
+}
+
+/**
+ * Run `fn` over `items` with at most `concurrency` in-flight promises.
+ * Results preserve input order.
+ */
+async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) {
+    return []
+  }
+  const limit = Math.max(1, Math.min(concurrency, items.length))
+  const results: R[] = new Array(items.length)
+  let nextIndex = 0
+
+  async function worker(): Promise<void> {
+    while (nextIndex < items.length) {
+      const index = nextIndex
+      nextIndex += 1
+      results[index] = await fn(items[index], index)
+    }
+  }
+
+  await Promise.all(Array.from({ length: limit }, () => worker()))
+  return results
 }
 
 export class BlockchainCache {
@@ -62,12 +118,22 @@ export class BlockchainCache {
     if (!this.db) {
       this.client = new MongoClient(MONGODB_URI)
       await this.client.connect()
-      const dbName = new URL(MONGODB_URI).pathname.slice(1) || 'faircoin-explorer'
+      const dbName = getMongoDatabaseName(MONGODB_URI)
       this.db = this.client.db(dbName)
       await this.ensureIndexes(this.db)
-      console.log(`Connected to MongoDB database: ${dbName}`)
+      logger.info(`Connected to MongoDB (cache) database: ${dbName}`)
     }
     return this.db
+  }
+
+  protected async cacheCollection(): Promise<Collection<CacheDocument>> {
+    const db = await this.getDb()
+    return db.collection<CacheDocument>('cache')
+  }
+
+  protected async recentBlocksCollection(): Promise<Collection<RecentBlocksDocument>> {
+    const db = await this.getDb()
+    return db.collection<RecentBlocksDocument>('recent_blocks')
   }
 
   /**
@@ -83,11 +149,11 @@ export class BlockchainCache {
         db.collection('recent_blocks').createIndex({ expiresAt: 1 }, { expireAfterSeconds: TTL_INDEX_GRACE_SECONDS }),
       ])
     } catch (error) {
-      console.error('Failed to ensure cache TTL indexes:', error)
+      logger.error('Failed to ensure cache TTL indexes:', error)
     }
   }
 
-  protected getCacheKey(method: string, params: any[], network: NetworkType) {
+  protected getCacheKey(method: string, params: RpcParam[], network: NetworkType) {
     return `${network}:${method}:${JSON.stringify(params)}`
   }
 
@@ -96,42 +162,41 @@ export class BlockchainCache {
     return now - cachedData.timestamp > cachedData.ttl * 1000
   }
 
-  async get<T>(method: string, params: any[] = [], options: CacheOptions): Promise<T> {
+  async get<T>(method: string, params: RpcParam[] = [], options: CacheOptions): Promise<T> {
     assertValidNetwork(options.network)
-    const db = await this.getDb()
-    const collection = db.collection('cache')
+    const collection = await this.cacheCollection()
     const cacheKey = this.getCacheKey(method, params, options.network)
     const ttlSeconds = options.ttl ?? 3600
 
     try {
-      // Check cache first
-      const cached = await collection.findOne({ _id: cacheKey } as any)
+      const cached = await collection.findOne({ _id: cacheKey })
 
-      if (cached && !this.isExpired(cached as any)) {
-        return cached.data
+      if (cached && !this.isExpired(cached)) {
+        return cached.data as T
       }
 
       // Fetch from RPC behind single-flight so concurrent misses share one call.
       const data = await this.fetchSingleFlight<T>(cacheKey, method, params, options.network)
 
       // Store in cache. `expiresAt` powers the Mongo TTL index.
+      // `_id` comes from the filter; do not set it on the replacement body
+      // (Mongo's `WithoutId` typing rejects it).
       const now = Date.now()
       await collection.replaceOne(
-        { _id: cacheKey } as any,
+        { _id: cacheKey },
         {
-          _id: cacheKey,
           data,
           timestamp: now,
           ttl: ttlSeconds,
           expiresAt: new Date(now + ttlSeconds * 1000),
-          network: options.network
-        } as any,
-        { upsert: true }
+          network: options.network,
+        },
+        { upsert: true },
       )
 
       return data
     } catch (error) {
-      console.error(`Error in cache.get for ${method}:`, error)
+      logger.error(`Error in cache.get for ${method}:`, error)
       // Fallback to RPC (still single-flighted) if cache read/write fails.
       return await this.fetchSingleFlight<T>(cacheKey, method, params, options.network)
     }
@@ -160,40 +225,37 @@ export class BlockchainCache {
     }
   }
 
-  async invalidate(method: string, params: any[] = [], network: NetworkType) {
-    const db = await this.getDb()
-    const collection = db.collection('cache')
+  async invalidate(method: string, params: RpcParam[] = [], network: NetworkType) {
+    const collection = await this.cacheCollection()
     const cacheKey = this.getCacheKey(method, params, network)
-    
-    await collection.deleteOne({ _id: cacheKey } as any)
+    await collection.deleteOne({ _id: cacheKey })
   }
 
   async invalidatePattern(pattern: string, network: NetworkType) {
     assertValidNetwork(network)
-    const db = await this.getDb()
-    const collection = db.collection('cache')
+    const collection = await this.cacheCollection()
 
     // Escape `network` so it cannot inject regex metacharacters into the key match.
     // `pattern` is caller-supplied and intentionally treated as a regex fragment.
-    await collection.deleteMany({
-      _id: { $regex: `^${escapeRegex(network)}:${pattern}` }
-    } as any)
+    const filter: Filter<CacheDocument> = {
+      _id: { $regex: `^${escapeRegex(network)}:${pattern}` },
+    }
+    await collection.deleteMany(filter)
   }
 
   async clearExpired() {
-    const db = await this.getDb()
-    const collection = db.collection('cache')
+    const collection = await this.cacheCollection()
     const now = Date.now()
-    
-    const result = await collection.deleteMany({
+
+    const filter: Filter<CacheDocument> = {
       $expr: {
-        $gt: [now, { $add: ['$timestamp', { $multiply: ['$ttl', 1000] }] }]
-      }
-    } as any)
-    
-    // Only log if there were expired entries to clean up
+        $gt: [now, { $add: ['$timestamp', { $multiply: ['$ttl', 1000] }] }],
+      },
+    }
+    const result = await collection.deleteMany(filter)
+
     if (result.deletedCount > 0) {
-      console.log(`Cleared ${result.deletedCount} expired cache entries`)
+      logger.info(`Cleared ${result.deletedCount} expired cache entries`)
     }
   }
 }
@@ -290,19 +352,91 @@ interface TransactionLookupOptions {
   prevoutLookupBudget?: PrevoutLookupBudget
 }
 
+/** Verbose block fields used when building recent-block summaries. */
+export interface VerboseBlock {
+  height: number
+  hash: string
+  time: number
+  nTx?: number
+  size: number
+  tx?: string[]
+  difficulty?: number
+  previousblockhash?: string
+  nextblockhash?: string
+  [key: string]: unknown
+}
+
+/** Verbose transaction body returned by `getrawtransaction <txid> true`. */
+export interface VerboseTransaction extends RawTransactionConfirmationFields {
+  txid?: string
+  size?: number
+  vin?: RawVin[]
+  vout?: RawVout[]
+  [key: string]: unknown
+}
+
+/** Address validation RPC result before sanitization. */
+interface AddressValidationResult {
+  isvalid?: boolean
+  address?: string
+  scriptPubKey?: string
+  ismine?: boolean
+  iswatchonly?: boolean
+  isscript?: boolean
+  iswitness?: boolean
+  [key: string]: unknown
+}
+
+interface NetworkInfoResult {
+  connections?: number
+  version?: number | string
+  subversion?: string
+  protocolversion?: number
+  [key: string]: unknown
+}
+
+interface MiningInfoResult {
+  difficulty?: number
+  networkhashps?: number | string
+  hashrate?: number | string
+  [key: string]: unknown
+}
+
+interface MempoolInfoResult {
+  size?: number
+  bytes?: number
+  usage?: number
+  maxmempool?: number
+  mempoolminfee?: number
+  [key: string]: unknown
+}
+
+/** One row from FairCoin `masternodelist` (default mode). */
+export interface MasternodeListEntry {
+  rank?: number
+  txhash?: string
+  outidx?: number
+  status?: string
+  addr?: string
+  version?: number
+  lastseen?: number
+  activetime?: number
+  lastpaid?: number
+  [key: string]: unknown
+}
+
 // Block-specific caching with different TTLs
 export class BlockCache extends BlockchainCache {
   async getBlock(hashOrHeight: string | number, network: NetworkType, verbose: boolean = true) {
     // Determine if it's a hash or height
     const isHeight = typeof hashOrHeight === 'number' || /^\d+$/.test(hashOrHeight.toString())
-    
+
     if (isHeight) {
-      const height = parseInt(hashOrHeight.toString())
+      const height = parseInt(hashOrHeight.toString(), 10)
       const hash = await this.get<string>('getblockhash', [height], { network, ttl: 300 }) // 5 minutes for block hashes
-      return await this.get<any>('getblock', [hash, verbose], { network, ttl: 3600 }) // 1 hour for block data
-    } else {
-      return await this.get<any>('getblock', [hashOrHeight, verbose], { network, ttl: 3600 }) // 1 hour for block data
+      return await this.get<VerboseBlock>('getblock', [hash, verbose], { network, ttl: 3600 }) // 1 hour for block data
     }
+    return await this.get<VerboseBlock>('getblock', [hashOrHeight, verbose], { network, ttl: 3600 }) // 1 hour for block data
   }
 
   /**
@@ -332,34 +466,52 @@ export class BlockCache extends BlockchainCache {
   async getTransaction(
     txid: string,
     network: NetworkType,
+    verbose?: true,
+    options?: TransactionLookupOptions,
+  ): Promise<VerboseTransaction | null>
+  async getTransaction(
+    txid: string,
+    network: NetworkType,
+    verbose: false,
+    options?: TransactionLookupOptions,
+  ): Promise<string>
+  async getTransaction(
+    txid: string,
+    network: NetworkType,
     verbose: boolean = true,
     options: TransactionLookupOptions = {},
-  ) {
+  ): Promise<VerboseTransaction | string | null> {
     assertValidNetwork(network)
 
     // Non-verbose callers just want the raw hex string; it never carries
     // confirmation state, so the plain cache path is correct for them.
     if (!verbose) {
-      return await this.get<any>('getrawtransaction', [txid, verbose], { network, ttl: CONFIRMED_TX_TTL_SECONDS })
+      return await this.get<string>('getrawtransaction', [txid, verbose], {
+        network,
+        ttl: CONFIRMED_TX_TTL_SECONDS,
+      })
     }
 
-    const db = await this.getDb()
-    const collection = db.collection('cache')
+    const collection = await this.cacheCollection()
     const cacheKey = this.getCacheKey('getrawtransaction', [txid, verbose], network)
 
-    let tx: (Record<string, unknown> & RawTransactionConfirmationFields) | null = null
+    let tx: VerboseTransaction | null = null
 
     try {
-      const cached = await collection.findOne({ _id: cacheKey } as any)
-      if (cached && !this.isExpired(cached as any) && !this.isStaleUnconfirmed(cached as any)) {
-        tx = cached.data
+      const cached = await collection.findOne({ _id: cacheKey })
+      if (
+        cached &&
+        !this.isExpired(cached) &&
+        !this.isStaleUnconfirmed(cached)
+      ) {
+        tx = cached.data as VerboseTransaction
       }
     } catch (error) {
-      console.error(`Error reading cached transaction ${txid}:`, error)
+      logger.error(`Error reading cached transaction ${txid}:`, error)
     }
 
     if (!tx) {
-      tx = await this.fetchSingleFlight<Record<string, unknown> & RawTransactionConfirmationFields>(
+      tx = await this.fetchSingleFlight<VerboseTransaction>(
         cacheKey,
         'getrawtransaction',
         [txid, verbose],
@@ -383,19 +535,18 @@ export class BlockCache extends BlockchainCache {
       try {
         const now = Date.now()
         await collection.replaceOne(
-          { _id: cacheKey } as any,
+          { _id: cacheKey },
           {
-            _id: cacheKey,
             data: tx,
             timestamp: now,
             ttl: ttlSeconds,
             expiresAt: new Date(now + ttlSeconds * 1000),
             network,
-          } as any,
+          },
           { upsert: true },
         )
       } catch (error) {
-        console.error(`Error caching transaction ${txid}:`, error)
+        logger.error(`Error caching transaction ${txid}:`, error)
       }
     }
 
@@ -424,15 +575,15 @@ export class BlockCache extends BlockchainCache {
    *    `prevout`, so the endpoint never fails because a prevout was unavailable.
    */
   private async enrichInputPrevouts(
-    tx: Record<string, unknown> | null,
+    tx: VerboseTransaction | null,
     network: NetworkType,
     budget?: PrevoutLookupBudget,
-  ): Promise<Record<string, unknown> | null> {
+  ): Promise<VerboseTransaction | null> {
     if (!tx || !Array.isArray(tx.vin)) {
       return tx
     }
 
-    const vin = tx.vin as RawVin[]
+    const vin = tx.vin
 
     // Collect the distinct parent txids we need (skipping coinbase inputs), in
     // first-seen order, capped so a pathological many-input tx cannot fan out
@@ -470,7 +621,7 @@ export class BlockCache extends BlockchainCache {
           )
           parents.set(parentTxid, Array.isArray(parent?.vout) ? parent.vout : null)
         } catch (error) {
-          console.error(`Error resolving prevout parent ${parentTxid}:`, error)
+          logger.error(`Error resolving prevout parent ${parentTxid}:`, error)
           parents.set(parentTxid, null)
         }
       }),
@@ -516,8 +667,12 @@ export class BlockCache extends BlockchainCache {
    * Confirmed entries (with a `blockhash`) are never considered stale here; their
    * volatile `confirmations` is recomputed live in {@link withLiveConfirmations}.
    */
-  private isStaleUnconfirmed(cached: { data?: { blockhash?: string }; timestamp?: number }): boolean {
-    if (cached.data?.blockhash) {
+  private isStaleUnconfirmed(cached: {
+    data?: unknown
+    timestamp?: number
+  }): boolean {
+    const data = cached.data as { blockhash?: string } | undefined
+    if (data?.blockhash) {
       return false
     }
     const age = Date.now() - (cached.timestamp ?? 0)
@@ -533,9 +688,9 @@ export class BlockCache extends BlockchainCache {
    *    the 30s-cached block height, clamped to at least 1.
    */
   private async withLiveConfirmations(
-    tx: (Record<string, unknown> & RawTransactionConfirmationFields) | null,
+    tx: VerboseTransaction | null,
     network: NetworkType,
-  ): Promise<Record<string, unknown> | null> {
+  ): Promise<VerboseTransaction | null> {
     if (!tx) {
       return tx
     }
@@ -565,7 +720,7 @@ export class BlockCache extends BlockchainCache {
     try {
       currentHeight = await this.getBlockCount(network)
     } catch (error) {
-      console.error('Error fetching block height for live confirmations:', error)
+      logger.error('Error fetching block height for live confirmations:', error)
       return { ...tx, blockheight, confirmations: typeof tx.confirmations === 'number' ? tx.confirmations : 1 }
     }
 
@@ -581,10 +736,9 @@ export class BlockCache extends BlockchainCache {
   private async resolveBlockHeight(blockhash: string, network: NetworkType): Promise<number | null> {
     try {
       const block = await this.getBlock(blockhash, network, true)
-      const height = (block as { height?: unknown } | null)?.height
-      return typeof height === 'number' ? height : null
+      return typeof block?.height === 'number' ? block.height : null
     } catch (error) {
-      console.error(`Error resolving height for block ${blockhash}:`, error)
+      logger.error(`Error resolving height for block ${blockhash}:`, error)
       return null
     }
   }
@@ -594,15 +748,18 @@ export class BlockCache extends BlockchainCache {
   }
 
   async getNetworkInfo(network: NetworkType) {
-    return await this.get<any>('getnetworkinfo', [], { network, ttl: 300 }) // 5 minutes for network info
+    return await this.get<NetworkInfoResult>('getnetworkinfo', [], { network, ttl: 300 }) // 5 minutes for network info
   }
 
   async getMiningInfo(network: NetworkType) {
-    return await this.get<any>('getmininginfo', [], { network, ttl: 60 }) // 1 minute for mining info
+    return await this.get<MiningInfoResult>('getmininginfo', [], { network, ttl: 60 }) // 1 minute for mining info
   }
 
   async validateAddress(address: string, network: NetworkType) {
-    const validation = await this.get<any>('validateaddress', [address], { network, ttl: 86400 }) // 24 hours for address validation
+    const validation = await this.get<AddressValidationResult>('validateaddress', [address], {
+      network,
+      ttl: 86400,
+    }) // 24 hours for address validation
     return sanitizeAddressValidation(validation)
   }
 
@@ -616,105 +773,116 @@ export class BlockCache extends BlockchainCache {
    * node and returns an empty array. We therefore call it with no filter to get
    * every masternode. A caller-supplied `filter` is forwarded only when non-empty.
    *
-   * The historical hang that motivated avoiding this call only affected
-   * /api/stats, which shared this cache key; /api/stats now uses the cheap
-   * {@link getMasternodeCount} instead, so the detailed list is safe to fetch here.
+   * Prefer {@link getMasternodeCount} for stats-only consumers; this list RPC is
+   * reserved for callers that need per-node rows (`?include=list`, MCP, etc.).
    */
-  async getMasternodeList(network: NetworkType, filter: string = ''): Promise<any> {
-    const params = filter ? [filter] : []
-    return this.get('masternodelist', params, { network, ttl: 600 }) // 10 min TTL for masternode list
+  async getMasternodeList(network: NetworkType, filter: string = ''): Promise<MasternodeListEntry[]> {
+    const params: RpcParam[] = filter ? [filter] : []
+    return this.get<MasternodeListEntry[]>('masternodelist', params, { network, ttl: 600 }) // 10 min TTL
   }
 
   /**
    * Cheap masternode tally via the `masternode count` RPC, which returns
    * `{ total, enabled, ... }` directly from the in-memory masternode manager.
    *
-   * This is what /api/stats uses for its masternode count: it is effectively free
-   * and never touches the heavier `masternodelist` array, keeping the stats
-   * endpoint fast and isolated from the list call's cost.
+   * This is what /api/stats and the default /api/masternodes path use: it is
+   * effectively free and never touches the heavier `masternodelist` array.
    */
   async getMasternodeCount(network: NetworkType): Promise<MasternodeCount | null> {
     try {
       return await this.get<MasternodeCount>('masternode', ['count'], { network, ttl: 60 })
-    } catch {
+    } catch (error) {
       // `masternode count` is unavailable on this node/network.
+      logger.debug(`masternode count unavailable on ${network}:`, error)
       return null
     }
   }
 
-  async getMempoolInfo(network: NetworkType): Promise<any> {
-    return this.get('getmempoolinfo', [], { network, ttl: 60 }) // 1 minute TTL for mempool
+  async getMempoolInfo(network: NetworkType): Promise<MempoolInfoResult> {
+    return this.get<MempoolInfoResult>('getmempoolinfo', [], { network, ttl: 60 }) // 1 minute TTL for mempool
   }
 
-  async getStakingInfo(network: NetworkType): Promise<any> {
+  async getStakingInfo(network: NetworkType): Promise<unknown> {
     try {
       return await this.get('getstakinginfo', [], { network, ttl: 300 })
-    } catch {
+    } catch (error) {
       // getstakinginfo does not exist on FairCoin v3.0.0 (PIVX-based)
+      logger.debug(`getstakinginfo unavailable on ${network}:`, error)
       return null
     }
   }
 
-  async getRawMempool(network: NetworkType): Promise<any> {
-    return this.get('getrawmempool', [], { network, ttl: 30 }) // 30 second TTL for mempool transactions
+  async getRawMempool(network: NetworkType): Promise<string[]> {
+    return this.get<string[]>('getrawmempool', [], { network, ttl: 30 }) // 30 second TTL for mempool transactions
   }
 
   // Get recent blocks with caching
-  async getRecentBlocks(network: NetworkType, limit: number = 20, offset: number = 0): Promise<any[]> {
+  async getRecentBlocks(network: NetworkType, limit: number = 20, offset: number = 0): Promise<RecentBlockSummary[]> {
     assertValidNetwork(network)
     const safeOffset = Math.min(MAX_BLOCK_OFFSET, Math.max(0, Math.floor(offset)))
     const safeLimit = Math.max(1, Math.floor(limit))
-    const db = await this.getDb()
-    const collection = db.collection('recent_blocks')
+    const collection = await this.recentBlocksCollection()
     const cacheKey = `${network}:recent:${safeLimit}:${safeOffset}`
 
     // Check cache first
-    const cached = await collection.findOne({ _id: cacheKey } as any)
+    const cached = await collection.findOne({ _id: cacheKey })
     if (cached && Date.now() - cached.timestamp < RECENT_BLOCKS_TTL_MS) {
       return cached.blocks
     }
 
     // Single-flight: dedupe concurrent misses for the same window so N parallel
-    // requests don't each trigger up to `limit` serial RPC `getblock` calls.
+    // requests don't each trigger up to `limit` RPC `getblock` calls.
     const existing = this.inFlight.get(cacheKey)
     if (existing) {
-      return existing as Promise<any[]>
+      return existing as Promise<RecentBlockSummary[]>
     }
 
-    const fetchPromise = (async () => {
+    const fetchPromise = (async (): Promise<RecentBlockSummary[]> => {
       try {
         const height = await this.getBlockCount(network)
         const startHeight = Math.max(0, height - safeOffset)
-        const blocks = []
-
-        for (let i = startHeight; i >= 0 && blocks.length < safeLimit; i--) {
-          try {
-            const block = await this.getBlock(i, network, true)
-            blocks.push({
-              height: block.height,
-              hash: block.hash,
-              time: block.time,
-              nTx: block.nTx || block.tx?.length || 0,
-              size: block.size,
-              tx: block.tx || []
-            })
-          } catch (error) {
-            console.error(`Error fetching block ${i}:`, error)
-          }
+        const heights: number[] = []
+        for (let i = startHeight; i >= 0 && heights.length < safeLimit; i--) {
+          heights.push(i)
         }
+
+        // Bounded parallel fetch: fill the window without serial RPC round-trips
+        // or an unbounded fan-out against the daemon.
+        const fetched = await mapWithConcurrency(
+          heights,
+          RECENT_BLOCKS_CONCURRENCY,
+          async (blockHeight) => {
+            try {
+              const block = await this.getBlock(blockHeight, network, true)
+              const summary: RecentBlockSummary = {
+                height: block.height,
+                hash: block.hash,
+                time: block.time,
+                nTx: block.nTx || block.tx?.length || 0,
+                size: block.size,
+                tx: block.tx || [],
+              }
+              return summary
+            } catch (error) {
+              logger.error(`Error fetching block ${blockHeight}:`, error)
+              return null
+            }
+          },
+        )
+
+        const blocks = fetched.filter((block): block is RecentBlockSummary => block !== null)
 
         // Cache the result. `expiresAt` powers the Mongo TTL index on recent_blocks.
         const cachedAt = Date.now()
         await collection.replaceOne(
-          { _id: cacheKey } as any,
+          { _id: cacheKey },
           {
-            _id: cacheKey,
             blocks,
             timestamp: cachedAt,
             expiresAt: new Date(cachedAt + RECENT_BLOCKS_TTL_MS),
-            network
-          } as any,
-          { upsert: true }
+            network,
+          },
+          { upsert: true },
         )
 
         return blocks
@@ -735,6 +903,8 @@ export const blockCache = new BlockCache()
 // Auto cleanup expired entries every hour
 if (typeof global !== 'undefined') {
   setInterval(() => {
-    blockchainCache.clearExpired().catch(console.error)
+    blockchainCache.clearExpired().catch((error: unknown) => {
+      logger.error('Failed to clear expired cache entries:', error)
+    })
   }, 3600000) // 1 hour
 }

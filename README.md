@@ -80,6 +80,7 @@ Behind a reverse proxy (e.g. nginx/Cloudflare), set `TRUSTED_PROXY_CIDRS` to the
 The Express server exposes a read-only JSON API under `/api`:
 
 - `GET /api/blocks`, `/api/block/:hashOrHeight`, `/api/blockcount`
+- `GET /api/transactions` (paginated recent txs from mempool + recent blocks)
 - `GET /api/transaction/:txid`, `POST /api/tx/broadcast`
 - `GET /api/address/:address`, `/api/address/:address/txs?page=&limit=`, `/api/address/:address/utxos` (requires a node with `addressindex` for full data)
 - `GET /api/mempool`, `/api/masternodes`, `/api/peers`, `/api/stats`, `/api/network-info`, `/api/mining-info`
@@ -138,6 +139,7 @@ Only key generation is done in-process (using the audited `@noble/curves` secp25
 ## Features
 
 - Dashboard with live blocks, mempool, price and network stats
+- Global recent transactions feed, charts/analytics, and tools (broadcast, address validator, API docs)
 - Block, transaction and address pages (with paginated address history when the node has `addressindex`)
 - Masternode list and reward stats, peers, network status
 - Universal search (height, hash, txid, address)

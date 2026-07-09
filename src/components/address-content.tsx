@@ -4,9 +4,11 @@ import {
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
+  Download,
   Hash,
   Info,
   Receipt,
+  Tag,
   TrendingDown,
   TrendingUp,
   Wallet,
@@ -14,8 +16,11 @@ import {
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslations } from '@/lib/i18n'
+import { useNetwork } from '@/contexts/network-context'
 import { useAddress, useAddressTransactions, type AddressTransaction } from '@/hooks/use-address'
 import { formatNumber } from '@/lib/format'
+import { downloadCsv } from '@/lib/download-csv'
+import { getKnownAddressLabel } from '@/lib/known-addresses'
 import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
@@ -31,6 +36,8 @@ function formatFair(value: number): string {
 
 export function AddressContent({ address }: { address: string }) {
   const t = useTranslations('address')
+  const { currentNetwork } = useNetwork()
+  const known = getKnownAddressLabel(address, currentNetwork)
   const { data: info, isLoading, isError, error, refetch, isFetching } = useAddress(address)
 
   if (isLoading) {
@@ -89,6 +96,15 @@ export function AddressContent({ address }: { address: string }) {
               <Wallet className="size-4" />
             </span>
             <h3 className="text-sm font-semibold tracking-tight">{t('addressInformation')}</h3>
+            {known ? (
+              <span
+                className="inline-flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-foreground"
+                title={known.description}
+              >
+                <Tag className="size-3" />
+                {known.label}
+              </span>
+            ) : null}
           </div>
           <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
             <Hash className="size-3" />
@@ -166,15 +182,38 @@ function AddressTransactionsSection({
   const total = data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / TXS_PER_PAGE))
 
+  const exportCsv = () => {
+    downloadCsv(
+      `faircoin-address-${address}-page-${page}.csv`,
+      ['txid', 'type', 'amount', 'confirmations', 'blockHeight', 'time'],
+      transactions.map((tx) => [
+        tx.txid,
+        tx.type,
+        tx.amount,
+        tx.confirmations,
+        tx.blockHeight ?? '',
+        tx.time,
+      ]),
+    )
+  }
+
   return (
     <SectionCard
       title={t('transactionHistory')}
       icon={Receipt}
       flush
       action={
-        <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
-          {t('transactionsCount', { count: total })}
-        </span>
+        <div className="flex items-center gap-2">
+          {transactions.length > 0 ? (
+            <Button type="button" variant="outline" size="sm" onClick={exportCsv}>
+              <Download className="size-3.5" />
+              {t('exportCsv')}
+            </Button>
+          ) : null}
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+            {t('transactionsCount', { count: total })}
+          </span>
+        </div>
       }
     >
       {isLoading ? (

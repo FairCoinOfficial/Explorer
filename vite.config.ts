@@ -15,6 +15,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@shared': path.resolve(__dirname, './shared'),
     },
   },
   server: {
@@ -23,10 +24,11 @@ export default defineConfig({
     port: 5180,
     strictPort: true,
     proxy: {
-      // Dev-only proxy. Override target with VITE_API_TARGET to point at a
-      // remote API (e.g. prod) when no local FairCoin node is running.
+      // Dev-only proxy. Must match server/index.ts PORT default (8080).
+      // Override target with VITE_API_TARGET to point at a remote API (e.g. prod)
+      // when no local FairCoin node is running.
       // Not used by the production build (Express serves the static dist).
-      '/api': process.env.VITE_API_TARGET || 'http://localhost:4000',
+      '/api': process.env.VITE_API_TARGET || 'http://localhost:8080',
     },
   },
 })

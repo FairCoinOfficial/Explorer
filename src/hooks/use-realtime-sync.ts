@@ -6,7 +6,7 @@ import {
   NewBlockEvent,
   BlockCountEvent,
   NetworkStatsEvent,
-} from '@/lib/websocket-types'
+} from '@shared/websocket-types'
 
 /**
  * Real-time cache sync for the home dashboard.
@@ -53,7 +53,9 @@ export function useRealtimeSync(event: WebSocketEvent | null): void {
       case 'new-block':
       case 'block-count': {
         void queryClient.invalidateQueries({ queryKey: ['recent-blocks'] })
-        void queryClient.invalidateQueries({ queryKey: ['network-stats'] })
+        void queryClient.invalidateQueries({ queryKey: ['recent-transactions'] })
+        // Must match useStats / useNetworkStats (`['stats', network]`).
+        void queryClient.invalidateQueries({ queryKey: ['stats'] })
         // Append the freshly-sampled tip to the stat-strip sparkline series.
         void queryClient.invalidateQueries({ queryKey: ['stats-history'] })
         break
@@ -62,13 +64,21 @@ export function useRealtimeSync(event: WebSocketEvent | null): void {
       // Difficulty / connections / hashrate moved — refresh the stats the
       // header pill, stat-strip, supply bar and network card read.
       case 'network-stats': {
-        void queryClient.invalidateQueries({ queryKey: ['network-stats'] })
+        void queryClient.invalidateQueries({ queryKey: ['stats'] })
+        break
+      }
+
+      case 'mempool-update': {
+        void queryClient.invalidateQueries({ queryKey: ['mempool'] })
+        void queryClient.invalidateQueries({ queryKey: ['recent-transactions'] })
+        // memPoolSize on the stats strip also changes with the pool.
+        void queryClient.invalidateQueries({ queryKey: ['stats'] })
         break
       }
 
       default:
-        // Other event types (mempool-update, transaction-confirmed, ping/pong,
-        // subscribe/unsubscribe, error) do not feed the home dashboard caches,
+        // Other event types (transaction-confirmed, ping/pong,
+        // subscribe/unsubscribe, error) do not feed the dashboard caches,
         // so there is nothing to invalidate here.
         break
     }

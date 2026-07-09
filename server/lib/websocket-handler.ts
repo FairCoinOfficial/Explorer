@@ -11,7 +11,7 @@ import {
   ErrorEvent,
   SubscribeEvent,
   UnsubscribeEvent
-} from './websocket-types'
+} from '../../shared/websocket-types'
 import { logger } from './logger'
 
 // Initialize WebSocket manager and blockchain monitor

@@ -1,4 +1,4 @@
-// FairCoin supply economics (mirrors server/routes/stats.ts).
+// FairCoin supply economics — single source for client and server.
 // Premine 5,000,000 FAIR on block 1; block reward 10 FAIR; halving every
 // 525,600 blocks; minimum reward 1.25 FAIR; hard cap 33,000,000 FAIR.
 
@@ -26,8 +26,9 @@ export interface SupplyInfo {
 }
 
 /**
- * Compute the circulating supply at a given block height using the same
- * halving schedule the chain uses on the server.
+ * Compute the circulating supply at a given block height using the chain's
+ * halving schedule: block 1 carries the premine, every subsequent block mints
+ * the era reward (halved every HALVING_INTERVAL blocks, floored at MIN_REWARD).
  */
 export function computeCirculatingSupply(blockHeight: number): number {
   if (blockHeight <= 0) return 0
@@ -44,6 +45,12 @@ export function computeCirculatingSupply(blockHeight: number): number {
     if (remaining > 0) supply += remaining * MIN_REWARD
   }
   return Math.min(supply, MAX_SUPPLY)
+}
+
+/** Current block reward at the given height, considering halvings. */
+export function currentBlockReward(blockHeight: number): number {
+  const halvings = blockHeight > 0 ? Math.floor(blockHeight / HALVING_INTERVAL) : 0
+  return Math.max(BLOCK_REWARD / 2 ** halvings, MIN_REWARD)
 }
 
 /** Derive a full supply snapshot (circulating, halving progress, etc.). */

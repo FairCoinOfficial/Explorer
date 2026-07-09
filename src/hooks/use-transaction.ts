@@ -1,5 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
+import { readErrorMessage } from '@/lib/read-error-message'
 
 export interface TransactionScriptSig {
   asm: string
@@ -269,7 +270,7 @@ export function useTransaction(txid: string): UseQueryResult<Transaction> {
         headers: { Accept: 'application/json' },
       })
       if (!response.ok) {
-        const message = await readErrorMessage(response)
+        const message = await readErrorMessage(response, 'transaction')
         throw new TransactionError(message, response.status)
       }
       const data = (await response.json()) as TransactionResponse
@@ -289,14 +290,4 @@ export class TransactionError extends Error {
     this.name = 'TransactionError'
     this.status = status
   }
-}
-
-async function readErrorMessage(response: Response): Promise<string> {
-  try {
-    const body = (await response.json()) as { error?: string }
-    if (body.error) return body.error
-  } catch {
-    // Fall through to the generic status-based message below.
-  }
-  return `Failed to load transaction (${response.status})`
 }

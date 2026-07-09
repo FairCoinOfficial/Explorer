@@ -27,7 +27,10 @@ export function LatestTxList({ blocks, isLoading, isError, max = 20 }: LatestTxL
           </span>
           <h3 className="text-sm font-semibold tracking-tight">{t('latestTransactions')}</h3>
         </div>
-        <Link to="/tx" className="text-xs font-medium text-primary transition-opacity hover:opacity-80">
+        <Link
+          to="/tx"
+          className="text-xs font-medium text-primary transition-opacity hover:opacity-80"
+        >
           {t('viewAll')}
         </Link>
       </header>
@@ -55,7 +58,7 @@ export function LatestTxList({ blocks, isLoading, isError, max = 20 }: LatestTxL
                   </Link>
                   <CopyButton
                     text={tx.txid}
-                    className="size-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                    className="size-6 shrink-0 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
                   />
                 </div>
 

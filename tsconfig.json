@@ -14,9 +14,10 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@shared/*": ["./shared/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "vite-env.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "shared/**/*.ts", "vite-env.d.ts"],
   "exclude": ["node_modules", "dist", "server"]
 }

@@ -51,7 +51,7 @@ export function RecentBlocksList({ blocks, isLoading, isError }: RecentBlocksLis
                     </Link>
                     <CopyButton
                       text={block.hash}
-                      className="size-6 opacity-0 transition-opacity group-hover:opacity-100"
+                      className="size-6 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
                     />
                   </div>
                   <Link

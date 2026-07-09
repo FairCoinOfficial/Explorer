@@ -12,7 +12,7 @@ import {
 import { useTranslations } from '@/lib/i18n'
 import { useNetworkStats } from '@/hooks/use-network-stats'
 import { useStatsHistory } from '@/hooks/use-stats-history'
-import { computeCirculatingSupply } from '@/lib/supply'
+import { computeCirculatingSupply } from '@shared/supply'
 import { formatCompactNumber, formatNumber } from '@/lib/format'
 import { Sparkline } from '@/components/home/sparkline'
 import { Skeleton } from '@/components/ui/skeleton'

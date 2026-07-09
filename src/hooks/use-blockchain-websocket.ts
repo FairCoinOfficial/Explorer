@@ -7,7 +7,7 @@ import {
   ConnectionState,
   WebSocketEventType,
   ClientMessage
-} from '@/lib/websocket-types'
+} from '@shared/websocket-types'
 
 interface UseBlockchainWebSocketOptions {
   network?: NetworkType

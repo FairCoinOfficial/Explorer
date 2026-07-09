@@ -6,8 +6,7 @@ import {
   WebSocketEvent,
   WebSocketEventType,
   WebSocketManagerConfig,
-  ServerMessage
-} from './websocket-types'
+} from '../../shared/websocket-types'
 import { logger } from './logger'
 
 export class WebSocketManager {
@@ -262,7 +261,7 @@ export class WebSocketManager {
   /**
    * Send message to connection
    */
-  private sendToConnection(connection: ConnectionInfo, event: ServerMessage): boolean {
+  private sendToConnection(connection: ConnectionInfo, event: WebSocketEvent): boolean {
     try {
       const message = JSON.stringify(event)
 
@@ -275,7 +274,7 @@ export class WebSocketManager {
 
       return false
     } catch (error) {
-      console.error(`[WebSocketManager] Error sending to connection ${connection.id}:`, error)
+      logger.error(`[WebSocketManager] Error sending to connection ${connection.id}:`, error)
       return false
     }
   }
@@ -318,7 +317,7 @@ export class WebSocketManager {
         try {
           connection.socket.close()
         } catch (error) {
-          console.error(`[WebSocketManager] Error closing connection ${id}:`, error)
+          logger.error(`[WebSocketManager] Error closing connection ${id}:`, error)
         }
         this.unregister(id)
       }
@@ -346,7 +345,7 @@ export class WebSocketManager {
       try {
         connection.socket.close()
       } catch (error) {
-        console.error(`[WebSocketManager] Error closing connection ${id}:`, error)
+        logger.error(`[WebSocketManager] Error closing connection ${id}:`, error)
       }
     })
 

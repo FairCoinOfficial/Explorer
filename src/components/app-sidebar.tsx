@@ -14,9 +14,14 @@ import {
   Plug,
   Calculator,
   Waypoints,
+  BadgeCheck,
   ChevronsLeft,
   ChevronsRight,
   ChevronRight,
+  ShieldCheck,
+  Radio,
+  BookOpen,
+  LineChart,
   type LucideIcon,
 } from "lucide-react"
 import {
@@ -228,6 +233,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
 
   const networkNav = [
     { icon: BarChart3, label: t('stats'), to: '/stats' },
+    { icon: LineChart, label: t('charts'), to: '/charts' },
     { icon: Shield, label: t('masternodes'), to: '/masternodes' },
     { icon: Clock, label: t('mempool'), to: '/mempool' },
     { icon: Users, label: t('peers'), to: '/peers' },
@@ -237,7 +243,11 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
 
   const toolsSubNav: ToolsSubItem[] = [
     { icon: Calculator, label: t('feeCalculator'), to: '/tools/fee-calculator' },
+    { icon: ShieldCheck, label: t('addressValidator'), to: '/tools/address-validator' },
+    { icon: Radio, label: t('broadcast'), to: '/tools/broadcast' },
+    { icon: BookOpen, label: t('apiDocs'), to: '/tools/api' },
     { icon: Plug, label: t('mcp'), to: '/tools/mcp' },
+    { icon: BadgeCheck, label: t('addressValidator'), to: '/tools/address-validator' },
   ]
 
   return (

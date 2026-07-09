@@ -13,7 +13,8 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { blockCache } from './lib/cache'
 import { handleRouteError, parseNetwork, parseLimit, parseOffset, parseBlockOffset, parseAddress, ValidationError } from './lib/http'
-import { computeCirculatingSupply, currentBlockReward } from './lib/supply'
+import { computeCirculatingSupply, currentBlockReward } from '../shared/supply'
+import { logger } from './lib/logger'
 import { toPublicNetworkInfo } from './lib/network-info'
 import { rpcWithNetwork } from '@fairco.in/rpc-client'
 import priceRouter from './routes/price'
@@ -23,6 +24,7 @@ import broadcastRouter from './routes/broadcast'
 import feeEstimateRouter from './routes/fee-estimate'
 import githubRouter from './routes/github'
 import mcpInfoRouter from './routes/mcp-info'
+import transactionsRouter from './routes/transactions'
 import { createMcpPostHandler, handleMcpMethodNotAllowed, handleMcpOptions } from './mcp/http'
 import packageJson from '../package.json' with { type: 'json' }
 
@@ -241,6 +243,9 @@ app.get('/api/transaction/:txid', async (req, res) => {
   }
 })
 
+// Paginated recent-transaction feed (blocks + optional mempool tip)
+app.use('/api/transactions', transactionsRouter)
+
 // Address routes (addressindex RPC + fallback)
 app.use('/api/address', addressRouter)
 
@@ -308,15 +313,24 @@ app.get('/api/masternodes', async (req, res) => {
     const network = parseNetwork(req.query.network)
     const limit = parseLimit(req.query.limit)
     const offset = parseOffset(req.query.offset)
+    // Stats-only by default (cheap `masternode count`). Pass `include=list` when
+    // the caller needs per-node rows — that triggers the heavier `masternodelist`.
+    const includeList =
+      typeof req.query.include === 'string' &&
+      req.query.include.split(',').map((part) => part.trim().toLowerCase()).includes('list')
     const COLLATERAL_PER_MASTERNODE = 5000
 
-    const [masternodeList, masternodeCount, blockHeight] = await Promise.all([
-      blockCache.getMasternodeList(network).catch(() => [] as unknown[]),
-      blockCache.getMasternodeCount(network).catch(() => null),
-      blockCache.getBlockCount(network).catch(() => 0),
-    ])
-
-    interface MasternodeEntry { txid: string; outidx: number; address: string; protocol: number; status: string; activeTime: number; lastSeen: number; lastPaid: number; rank: number }
+    interface MasternodeEntry {
+      txid: string
+      outidx: number
+      address: string
+      protocol: number
+      status: string
+      activeTime: number
+      lastSeen: number
+      lastPaid: number
+      rank: number
+    }
 
     // FairCoin v3.0.5 `masternodelist` (default mode) returns an array of objects:
     // { rank, txhash, outidx, status, addr, version, lastseen, activetime, lastpaid }.
@@ -335,23 +349,58 @@ app.get('/api/masternodes', async (req, res) => {
       }
     }
 
-    const masternodes = (Array.isArray(masternodeList) ? masternodeList : []).map(parseMasternodeEntry)
-    // Real supply schedule (premine + halvings), not a naive height*reward guess.
+    const [masternodeCount, blockHeight, masternodeList] = await Promise.all([
+      blockCache.getMasternodeCount(network),
+      blockCache.getBlockCount(network).catch(() => 0),
+      includeList
+        ? blockCache.getMasternodeList(network).catch((error: unknown) => {
+            logger.error('Error fetching masternode list:', error)
+            return [] as Awaited<ReturnType<typeof blockCache.getMasternodeList>>
+          })
+        : Promise.resolve(null),
+    ])
+
+    const masternodes = (masternodeList ?? []).map(parseMasternodeEntry)
     const totalSupply = computeCirculatingSupply(blockHeight)
-    const totalCollateral = masternodes.length * COLLATERAL_PER_MASTERNODE
+
+    const statusCounts = masternodes.reduce((acc, mn) => {
+      acc[mn.status] = (acc[mn.status] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+
+    const enabledCount = masternodeCount?.enabled ?? statusCounts.ENABLED ?? 0
+    const totalCount = masternodeCount?.total ?? (includeList ? masternodes.length : 0)
+    const totalCollateral = totalCount * COLLATERAL_PER_MASTERNODE
     const collateralPercentage = totalSupply > 0 ? (totalCollateral / totalSupply) * 100 : 0
 
-    const statusCounts = masternodes.reduce((acc, mn) => { acc[mn.status] = (acc[mn.status] || 0) + 1; return acc }, {} as Record<string, number>)
-    const enabledCount = masternodeCount?.enabled ?? statusCounts.ENABLED ?? 0
-    const totalCount = masternodeCount?.total ?? masternodes.length
-
     const stats = {
-      total: totalCount, enabled: enabledCount,
-      preEnabled: statusCounts.PRE_ENABLED || 0, expired: statusCounts.EXPIRED || 0,
-      newStartRequired: statusCounts.NEW_START_REQUIRED || 0, watchdogExpired: statusCounts.WATCHDOG_EXPIRED || 0,
-      totalCollateral, collateralPercentage,
-      averageActiveTime: masternodes.length > 0 ? masternodes.reduce((sum, mn) => sum + mn.activeTime, 0) / masternodes.length : 0,
-      networkSecurity: { masternodeRewards: MASTERNODE_REWARD_PERCENT, stakingRewards: STAKING_REWARD_PERCENT, budgetRewards: BUDGET_REWARD_PERCENT }
+      total: totalCount,
+      enabled: enabledCount,
+      preEnabled: statusCounts.PRE_ENABLED || 0,
+      expired: statusCounts.EXPIRED || 0,
+      newStartRequired: statusCounts.NEW_START_REQUIRED || 0,
+      watchdogExpired: statusCounts.WATCHDOG_EXPIRED || 0,
+      totalCollateral,
+      collateralPercentage,
+      averageActiveTime:
+        masternodes.length > 0
+          ? masternodes.reduce((sum, mn) => sum + mn.activeTime, 0) / masternodes.length
+          : 0,
+      networkSecurity: {
+        masternodeRewards: MASTERNODE_REWARD_PERCENT,
+        stakingRewards: STAKING_REWARD_PERCENT,
+        budgetRewards: BUDGET_REWARD_PERCENT,
+      },
+    }
+
+    if (!includeList) {
+      res.json({
+        masternodes: [],
+        stats,
+        network,
+        pagination: { total: 0, limit, offset },
+      })
+      return
     }
 
     // Sort by rank (active masternodes first) so pagination is stable and useful.

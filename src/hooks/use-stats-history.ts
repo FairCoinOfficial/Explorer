@@ -11,11 +11,20 @@ export interface StatHistoryPoint {
   height: number
   difficulty: number
   connections: number
+  mempoolSize: number
+  lastBlockTxCount: number
   timestamp: string
 }
 
 interface StatHistoryResponse {
-  history: StatHistoryPoint[]
+  history: Array<{
+    height: number
+    difficulty: number
+    connections: number
+    mempoolSize?: number
+    lastBlockTxCount?: number
+    timestamp: string
+  }>
 }
 
 /**
@@ -47,7 +56,14 @@ export function useStatsHistory(options: UseStatsHistoryOptions = {}) {
         throw new Error(`Failed to load stats history (${response.status})`)
       }
       const data = (await response.json()) as StatHistoryResponse
-      return data.history ?? []
+      return (data.history ?? []).map((point) => ({
+        height: point.height,
+        difficulty: point.difficulty,
+        connections: point.connections,
+        mempoolSize: point.mempoolSize ?? 0,
+        lastBlockTxCount: point.lastBlockTxCount ?? 0,
+        timestamp: point.timestamp,
+      }))
     },
     refetchInterval: 5 * 60_000,
     retry: 1,

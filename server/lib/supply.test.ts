@@ -7,7 +7,7 @@ import {
   HALVING_INTERVAL,
   MIN_REWARD,
   BLOCK_REWARD,
-} from './supply'
+} from '../../shared/supply'
 
 describe('computeCirculatingSupply', () => {
   it('returns 0 before the chain starts', () => {

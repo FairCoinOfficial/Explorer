@@ -1,5 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
+import { readErrorMessage } from '@/lib/read-error-message'
 
 export interface Block {
   hash: string
@@ -35,7 +36,7 @@ export function useBlock(hashOrHeight: string): UseQueryResult<Block> {
         headers: { Accept: 'application/json' },
       })
       if (!response.ok) {
-        throw new Error(await readErrorMessage(response))
+        throw new Error(await readErrorMessage(response, 'block'))
       }
       const data = (await response.json()) as BlockResponse
       return data.block
@@ -43,14 +44,4 @@ export function useBlock(hashOrHeight: string): UseQueryResult<Block> {
     refetchInterval: 30_000,
     retry: 1,
   })
-}
-
-async function readErrorMessage(response: Response): Promise<string> {
-  try {
-    const body = (await response.json()) as { error?: string }
-    if (body.error) return body.error
-  } catch {
-    // Fall through to the generic status-based message below.
-  }
-  return `Failed to load block (${response.status})`
 }

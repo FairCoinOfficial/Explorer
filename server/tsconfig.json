@@ -12,12 +12,13 @@
     "skipLibCheck": true,
     "noEmit": true,
     "outDir": "./dist",
-    "rootDir": ".",
+    "rootDir": "..",
     "baseUrl": ".",
     "paths": {
-      "@/server/*": ["./*"]
+      "@/server/*": ["./*"],
+      "@shared/*": ["../shared/*"]
     }
   },
-  "include": ["./**/*.ts"],
+  "include": ["./**/*.ts", "../shared/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

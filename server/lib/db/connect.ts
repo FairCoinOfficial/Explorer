@@ -1,17 +1,12 @@
 import mongoose from 'mongoose'
 import { config } from 'dotenv'
+import { getDefaultMongoUri, getMongoDatabaseName } from './name'
+import { logger } from '../logger'
 
 // Load environment variables
 config()
 
-const APP_NAME = 'explorer'
-
-function getDatabaseName(): string {
-  const env = process.env.NODE_ENV || 'development'
-  return `${APP_NAME}-${env}`
-}
-
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/explorer-development'
+const MONGODB_URI = process.env.MONGODB_URI || getDefaultMongoUri()
 
 if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable inside .env.local')
@@ -41,7 +36,7 @@ async function connectToDatabase() {
   }
 
   if (!cached.promise) {
-    const dbName = getDatabaseName()
+    const dbName = getMongoDatabaseName(MONGODB_URI)
     const opts = {
       dbName,
       bufferCommands: false,
@@ -55,7 +50,7 @@ async function connectToDatabase() {
     }
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
-      console.log('Connected to MongoDB Atlas')
+      logger.info(`Connected to MongoDB (mongoose) database: ${dbName}`)
       return mongooseInstance
     })
   }

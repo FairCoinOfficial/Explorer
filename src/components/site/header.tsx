@@ -347,7 +347,7 @@ export function SiteHeader() {
                   type="button"
                   onClick={resetSearch}
                   className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground hover:bg-background/60 hover:text-foreground transition-colors cursor-pointer"
-                  aria-label={t('toggleSearch')}
+                  aria-label={t('clearSearch')}
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>

@@ -35,6 +35,8 @@ interface StatSample {
   height: number;
   difficulty: number;
   connections: number;
+  mempoolSize: number;
+  lastBlockTxCount: number;
 }
 
 /**
@@ -53,19 +55,35 @@ function currentSampleBucket(now: number): Date {
  * rather than failing the whole sample.
  */
 async function loadStatSample(): Promise<StatSample> {
-  const [blockHeight, miningInfo, networkInfo] = await Promise.all([
+  const [blockHeight, miningInfo, networkInfo, mempoolInfo] = await Promise.all([
     blockCache.getBlockCount(SAMPLE_NETWORK).catch(() => 0),
     blockCache.getMiningInfo(SAMPLE_NETWORK).catch(() => null),
     blockCache.getNetworkInfo(SAMPLE_NETWORK).catch(() => null),
+    blockCache.getMempoolInfo(SAMPLE_NETWORK).catch(() => null),
   ]);
 
   const difficultyRaw = (miningInfo as Record<string, unknown> | null)?.difficulty;
   const connectionsRaw = (networkInfo as Record<string, unknown> | null)?.connections;
+  const mempoolSizeRaw = (mempoolInfo as Record<string, unknown> | null)?.size;
+
+  let lastBlockTxCount = 0;
+  if (typeof blockHeight === "number" && blockHeight > 0) {
+    const tip = await blockCache.getBlock(blockHeight, SAMPLE_NETWORK, true).catch(() => null);
+    const nTx = (tip as Record<string, unknown> | null)?.nTx;
+    const tx = (tip as Record<string, unknown> | null)?.tx;
+    if (typeof nTx === "number") {
+      lastBlockTxCount = nTx;
+    } else if (Array.isArray(tx)) {
+      lastBlockTxCount = tx.length;
+    }
+  }
 
   return {
     height: typeof blockHeight === "number" ? blockHeight : 0,
     difficulty: typeof difficultyRaw === "number" ? difficultyRaw : 0,
     connections: typeof connectionsRaw === "number" ? connectionsRaw : 0,
+    mempoolSize: typeof mempoolSizeRaw === "number" ? mempoolSizeRaw : 0,
+    lastBlockTxCount,
   };
 }
 
@@ -94,6 +112,8 @@ async function sampleAndStoreStats(): Promise<void> {
           height: sample.height,
           difficulty: sample.difficulty,
           connections: sample.connections,
+          mempoolSize: sample.mempoolSize,
+          lastBlockTxCount: sample.lastBlockTxCount,
         },
       },
       { upsert: true },
@@ -132,6 +152,8 @@ interface StatHistoryPoint {
   height: number;
   difficulty: number;
   connections: number;
+  mempoolSize: number;
+  lastBlockTxCount: number;
   timestamp: string;
 }
 
@@ -152,7 +174,16 @@ router.get("/", async (_req: Request, res: Response) => {
     const docs = await StatPoint.find({ timestamp: { $gte: cutoff } })
       .sort({ timestamp: -1 })
       .limit(HISTORY_MAX_POINTS)
-      .lean<{ height: number; difficulty: number; connections: number; timestamp: Date }[]>()
+      .lean<
+        {
+          height: number;
+          difficulty: number;
+          connections: number;
+          mempoolSize?: number;
+          lastBlockTxCount?: number;
+          timestamp: Date;
+        }[]
+      >()
       .exec();
 
     // Fetched newest-first (to take the most recent N); reverse to oldest→newest
@@ -161,6 +192,8 @@ router.get("/", async (_req: Request, res: Response) => {
       height: doc.height,
       difficulty: doc.difficulty,
       connections: doc.connections,
+      mempoolSize: typeof doc.mempoolSize === "number" ? doc.mempoolSize : 0,
+      lastBlockTxCount: typeof doc.lastBlockTxCount === "number" ? doc.lastBlockTxCount : 0,
       timestamp: doc.timestamp.toISOString(),
     }));
 

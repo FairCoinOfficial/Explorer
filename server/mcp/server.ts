@@ -17,7 +17,7 @@ import { z } from "zod";
 import { rpcWithNetwork, type NetworkType } from "@fairco.in/rpc-client";
 import { blockCache, type MasternodeCount } from "../lib/cache";
 import { parseNetwork, MAX_LIMIT, ValidationError } from "../lib/http";
-import { computeCirculatingSupply, currentBlockReward, MAX_SUPPLY } from "../lib/supply";
+import { computeCirculatingSupply, currentBlockReward, MAX_SUPPLY } from "../../shared/supply";
 import { getPrice } from "../lib/price-service";
 import { logger } from "../lib/logger";
 import { registerWalletTools } from "./wallet-tools";
@@ -357,7 +357,7 @@ async function resolveSearch(
   if (/^\d+$/.test(query)) {
     const block = await blockCache.getBlock(parseInt(query, 10), network, true).catch(() => null);
     if (block) {
-      const summary = toBlockSummary(block as Record<string, unknown>);
+      const summary = toBlockSummary({ ...block });
       const value = String(summary.height ?? query);
       return {
         hits: [{ id: encodeId("block", value), title: `Block #${value}`, url: webUrl("block", value) }],
@@ -371,7 +371,7 @@ async function resolveSearch(
   if (/^[0-9a-fA-F]{64}$/.test(query)) {
     const block = await blockCache.getBlock(query, network, true).catch(() => null);
     if (block) {
-      const summary = toBlockSummary(block as Record<string, unknown>);
+      const summary = toBlockSummary({ ...block });
       return {
         hits: [{ id: encodeId("block", query), title: `Block ${query}`, url: webUrl("block", query) }],
         record: { ...summary, network },
@@ -484,7 +484,7 @@ export function createFaircoinMcpServer(version: string): McpServer {
         let record: Record<string, unknown> | null;
         if (kind === "block") {
           const block = await blockCache.getBlock(value, net, true).catch(() => null);
-          record = block ? { ...toBlockSummary(block as Record<string, unknown>), network: net } : null;
+          record = block ? { ...toBlockSummary({ ...block }), network: net } : null;
           title = `Block ${value}`;
         } else if (kind === "tx") {
           const tx = await blockCache.getTransaction(value, net, true).catch(() => null);
@@ -582,7 +582,7 @@ export function createFaircoinMcpServer(version: string): McpServer {
         if (!block) {
           throw new ValidationError(`Block '${hashOrHeight}' not found on ${net}.`);
         }
-        return jsonResult({ network: net, block: block as Record<string, unknown> });
+        return jsonResult({ network: net, block: { ...block } });
       } catch (error) {
         return errorResult("get_block failed", error);
       }

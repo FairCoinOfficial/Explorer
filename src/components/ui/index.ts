@@ -5,8 +5,6 @@ export { StatsCard } from './stats-card'
 export { EmptyState } from './empty-state'
 export { LoadingState } from './loading-state'
 export { InfoGrid } from './info-grid'
-export { SimpleDataTable } from './simple-data-table'
-export { DataTable } from './data-table'
 export { Field } from './field'
 export { VisuallyHidden } from './visually-hidden'
 

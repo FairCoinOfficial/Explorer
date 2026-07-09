@@ -26,6 +26,9 @@ const StatsPage = lazy(() => import('./pages/stats'))
 const PeersPage = lazy(() => import('./pages/peers'))
 const FeeCalculatorPage = lazy(() => import('./pages/fee-calculator'))
 const AddressValidatorPage = lazy(() => import('./pages/address-validator'))
+const BroadcastPage = lazy(() => import('./pages/broadcast'))
+const ApiDocsPage = lazy(() => import('./pages/api-docs'))
+const ChartsPage = lazy(() => import('./pages/charts'))
 const McpPage = lazy(() => import('./pages/mcp'))
 const BridgePage = lazy(() => import('./pages/bridge'))
 const NotFoundPage = lazy(() => import('./pages/not-found'))
@@ -120,6 +123,14 @@ export default function App() {
                     }
                   />
                   <Route
+                    path="charts"
+                    element={
+                      <Suspense fallback={<PageLoading />}>
+                        <ChartsPage />
+                      </Suspense>
+                    }
+                  />
+                  <Route
                     path="peers"
                     element={
                       <Suspense fallback={<PageLoading />}>
@@ -140,6 +151,22 @@ export default function App() {
                     element={
                       <Suspense fallback={<PageLoading />}>
                         <AddressValidatorPage />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="tools/broadcast"
+                    element={
+                      <Suspense fallback={<PageLoading />}>
+                        <BroadcastPage />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="tools/api"
+                    element={
+                      <Suspense fallback={<PageLoading />}>
+                        <ApiDocsPage />
                       </Suspense>
                     }
                   />

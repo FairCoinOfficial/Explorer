@@ -1,65 +1,74 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { X, Download, Smartphone } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { X, Download, Smartphone } from 'lucide-react'
+import { toast } from 'sonner'
+import { useTranslations } from '@/lib/i18n'
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
+function isStandaloneDisplay(): boolean {
+  if (window.matchMedia('(display-mode: standalone)').matches) return true
+  const nav = window.navigator as Navigator & { standalone?: boolean }
+  return nav.standalone === true
+}
 
 export function PWAInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const t = useTranslations('pwa')
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false)
+  const [isInstalled, setIsInstalled] = useState(false)
 
   useEffect(() => {
-    // Check if app is already installed
-    if (window.matchMedia('(display-mode: standalone)').matches || 
-        (window.navigator as any).standalone === true) {
-      setIsInstalled(true);
-      return;
+    if (isStandaloneDisplay()) {
+      setIsInstalled(true)
+      return
     }
 
-    // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallPrompt(true);
-    };
+      e.preventDefault()
+      setDeferredPrompt(e as BeforeInstallPromptEvent)
+      setShowInstallPrompt(true)
+    }
 
-    // Listen for appinstalled event
     const handleAppInstalled = () => {
-      setIsInstalled(true);
-      setShowInstallPrompt(false);
-      setDeferredPrompt(null);
-    };
+      setIsInstalled(true)
+      setShowInstallPrompt(false)
+      setDeferredPrompt(null)
+    }
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    window.addEventListener('appinstalled', handleAppInstalled)
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
-    };
-  }, []);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+      window.removeEventListener('appinstalled', handleAppInstalled)
+    }
+  }, [])
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) return
 
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
+    await deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+
     if (outcome === 'accepted') {
-      toast.success('App installed successfully');
+      toast.success(t('installed'))
     }
-    
-    setDeferredPrompt(null);
-    setShowInstallPrompt(false);
-  };
+
+    setDeferredPrompt(null)
+    setShowInstallPrompt(false)
+  }
 
   const handleDismiss = () => {
-    setShowInstallPrompt(false);
-    setDeferredPrompt(null);
-  };
+    setShowInstallPrompt(false)
+    setDeferredPrompt(null)
+  }
 
   if (isInstalled || !showInstallPrompt) {
-    return null;
+    return null
   }
 
   return (
@@ -71,12 +80,8 @@ export function PWAInstallPrompt() {
               <Smartphone className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-foreground">
-                Install FairCoin Explorer
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Add to your home screen for quick access
-              </p>
+              <h3 className="text-sm font-semibold text-foreground">{t('installTitle')}</h3>
+              <p className="text-xs text-muted-foreground mt-1">{t('installDescription')}</p>
             </div>
           </div>
           <Button
@@ -84,30 +89,22 @@ export function PWAInstallPrompt() {
             size="sm"
             className="h-6 w-6 p-0 hover:bg-accent/50"
             onClick={handleDismiss}
+            aria-label={t('dismiss')}
           >
             <X className="h-3 w-3" />
           </Button>
         </div>
-        
+
         <div className="flex gap-2">
-          <Button
-            size="sm"
-            className="flex-1 h-8 text-xs"
-            onClick={handleInstallClick}
-          >
+          <Button size="sm" className="flex-1 h-8 text-xs" onClick={() => void handleInstallClick()}>
             <Download className="h-3 w-3 mr-1" />
-            Install
+            {t('install')}
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs"
-            onClick={handleDismiss}
-          >
-            Not now
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={handleDismiss}>
+            {t('notNow')}
           </Button>
         </div>
       </div>
     </div>
-  );
+  )
 }

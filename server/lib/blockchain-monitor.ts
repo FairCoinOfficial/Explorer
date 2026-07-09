@@ -10,7 +10,7 @@ import {
   BlockCountEvent,
   MempoolUpdateEvent,
   NetworkStatsEvent
-} from './websocket-types'
+} from '../../shared/websocket-types'
 import { blockCache } from './cache'
 import { logger } from './logger'
 
@@ -21,6 +21,10 @@ export class BlockchainMonitor {
   private statsInterval: NodeJS.Timeout | null = null
   private config: BlockchainMonitorConfig
   private isRunning: boolean = false
+  /** Last broadcast `network-stats` identity fields (not on NetworkState). */
+  private lastBroadcastVersion = new Map<NetworkType, string>()
+  private lastBroadcastSubversion = new Map<NetworkType, string | undefined>()
+  private lastBroadcastProtocol = new Map<NetworkType, number | undefined>()
 
   constructor(wsManager: WebSocketManager, config?: Partial<BlockchainMonitorConfig>) {
     this.wsManager = wsManager
@@ -136,7 +140,7 @@ export class BlockchainMonitor {
 
       logger.debug(`[BlockchainMonitor] ${network} initialized: Block ${blockCount}`)
     } catch (error) {
-      console.error(`[BlockchainMonitor] Error initializing ${network}:`, error)
+      logger.error(`[BlockchainMonitor] Error initializing ${network}:`, error)
     }
   }
 
@@ -192,7 +196,7 @@ export class BlockchainMonitor {
 
       state.lastUpdate = new Date()
     } catch (error) {
-      console.error(`[BlockchainMonitor] Error polling ${network}:`, error)
+      logger.error(`[BlockchainMonitor] Error polling ${network}:`, error)
     }
   }
 
@@ -221,15 +225,15 @@ export class BlockchainMonitor {
           time: block.time,
           nTx: block.nTx || block.tx?.length || 0,
           size: block.size,
-          difficulty: block.difficulty,
-          tx: block.tx || [],
+          difficulty: block.difficulty ?? 0,
+          tx: Array.isArray(block.tx) ? block.tx.filter((entry): entry is string => typeof entry === 'string') : [],
           previousblockhash: block.previousblockhash,
           nextblockhash: block.nextblockhash
         }
       }
       this.wsManager.broadcast(newBlockEvent, network)
     } catch (error) {
-      console.error(`[BlockchainMonitor] Error handling new block ${height} on ${network}:`, error)
+      logger.error(`[BlockchainMonitor] Error handling new block ${height} on ${network}:`, error)
     }
   }
 
@@ -244,16 +248,18 @@ export class BlockchainMonitor {
       }
 
       const mempoolInfo = await blockCache.getMempoolInfo(network)
+      const size = mempoolInfo?.size ?? 0
+      const bytes = mempoolInfo?.bytes ?? 0
+      const usage = mempoolInfo?.usage ?? 0
+      const maxmempool = mempoolInfo?.maxmempool ?? 0
+      const mempoolminfee = mempoolInfo?.mempoolminfee ?? 0
 
       // Check if mempool changed
-      if (
-        mempoolInfo &&
-        (mempoolInfo.size !== state.mempoolSize || mempoolInfo.bytes !== state.mempoolBytes)
-      ) {
-        logger.debug(`[BlockchainMonitor] ${network}: Mempool changed (${state.mempoolSize} -> ${mempoolInfo.size} tx)`)
+      if (size !== state.mempoolSize || bytes !== state.mempoolBytes) {
+        logger.debug(`[BlockchainMonitor] ${network}: Mempool changed (${state.mempoolSize} -> ${size} tx)`)
 
-        state.mempoolSize = mempoolInfo.size
-        state.mempoolBytes = mempoolInfo.bytes
+        state.mempoolSize = size
+        state.mempoolBytes = bytes
 
         // Broadcast mempool update event
         const mempoolEvent: MempoolUpdateEvent = {
@@ -261,18 +267,18 @@ export class BlockchainMonitor {
           network,
           timestamp: Date.now(),
           data: {
-            size: mempoolInfo.size,
-            bytes: mempoolInfo.bytes,
-            usage: mempoolInfo.usage,
-            maxmempool: mempoolInfo.maxmempool,
-            mempoolminfee: mempoolInfo.mempoolminfee,
+            size,
+            bytes,
+            usage,
+            maxmempool,
+            mempoolminfee,
             transactions: []
           }
         }
         this.wsManager.broadcast(mempoolEvent, network)
       }
     } catch (error) {
-      console.error(`[BlockchainMonitor] Error polling mempool for ${network}:`, error)
+      logger.error(`[BlockchainMonitor] Error polling mempool for ${network}:`, error)
     }
   }
 
@@ -286,7 +292,8 @@ export class BlockchainMonitor {
   }
 
   /**
-   * Poll network stats for single network
+   * Poll network stats for single network. Broadcasts only when the payload
+   * actually changed — avoids redundant `network-stats` WS traffic every 30s.
    */
   private async pollNetworkStatsForNetwork(network: NetworkType): Promise<void> {
     try {
@@ -295,42 +302,71 @@ export class BlockchainMonitor {
         return
       }
 
-      // Get network info and mining info
       const [networkInfo, miningInfo] = await Promise.all([
-        blockCache.getNetworkInfo(network).catch(() => null),
-        blockCache.getMiningInfo(network).catch(() => null)
+        blockCache.getNetworkInfo(network).catch((error: unknown) => {
+          logger.debug(`[BlockchainMonitor] getNetworkInfo failed for ${network}:`, error)
+          return null
+        }),
+        blockCache.getMiningInfo(network).catch((error: unknown) => {
+          logger.debug(`[BlockchainMonitor] getMiningInfo failed for ${network}:`, error)
+          return null
+        }),
       ])
 
-      if (networkInfo || miningInfo) {
-        // Update state
-        if (networkInfo) {
-          state.connections = networkInfo.connections || 0
-        }
-        if (miningInfo) {
-          state.difficulty = miningInfo.difficulty || 0
-          state.hashrate = miningInfo.networkhashps || miningInfo.hashrate || '0'
-        }
-
-        // Broadcast network stats event
-        const statsEvent: NetworkStatsEvent = {
-          type: 'network-stats',
-          network,
-          timestamp: Date.now(),
-          data: {
-            connections: state.connections,
-            difficulty: state.difficulty,
-            hashrate: state.hashrate,
-            version: networkInfo?.version || 'Unknown',
-            subversion: networkInfo?.subversion,
-            protocolversion: networkInfo?.protocolversion
-          }
-        }
-        this.wsManager.broadcast(statsEvent, network)
-
-        logger.debug(`[BlockchainMonitor] ${network}: Broadcasted network stats update`)
+      if (!networkInfo && !miningInfo) {
+        return
       }
+
+      const connections = networkInfo?.connections ?? state.connections
+      const difficulty = miningInfo?.difficulty ?? state.difficulty
+      const rawHashrate = miningInfo?.networkhashps ?? miningInfo?.hashrate ?? state.hashrate
+      const hashrate = typeof rawHashrate === 'string' ? rawHashrate : String(rawHashrate ?? '0')
+      const version =
+        networkInfo?.version !== undefined && networkInfo?.version !== null
+          ? String(networkInfo.version)
+          : 'Unknown'
+      const subversion = networkInfo?.subversion
+      const protocolversion = networkInfo?.protocolversion
+
+      const unchanged =
+        connections === state.connections &&
+        difficulty === state.difficulty &&
+        hashrate === state.hashrate &&
+        version === this.lastBroadcastVersion.get(network) &&
+        subversion === this.lastBroadcastSubversion.get(network) &&
+        protocolversion === this.lastBroadcastProtocol.get(network)
+
+      state.connections = connections
+      state.difficulty = difficulty
+      state.hashrate = hashrate
+
+      if (unchanged) {
+        logger.debug(`[BlockchainMonitor] ${network}: network stats unchanged, skip broadcast`)
+        return
+      }
+
+      this.lastBroadcastVersion.set(network, version)
+      this.lastBroadcastSubversion.set(network, subversion)
+      this.lastBroadcastProtocol.set(network, protocolversion)
+
+      const statsEvent: NetworkStatsEvent = {
+        type: 'network-stats',
+        network,
+        timestamp: Date.now(),
+        data: {
+          connections,
+          difficulty,
+          hashrate,
+          version,
+          subversion,
+          protocolversion,
+        },
+      }
+      this.wsManager.broadcast(statsEvent, network)
+
+      logger.debug(`[BlockchainMonitor] ${network}: Broadcasted network stats update`)
     } catch (error) {
-      console.error(`[BlockchainMonitor] Error polling network stats for ${network}:`, error)
+      logger.error(`[BlockchainMonitor] Error polling network stats for ${network}:`, error)
     }
   }
 

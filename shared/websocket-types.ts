@@ -1,4 +1,5 @@
 // WebSocket Types and Interfaces for FairCoin Explorer
+// Single source for client and server.
 
 export type NetworkType = 'mainnet' | 'testnet'
 
@@ -19,7 +20,7 @@ export interface WebSocketEvent {
   type: WebSocketEventType
   network: NetworkType
   timestamp: number
-  data?: any
+  data?: unknown
 }
 
 // Block Data Interface
@@ -131,7 +132,7 @@ export interface ErrorEvent extends WebSocketEvent {
   data: {
     code: string
     message: string
-    details?: any
+    details?: unknown
   }
 }
 
@@ -151,10 +152,14 @@ export type WebSocketMessage =
 // Connection State
 export type ConnectionState = 'connecting' | 'connected' | 'disconnected' | 'error'
 
-// Connection Metadata
+// Connection Metadata (server-side; socket is the ws library instance)
 export interface ConnectionInfo {
   id: string
-  socket: WebSocket | any
+  socket: {
+    readyState: number
+    send: (data: string) => void
+    close: () => void
+  }
   network: NetworkType
   subscribedEvents: Set<WebSocketEventType>
   lastActivity: Date

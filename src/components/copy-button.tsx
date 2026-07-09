@@ -1,30 +1,32 @@
-import * as React from 'react';
-import { Button } from '@/components/ui/button';
-import { Check, Copy } from 'lucide-react';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import * as React from 'react'
+import { Button } from '@/components/ui/button'
+import { Check, Copy } from 'lucide-react'
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
+import { useTranslations } from '@/lib/i18n'
 
 interface CopyButtonProps {
-  text: string;
-  className?: string;
+  text: string
+  className?: string
   /** Optional visible label rendered next to the icon (e.g. "Copy faircoin.conf"). */
-  label?: string;
+  label?: string
   /** Keep the button icon-only while still using `label` for the accessible name. */
-  hideLabel?: boolean;
+  hideLabel?: boolean
 }
 
 export function CopyButton({ text, className, label, hideLabel = false }: CopyButtonProps) {
-  const [copied, setCopied] = React.useState(false);
-  const showLabel = Boolean(label) && !hideLabel;
+  const [copied, setCopied] = React.useState(false)
+  const t = useTranslations('common')
+  const showLabel = Boolean(label) && !hideLabel
 
   async function onCopy() {
     try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      toast.success('Copied to clipboard');
-      setTimeout(() => setCopied(false), 1500);
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      toast.success(t('copied'))
+      setTimeout(() => setCopied(false), 1500)
     } catch {
-      toast.error('Failed to copy');
+      toast.error(t('copyFailed'))
     }
   }
 
@@ -33,12 +35,12 @@ export function CopyButton({ text, className, label, hideLabel = false }: CopyBu
       type="button"
       variant="outline"
       size={showLabel ? 'sm' : 'icon'}
-      aria-label={label ?? 'Copy'}
+      aria-label={label ?? t('copy')}
       onClick={onCopy}
       className={cn(showLabel && 'gap-2', className)}
     >
       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
       {showLabel ? <span>{label}</span> : null}
     </Button>
-  );
+  )
 }

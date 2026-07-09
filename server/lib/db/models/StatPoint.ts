@@ -14,6 +14,10 @@ export interface IStatPoint extends Document {
   height: number;
   difficulty: number;
   connections: number;
+  /** Mempool size (pending tx count) at sample time. */
+  mempoolSize: number;
+  /** Transaction count in the tip block at sample time. */
+  lastBlockTxCount: number;
   timestamp: Date;
 }
 
@@ -21,6 +25,8 @@ const StatPointSchema = new Schema<IStatPoint>({
   height: { type: Number, required: true },
   difficulty: { type: Number, required: true },
   connections: { type: Number, required: true },
+  mempoolSize: { type: Number, required: true, default: 0 },
+  lastBlockTxCount: { type: Number, required: true, default: 0 },
   // A unique index makes the per-window upsert idempotent: two concurrent ticks
   // (or a restart mid-window) collapse onto the same bucket instead of duplicating.
   timestamp: { type: Date, required: true, unique: true },

@@ -68,7 +68,7 @@ export function HashCell({
       {hideCopy ? null : (
         <CopyButton
           text={value}
-          className="size-6 shrink-0 opacity-0 transition-opacity group-hover/hash:opacity-100"
+          className="size-6 shrink-0 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/hash:opacity-100"
         />
       )}
     </span>
