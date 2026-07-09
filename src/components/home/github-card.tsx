@@ -1,11 +1,23 @@
 import { Github, Star, Download, Tag } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
-import { useTranslations } from '@/lib/i18n'
+import { enUS, es, fr, de, ru, zhCN, ja, ko } from 'date-fns/locale'
+import { useLocale, useTranslations, type Locale } from '@/lib/i18n'
 import { useGithubStats, type GithubReleaseAsset } from '@/hooks/use-github-stats'
 import { ModuleCard } from '@/components/home/module-card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatBytes, formatCompactNumber } from '@/lib/format'
+
+const DATE_FNS_LOCALES: Record<Locale, typeof enUS> = {
+  en: enUS,
+  es,
+  fr,
+  de,
+  ru,
+  zh: zhCN,
+  ja,
+  ko,
+}
 
 const REPO_URL = 'https://github.com/FairCoinOfficial/FairCoin'
 
@@ -15,6 +27,7 @@ function assetLabel(asset: GithubReleaseAsset): string {
 
 export function GithubCard() {
   const t = useTranslations('home')
+  const locale = useLocale()
   const { data, isLoading } = useGithubStats()
 
   const stars = data?.status === 'ok' ? data.data.stars : null
@@ -51,7 +64,10 @@ export function GithubCard() {
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {t('githubReleased', {
-              when: formatDistanceToNow(new Date(release.publishedAt), { addSuffix: true }),
+              when: formatDistanceToNow(new Date(release.publishedAt), {
+                addSuffix: true,
+                locale: DATE_FNS_LOCALES[locale],
+              }),
             })}
           </p>
 

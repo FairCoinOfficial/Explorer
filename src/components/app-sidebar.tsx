@@ -14,7 +14,6 @@ import {
   Plug,
   Calculator,
   Waypoints,
-  BadgeCheck,
   ChevronsLeft,
   ChevronsRight,
   ChevronRight,
@@ -247,7 +246,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     { icon: Radio, label: t('broadcast'), to: '/tools/broadcast' },
     { icon: BookOpen, label: t('apiDocs'), to: '/tools/api' },
     { icon: Plug, label: t('mcp'), to: '/tools/mcp' },
-    { icon: BadgeCheck, label: t('addressValidator'), to: '/tools/address-validator' },
   ]
 
   return (

@@ -940,7 +940,7 @@
   "tools.mcp.groups.wallet.description": "Let an AI agent hold its own FairCoin key and transact autonomously on mainnet or testnet.",
   "tools.mcp.groups.wallet.securityNote": "Non-custodial: the agent holds its own private key and the server stores nothing — no database, no file, no in-memory copy. Transactions are signed transiently and the key is never logged or persisted. Works on mainnet and testnet.",
   "nav.charts": "Charts",
-  "nav.addressValidator": "Address Validator",
+  "nav.addressValidator": "주소 검증기",
   "nav.broadcast": "Broadcast TX",
   "nav.apiDocs": "API Docs",
   "transactions.title": "Transactions",
@@ -1036,5 +1036,17 @@
   "mempool.feeHistogram": "Fee rate distribution",
   "mempool.feeHistogramHint": "sat/vB buckets from currently detailed mempool entries.",
   "mempool.medianFeeRate": "Median fee rate",
-  "mempool.avgAge": "Avg age ~{seconds}s"
+  "mempool.avgAge": "Avg age ~{seconds}s",
+  "common.copy": "복사",
+  "common.copied": "클립보드에 복사됨",
+  "common.copyFailed": "복사 실패",
+  "common.home": "홈",
+  "header.clearSearch": "검색 지우기",
+  "pwa.dismiss": "설치 안내 닫기",
+  "pwa.installed": "앱이 성공적으로 설치되었습니다",
+  "errorBoundary.title": "문제가 발생했습니다",
+  "errorBoundary.fallback": "예기치 않은 오류가 발생했습니다.",
+  "errorBoundary.reload": "페이지 새로고침",
+  "blocks.filterPageOnly": "필터는 현재 결과 페이지에만 적용됩니다",
+  "blocks.timeFilterHint": "이 페이지만"
 }

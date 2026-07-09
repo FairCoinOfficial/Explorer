@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
-import { formatDistanceToNow } from 'date-fns'
 import { Receipt } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
 import { useLatestTransactions, type RecentBlock } from '@/hooks/use-recent-blocks'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CopyButton } from '@/components/copy-button'
+import { RelativeTime } from '@/components/detail/relative-time'
 import { shortHash } from '@/lib/format'
 
 interface LatestTxListProps {
@@ -27,10 +27,7 @@ export function LatestTxList({ blocks, isLoading, isError, max = 20 }: LatestTxL
           </span>
           <h3 className="text-sm font-semibold tracking-tight">{t('latestTransactions')}</h3>
         </div>
-        <Link
-          to="/tx"
-          className="text-xs font-medium text-primary transition-opacity hover:opacity-80"
-        >
+        <Link to="/tx" className="text-xs font-medium text-primary transition-opacity hover:opacity-80">
           {t('viewAll')}
         </Link>
       </header>
@@ -69,9 +66,10 @@ export function LatestTxList({ blocks, isLoading, isError, max = 20 }: LatestTxL
                   >
                     #{tx.blockHeight.toLocaleString()}
                   </Link>
-                  <span className="text-muted-foreground tabular-nums">
-                    {formatDistanceToNow(new Date(tx.blockTime * 1000), { addSuffix: true })}
-                  </span>
+                  <RelativeTime
+                    timestamp={tx.blockTime}
+                    className="text-muted-foreground"
+                  />
                 </div>
               </li>
             ))}

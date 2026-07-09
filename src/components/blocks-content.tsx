@@ -93,7 +93,7 @@ export function BlocksContent() {
 
   if (isError) {
     return (
-      <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <div className="flex-1 space-y-4">
         <ListHeader
           title={t('title')}
           subtitle={t('subtitle')}
@@ -118,7 +118,7 @@ export function BlocksContent() {
   }
 
   return (
-    <div className="w-full flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+    <div className="w-full flex-1 space-y-4">
       <ListHeader
         title={t('title')}
         subtitle={t('subtitle')}
@@ -161,22 +161,28 @@ export function BlocksContent() {
             className="w-full pl-10"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <Calendar className="size-4 shrink-0 text-muted-foreground" />
-          <span className="hidden text-sm text-muted-foreground sm:inline">{t('filter')}</span>
-          <div className="flex gap-1">
-            {TIME_FILTERS.map(({ key, labelKey }) => (
-              <Button
-                key={key}
-                variant={timeFilter === key ? 'default' : 'outline'}
-                size="sm"
-                className="h-8 px-3 text-xs"
-                onClick={() => setTimeFilter(key)}
-              >
-                {t(labelKey)}
-              </Button>
-            ))}
+        <div className="flex flex-col gap-1 sm:items-end">
+          <div className="flex items-center gap-2">
+            <Calendar className="size-4 shrink-0 text-muted-foreground" />
+            <span className="hidden text-sm text-muted-foreground sm:inline">{t('filter')}</span>
+            <div className="flex gap-1">
+              {TIME_FILTERS.map(({ key, labelKey }) => (
+                <Button
+                  key={key}
+                  variant={timeFilter === key ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-8 px-3 text-xs"
+                  onClick={() => setTimeFilter(key)}
+                  title={t('filterPageOnly')}
+                >
+                  {t(labelKey)}
+                </Button>
+              ))}
+            </div>
           </div>
+          {timeFilter !== 'all' || searchQuery.trim() ? (
+            <p className="text-xs text-muted-foreground">{t('filterPageOnly')}</p>
+          ) : null}
         </div>
       </div>
 
@@ -299,7 +305,7 @@ function BlockRow({
 
 function BlocksSkeleton() {
   return (
-    <div className="w-full flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+    <div className="w-full flex-1 space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="space-y-2">
           <Skeleton className="h-8 w-40" />

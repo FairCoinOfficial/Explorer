@@ -65,7 +65,7 @@ export function StatsContent() {
 
   if (isError || !stats) {
     return (
-      <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <div className="flex-1 space-y-4">
         <DetailHeader
           title={t('title')}
           subtitle={t('subtitle')}
@@ -93,7 +93,7 @@ export function StatsContent() {
   const phaseLabel = t('phase', { phase: stats.phase })
 
   return (
-    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+    <div className="flex-1 space-y-4">
       <DetailHeader
         title={t('title')}
         subtitle={t('subtitle')}
@@ -349,7 +349,7 @@ function formatHashrate(hashrate: number, t: Translate): string {
 
 function StatsSkeleton() {
   return (
-    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+    <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="space-y-2">
           <Skeleton className="h-8 w-48" />

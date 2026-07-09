@@ -9,7 +9,7 @@ export default function NotFoundPage() {
   const nav = useTranslations('nav')
 
   return (
-    <div className="flex flex-1 items-center justify-center p-2 pt-3 sm:p-4 md:p-6 lg:p-8">
+    <div className="flex flex-1 items-center justify-center">
       <SectionCard className="w-full max-w-md text-center">
         <div className="flex flex-col items-center gap-4">
           <span className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">

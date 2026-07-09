@@ -940,7 +940,7 @@
   "tools.mcp.groups.wallet.description": "Let an AI agent hold its own FairCoin key and transact autonomously on mainnet or testnet.",
   "tools.mcp.groups.wallet.securityNote": "Non-custodial: the agent holds its own private key and the server stores nothing — no database, no file, no in-memory copy. Transactions are signed transiently and the key is never logged or persisted. Works on mainnet and testnet.",
   "nav.charts": "Charts",
-  "nav.addressValidator": "Address Validator",
+  "nav.addressValidator": "地址验证器",
   "nav.broadcast": "Broadcast TX",
   "nav.apiDocs": "API Docs",
   "transactions.title": "Transactions",
@@ -1036,5 +1036,17 @@
   "mempool.feeHistogram": "Fee rate distribution",
   "mempool.feeHistogramHint": "sat/vB buckets from currently detailed mempool entries.",
   "mempool.medianFeeRate": "Median fee rate",
-  "mempool.avgAge": "Avg age ~{seconds}s"
+  "mempool.avgAge": "Avg age ~{seconds}s",
+  "common.copy": "复制",
+  "common.copied": "已复制到剪贴板",
+  "common.copyFailed": "复制失败",
+  "common.home": "首页",
+  "header.clearSearch": "清除搜索",
+  "pwa.dismiss": "关闭安装提示",
+  "pwa.installed": "应用安装成功",
+  "errorBoundary.title": "出错了",
+  "errorBoundary.fallback": "发生了意外错误。",
+  "errorBoundary.reload": "重新加载页面",
+  "blocks.filterPageOnly": "筛选仅适用于当前页结果",
+  "blocks.timeFilterHint": "仅本页"
 }

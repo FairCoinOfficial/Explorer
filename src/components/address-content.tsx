@@ -21,6 +21,7 @@ import { useAddress, useAddressTransactions, type AddressTransaction } from '@/h
 import { formatNumber } from '@/lib/format'
 import { downloadCsv } from '@/lib/download-csv'
 import { getKnownAddressLabel } from '@/lib/known-addresses'
+import { DetailBreadcrumbs } from '@/components/detail/detail-breadcrumbs'
 import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
@@ -36,6 +37,7 @@ function formatFair(value: number): string {
 
 export function AddressContent({ address }: { address: string }) {
   const t = useTranslations('address')
+  const common = useTranslations('common')
   const { currentNetwork } = useNetwork()
   const known = getKnownAddressLabel(address, currentNetwork)
   const { data: info, isLoading, isError, error, refetch, isFetching } = useAddress(address)
@@ -46,7 +48,10 @@ export function AddressContent({ address }: { address: string }) {
 
   if (isError || !info) {
     return (
-      <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <div className="flex-1 space-y-4">
+        <DetailBreadcrumbs
+          items={[{ label: common('address') }]}
+        />
         <DetailHeader
           title={t('title')}
           subtitle={t('subtitle')}
@@ -74,7 +79,8 @@ export function AddressContent({ address }: { address: string }) {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+    <div className="flex-1 space-y-4">
+      <DetailBreadcrumbs items={[{ label: common('address') }]} />
       <DetailHeader
         title={t('title')}
         subtitle={t('subtitle')}
@@ -325,7 +331,7 @@ function AddressTransactionRow({
 
 function AddressSkeleton() {
   return (
-    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+    <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="space-y-2">
           <Skeleton className="h-8 w-48" />

@@ -9,7 +9,6 @@ import {
   Inbox,
   Layers,
 } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
 import { useTranslations } from '@/lib/i18n'
 import { useMempool, type MempoolTransaction } from '@/hooks/use-mempool'
 import { formatBytes, formatNumber } from '@/lib/format'
@@ -17,6 +16,7 @@ import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
 import { HashCell } from '@/components/detail/hash-cell'
+import { RelativeTime } from '@/components/detail/relative-time'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
@@ -72,7 +72,7 @@ export default function MempoolContent() {
 
   if (isError || !data) {
     return (
-      <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <div className="flex-1 space-y-4">
         <DetailHeader
           title={t('title')}
           subtitle={t('description')}
@@ -107,7 +107,7 @@ export default function MempoolContent() {
     ages.length > 0 ? Math.round(ages.reduce((sum, age) => sum + age, 0) / ages.length) : 0
 
   return (
-    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+    <div className="flex-1 space-y-4">
       <DetailHeader
         title={t('title')}
         subtitle={t('description')}
@@ -225,10 +225,6 @@ function MempoolRow({
   t: (key: string, params?: Record<string, string | number>) => string
 }) {
   const satoshis = Math.round(tx.fee * SATOSHIS_PER_FAIR)
-  const waiting =
-    Number.isFinite(tx.time) && tx.time > 0
-      ? formatDistanceToNow(new Date(tx.time * 1000), { addSuffix: true })
-      : '—'
 
   return (
     <li className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40">
@@ -238,9 +234,9 @@ function MempoolRow({
 
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <HashCell value={tx.txid} to="tx" textClassName="font-medium" />
-        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground tabular-nums" title={waiting}>
+        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground tabular-nums">
           <Clock className="size-3" />
-          {waiting}
+          <RelativeTime timestamp={tx.time} />
         </span>
       </div>
 
@@ -261,7 +257,7 @@ function MempoolRow({
 
 function MempoolSkeleton() {
   return (
-    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+    <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="space-y-2">
           <Skeleton className="h-8 w-40" />

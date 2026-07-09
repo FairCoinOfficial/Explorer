@@ -1036,5 +1036,17 @@
   "mempool.feeHistogram": "Fee rate distribution",
   "mempool.feeHistogramHint": "sat/vB buckets from currently detailed mempool entries.",
   "mempool.medianFeeRate": "Median fee rate",
-  "mempool.avgAge": "Avg age ~{seconds}s"
+  "mempool.avgAge": "Avg age ~{seconds}s",
+  "common.copy": "Copy",
+  "common.copied": "Copied to clipboard",
+  "common.copyFailed": "Failed to copy",
+  "common.home": "Home",
+  "header.clearSearch": "Clear search",
+  "pwa.dismiss": "Dismiss install prompt",
+  "pwa.installed": "App installed successfully",
+  "errorBoundary.title": "Something went wrong",
+  "errorBoundary.fallback": "An unexpected error occurred.",
+  "errorBoundary.reload": "Reload page",
+  "blocks.filterPageOnly": "Filters apply to this page of results only",
+  "blocks.timeFilterHint": "This page only"
 }

@@ -105,7 +105,7 @@ export function MasternodesContent() {
   const activeCount = stats && stats.enabled > 0 ? formatNumber(stats.enabled) : '—'
 
   return (
-    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+    <div className="flex-1 space-y-4">
       <DetailHeader
         title={t('header.title')}
         subtitle={t('header.subtitle')}

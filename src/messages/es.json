@@ -1036,5 +1036,17 @@
   "mempool.feeHistogram": "Distribución de comisiones",
   "mempool.feeHistogramHint": "Cubos sat/vB de las entradas del mempool detalladas actualmente.",
   "mempool.medianFeeRate": "Comisión mediana",
-  "mempool.avgAge": "Edad media ~{seconds}s"
+  "mempool.avgAge": "Edad media ~{seconds}s",
+  "common.copy": "Copiar",
+  "common.copied": "Copiado al portapapeles",
+  "common.copyFailed": "Error al copiar",
+  "common.home": "Inicio",
+  "header.clearSearch": "Borrar búsqueda",
+  "pwa.dismiss": "Cerrar aviso de instalación",
+  "pwa.installed": "Aplicación instalada correctamente",
+  "errorBoundary.title": "Algo salió mal",
+  "errorBoundary.fallback": "Ocurrió un error inesperado.",
+  "errorBoundary.reload": "Recargar página",
+  "blocks.filterPageOnly": "Los filtros solo se aplican a esta página de resultados",
+  "blocks.timeFilterHint": "Solo esta página"
 }

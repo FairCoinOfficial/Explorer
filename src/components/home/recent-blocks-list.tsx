@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
-import { formatDistanceToNow } from 'date-fns'
 import { Blocks } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
 import type { RecentBlock } from '@/hooks/use-recent-blocks'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CopyButton } from '@/components/copy-button'
+import { RelativeTime } from '@/components/detail/relative-time'
 import { shortHash, formatBytes } from '@/lib/format'
 
 interface RecentBlocksListProps {
@@ -66,9 +66,10 @@ export function RecentBlocksList({ blocks, isLoading, isError }: RecentBlocksLis
                   <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary tabular-nums">
                     {t('txCount', { count: (block.nTx ?? block.tx.length).toString() })}
                   </span>
-                  <span className="text-muted-foreground tabular-nums">
-                    {formatDistanceToNow(new Date(block.time * 1000), { addSuffix: true })}
-                  </span>
+                  <RelativeTime
+                    timestamp={block.time}
+                    className="text-muted-foreground"
+                  />
                 </div>
 
                 <span className="hidden w-16 shrink-0 text-right text-xs text-muted-foreground tabular-nums sm:inline">

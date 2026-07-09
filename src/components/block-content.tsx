@@ -13,6 +13,7 @@ import {
 import { useTranslations } from '@/lib/i18n'
 import { useBlock } from '@/hooks/use-block'
 import { formatBytes, formatNumber } from '@/lib/format'
+import { DetailBreadcrumbs } from '@/components/detail/detail-breadcrumbs'
 import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
@@ -32,6 +33,7 @@ const PROGRESS_GRADIENT = 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(-
 export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
   const t = useTranslations('block')
   const common = useTranslations('common')
+  const nav = useTranslations('nav')
   const { data: block, isLoading, isError, error, refetch, isFetching } = useBlock(hashOrHeight)
 
   if (isLoading) {
@@ -40,7 +42,13 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
 
   if (isError || !block) {
     return (
-      <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <div className="flex-1 space-y-4">
+        <DetailBreadcrumbs
+          items={[
+            { label: nav('blocks'), to: '/blocks' },
+            { label: t('notFound') },
+          ]}
+        />
         <DetailHeader
           title={t('notFound')}
           subtitle={t('details')}
@@ -68,7 +76,13 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
   const confirmations = block.confirmations
 
   return (
-    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+    <div className="flex-1 space-y-4">
+      <DetailBreadcrumbs
+        items={[
+          { label: nav('blocks'), to: '/blocks' },
+          { label: `${t('block')} #${formatNumber(block.height)}` },
+        ]}
+      />
       <DetailHeader
         title={`${t('block')} #${formatNumber(block.height)}`}
         subtitle={t('details')}
@@ -326,7 +340,7 @@ function NavPill({
 
 function BlockSkeleton() {
   return (
-    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+    <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="space-y-2">
           <Skeleton className="h-8 w-48" />

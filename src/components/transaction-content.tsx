@@ -27,6 +27,7 @@ import {
   type TransactionInput,
 } from '@/hooks/use-transaction'
 import { formatNumber } from '@/lib/format'
+import { DetailBreadcrumbs } from '@/components/detail/detail-breadcrumbs'
 import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
@@ -148,6 +149,7 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
 export function TransactionContent({ txid }: { txid: string }) {
   const t = useTranslations('tx')
   const common = useTranslations('common')
+  const nav = useTranslations('nav')
   const navigate = useNavigate()
   const { data: transaction, isLoading, isError, error, refetch, isFetching } = useTransaction(txid)
 
@@ -157,7 +159,13 @@ export function TransactionContent({ txid }: { txid: string }) {
 
   if (isError || !transaction) {
     return (
-      <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+      <div className="flex-1 space-y-4">
+        <DetailBreadcrumbs
+          items={[
+            { label: nav('transactions'), to: '/tx' },
+            { label: t('notFound') },
+          ]}
+        />
         <DetailHeader
           title={t('notFound')}
           subtitle={t('invalidId')}
@@ -204,7 +212,13 @@ export function TransactionContent({ txid }: { txid: string }) {
   const hasSecondaryStats = showTotalMovedStat || changeTotal > 0 || analysis.fee !== null
 
   return (
-    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+    <div className="flex-1 space-y-4">
+      <DetailBreadcrumbs
+        items={[
+          { label: nav('transactions'), to: '/tx' },
+          { label: common('transaction') },
+        ]}
+      />
       <DetailHeader
         title={t('title')}
         subtitle={t('subtitle')}
@@ -569,7 +583,7 @@ function OutputRow({ entry, t }: { entry: ClassifiedOutput; t: Translate }) {
 
 function TransactionSkeleton() {
   return (
-    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+    <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="space-y-2">
           <Skeleton className="h-8 w-56" />

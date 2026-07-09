@@ -66,7 +66,7 @@ export function NetworkStatusContent() {
   const online = !isError && Boolean(status)
 
   return (
-    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+    <div className="flex-1 space-y-4">
       <DetailHeader
         title={t('title')}
         subtitle={t('subtitle')}
@@ -226,7 +226,7 @@ function StatusIndicator({ ok, label, t }: { ok: boolean; label: string; t: Tran
 
 function NetworkStatusSkeleton() {
   return (
-    <div className="flex-1 space-y-4 p-3 pt-4 sm:p-4 md:p-6 lg:p-8">
+    <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="space-y-2">
           <Skeleton className="h-8 w-44" />

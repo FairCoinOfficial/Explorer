@@ -940,7 +940,7 @@
   "tools.mcp.groups.wallet.description": "Let an AI agent hold its own FairCoin key and transact autonomously on mainnet or testnet.",
   "tools.mcp.groups.wallet.securityNote": "Non-custodial: the agent holds its own private key and the server stores nothing — no database, no file, no in-memory copy. Transactions are signed transiently and the key is never logged or persisted. Works on mainnet and testnet.",
   "nav.charts": "Charts",
-  "nav.addressValidator": "Address Validator",
+  "nav.addressValidator": "Adress-Validator",
   "nav.broadcast": "Broadcast TX",
   "nav.apiDocs": "API Docs",
   "transactions.title": "Transactions",
@@ -1036,5 +1036,17 @@
   "mempool.feeHistogram": "Fee rate distribution",
   "mempool.feeHistogramHint": "sat/vB buckets from currently detailed mempool entries.",
   "mempool.medianFeeRate": "Median fee rate",
-  "mempool.avgAge": "Avg age ~{seconds}s"
+  "mempool.avgAge": "Avg age ~{seconds}s",
+  "common.copy": "Kopieren",
+  "common.copied": "In die Zwischenablage kopiert",
+  "common.copyFailed": "Kopieren fehlgeschlagen",
+  "common.home": "Start",
+  "header.clearSearch": "Suche löschen",
+  "pwa.dismiss": "Installationshinweis schließen",
+  "pwa.installed": "App erfolgreich installiert",
+  "errorBoundary.title": "Etwas ist schiefgelaufen",
+  "errorBoundary.fallback": "Ein unerwarteter Fehler ist aufgetreten.",
+  "errorBoundary.reload": "Seite neu laden",
+  "blocks.filterPageOnly": "Filter gelten nur für diese Ergebnisseite",
+  "blocks.timeFilterHint": "Nur diese Seite"
 }

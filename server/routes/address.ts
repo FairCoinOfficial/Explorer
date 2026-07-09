@@ -216,6 +216,10 @@ router.get("/:address/txs", async (req: Request, res: Response) => {
     for (const txid of pageTxids) {
       try {
         const tx = await blockCache.getTransaction(txid, network, true, { prevoutLookupBudget });
+        if (!tx) {
+          transactions.push({ txid, blockhash: null, blockHeight: null, confirmations: 0, time: 0, size: 0, amount: 0, type: "received" });
+          continue;
+        }
         const vouts = (tx.vout ?? []) as TxVout[];
         const vins = (tx.vin ?? []) as TxVin[];
 
