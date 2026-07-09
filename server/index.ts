@@ -108,10 +108,18 @@ app.set('trust proxy', isTrustedProxy)
 // ---- Security & performance middleware ----
 
 const DEFAULT_PUBLIC_ORIGIN = 'https://explorer.fairco.in'
+const EXTRA_CORS_ORIGINS = (process.env.CORS_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
 const CORS_ALLOWLIST = [
-  process.env.PUBLIC_BASE_URL || DEFAULT_PUBLIC_ORIGIN,
-  'http://localhost:5180',
-  'http://localhost:5173',
+  ...new Set([
+    process.env.PUBLIC_BASE_URL || DEFAULT_PUBLIC_ORIGIN,
+    'https://oxy.so',
+    'http://localhost:5180',
+    'http://localhost:5173',
+    ...EXTRA_CORS_ORIGINS,
+  ]),
 ]
 
 // Global API rate limit and a stricter one for sensitive/expensive endpoints.

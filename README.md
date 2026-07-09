@@ -69,6 +69,8 @@ WEBSOCKET_MAX_PAYLOAD_BYTES=65536
 
 # Public origin allowed by the API CORS allowlist
 PUBLIC_BASE_URL=https://explorer.fairco.in
+# Extra comma-separated origins (in addition to PUBLIC_BASE_URL, https://oxy.so, and localhost)
+# CORS_ALLOWED_ORIGINS=https://other.example,https://app.example
 ```
 
 **Security**: RPC credentials are only read server-side; all RPC calls are proxied through the API. The `/api` surface is rate-limited (a global limiter on `/api`, plus stricter limits on `/api/search`, `/api/transaction`, `/api/address`, `/api/tx/broadcast`, and the public `/mcp` endpoint, which can drive daemon-backed wallet tools). Expensive lookups are bounded: `/api/price/history` samples long windows in memory from a bounded, two-tier-pruned series, and `/api/search` on an address returns balance only (it no longer triggers an unbounded address-txid scan, so `txCount` is `0` there — use the address pages for full history). `/api/peers` is redacted (no raw peer addresses or topology).
