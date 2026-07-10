@@ -153,6 +153,9 @@ const INLINE_SCRIPT_HASHES = [
 
 app.use(
   helmet({
+    // Public JSON API is meant to be readable from any site; helmet's default
+    // CORP `same-origin` would block cross-origin fetches even with CORS open.
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
