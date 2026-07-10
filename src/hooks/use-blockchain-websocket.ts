@@ -41,7 +41,7 @@ export function useBlockchainWebSocket(
   const [error, setError] = useState<Error | null>(null)
 
   const wsRef = useRef<WebSocket | null>(null)
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reconnectAttemptsRef = useRef(0)
   const maxReconnectDelay = 30000 // 30 seconds
   const initialReconnectDelay = 1000 // 1 second
@@ -80,13 +80,10 @@ export function useBlockchainWebSocket(
       const host = window.location.host
       const wsUrl = `${protocol}//${host}/api/ws`
 
-      console.log('[useBlockchainWebSocket] Connecting to:', wsUrl)
-
       const ws = new WebSocket(wsUrl)
       wsRef.current = ws
 
       ws.onopen = () => {
-        console.log('[useBlockchainWebSocket] Connected')
         setConnectionState('connected')
         setError(null)
         reconnectAttemptsRef.current = 0
@@ -104,30 +101,26 @@ export function useBlockchainWebSocket(
           const message: WebSocketEvent = JSON.parse(event.data)
           setLastMessage(message)
 
-          // Handle special message types
           if (message.type === 'error') {
             console.error('[useBlockchainWebSocket] Server error:', message.data)
           }
-        } catch (error) {
-          console.error('[useBlockchainWebSocket] Error parsing message:', error)
+        } catch (parseError) {
+          console.error('[useBlockchainWebSocket] Error parsing message:', parseError)
         }
       }
 
-      ws.onerror = (event) => {
-        console.error('[useBlockchainWebSocket] WebSocket error:', event)
+      ws.onerror = () => {
         setError(new Error('WebSocket error'))
         setConnectionState('error')
       }
 
       ws.onclose = (event) => {
-        console.log('[useBlockchainWebSocket] Disconnected:', event.code, event.reason)
         setConnectionState('disconnected')
         wsRef.current = null
 
         // Auto-reconnect if not a clean close
         if (event.code !== 1000 && autoConnect) {
           const delay = calculateReconnectDelay()
-          console.log(`[useBlockchainWebSocket] Reconnecting in ${delay}ms...`)
 
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++
@@ -135,9 +128,13 @@ export function useBlockchainWebSocket(
           }, delay)
         }
       }
-    } catch (error) {
-      console.error('[useBlockchainWebSocket] Connection error:', error)
-      setError(error instanceof Error ? error : new Error('Unknown connection error'))
+    } catch (connectionError) {
+      console.error('[useBlockchainWebSocket] Connection error:', connectionError)
+      setError(
+        connectionError instanceof Error
+          ? connectionError
+          : new Error('Unknown connection error'),
+      )
       setConnectionState('error')
     }
   }, [network, autoConnect, calculateReconnectDelay])
@@ -146,8 +143,6 @@ export function useBlockchainWebSocket(
    * Disconnect from WebSocket
    */
   const disconnect = useCallback(() => {
-    console.log('[useBlockchainWebSocket] Disconnecting...')
-
     // Clear reconnect timeout
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
@@ -167,7 +162,6 @@ export function useBlockchainWebSocket(
    * Reconnect to WebSocket
    */
   const reconnect = useCallback(() => {
-    console.log('[useBlockchainWebSocket] Manual reconnect')
     disconnect()
     reconnectAttemptsRef.current = 0
     connect()
@@ -179,8 +173,6 @@ export function useBlockchainWebSocket(
   const send = useCallback((message: ClientMessage) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message))
-    } else {
-      console.warn('[useBlockchainWebSocket] Cannot send message: not connected')
     }
   }, [])
 
@@ -225,7 +217,6 @@ export function useBlockchainWebSocket(
    */
   useEffect(() => {
     if (reconnectOnNetworkChange && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      console.log('[useBlockchainWebSocket] Network changed, sending change-network message')
       const message: ClientMessage = {
         type: 'change-network',
         network

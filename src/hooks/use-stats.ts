@@ -1,5 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
+import { useLiveRefetchInterval } from '@/contexts/blockchain-context'
 
 export interface StatsLastBlock {
   height: number
@@ -34,6 +35,7 @@ interface StatsResponse {
 
 export function useStats(): UseQueryResult<NetworkStatsData> {
   const { currentNetwork } = useNetwork()
+  const refetchInterval = useLiveRefetchInterval()
 
   return useQuery<NetworkStatsData>({
     queryKey: ['stats', currentNetwork],
@@ -47,7 +49,7 @@ export function useStats(): UseQueryResult<NetworkStatsData> {
       const data = (await response.json()) as StatsResponse
       return data.stats
     },
-    refetchInterval: 30_000,
+    refetchInterval,
     retry: 1,
   })
 }
