@@ -1,5 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
+import { useLiveRefetchInterval } from '@/contexts/blockchain-context'
 import { readErrorMessage } from '@/lib/read-error-message'
 
 export interface Block {
@@ -28,6 +29,7 @@ interface BlockResponse {
 
 export function useBlock(hashOrHeight: string): UseQueryResult<Block> {
   const { currentNetwork } = useNetwork()
+  const refetchInterval = useLiveRefetchInterval()
 
   return useQuery<Block>({
     queryKey: ['block', hashOrHeight, currentNetwork],
@@ -41,7 +43,7 @@ export function useBlock(hashOrHeight: string): UseQueryResult<Block> {
       const data = (await response.json()) as BlockResponse
       return data.block
     },
-    refetchInterval: 30_000,
+    refetchInterval,
     retry: 1,
   })
 }

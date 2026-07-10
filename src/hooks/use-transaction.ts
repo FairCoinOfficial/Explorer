@@ -1,5 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
+import { useLiveRefetchInterval } from '@/contexts/blockchain-context'
 import { readErrorMessage } from '@/lib/read-error-message'
 
 export interface TransactionScriptSig {
@@ -262,6 +263,7 @@ export function analyzeTransaction(tx: Transaction): TransactionAnalysis {
 
 export function useTransaction(txid: string): UseQueryResult<Transaction> {
   const { currentNetwork } = useNetwork()
+  const refetchInterval = useLiveRefetchInterval()
 
   return useQuery<Transaction>({
     queryKey: ['transaction', txid, currentNetwork],
@@ -276,7 +278,7 @@ export function useTransaction(txid: string): UseQueryResult<Transaction> {
       const data = (await response.json()) as TransactionResponse
       return data.transaction
     },
-    refetchInterval: 30_000,
+    refetchInterval,
     retry: 1,
   })
 }

@@ -2,35 +2,25 @@ import {
   AlertTriangle,
   ArrowDownLeft,
   ArrowUpRight,
+  Info,
   Network,
   Users,
 } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
-import { usePeers, type Peer } from '@/hooks/use-peers'
-import { formatBytes, formatNumber } from '@/lib/format'
+import { usePeers } from '@/hooks/use-peers'
+import { formatNumber } from '@/lib/format'
 import { ListHeader } from '@/components/detail/list-header'
 import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
-import { RelativeTime } from '@/components/detail/relative-time'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
 
-type Translate = (key: string, params?: Record<string, string | number>) => string
-
-function cleanSubver(subver: string): string {
-  return subver.replace(/^\/(.*)\/$/, '$1')
-}
-
-function formatLatency(pingtime: number): string {
-  return pingtime > 0 ? `${(pingtime * 1000).toFixed(0)} ms` : '—'
-}
-
-/** Total bytes exchanged with a peer (sent + received). */
-function formatTraffic(peer: Peer): string {
-  return formatBytes(peer.bytessent + peer.bytesrecv)
-}
-
+/**
+ * Peers page — aggregate counts only.
+ *
+ * `GET /api/peers` redacts IP, client, latency, and traffic. The UI shows the
+ * public totals (inbound / outbound) instead of empty per-peer columns.
+ */
 export default function PeersPage() {
   const t = useTranslations('peers')
   const common = useTranslations('common')
@@ -81,7 +71,7 @@ export default function PeersPage() {
         }
       />
 
-      <StatTileGrid className="grid-cols-3 lg:grid-cols-3">
+      <StatTileGrid className="grid-cols-3">
         <StatTile
           icon={Users}
           label={t('totalPeers')}
@@ -103,143 +93,25 @@ export default function PeersPage() {
         />
       </StatTileGrid>
 
-      <SectionCard
-        title={t('title')}
-        icon={Network}
-        flush
-        action={
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
-            {formatNumber(data.total)}
-          </span>
-        }
-      >
-        {data.peers.length > 0 ? (
-          <>
-            {/* Mobile: stacked cards */}
-            <ul className="divide-y lg:hidden">
-              {data.peers.map((peer) => (
-                <PeerCard key={peer.addr} peer={peer} t={t} />
-              ))}
-            </ul>
-
-            {/* Desktop: table */}
-            <div className="hidden overflow-x-auto lg:block">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    <th className="px-4 py-2.5 font-medium">{t('tableAddress')}</th>
-                    <th className="px-4 py-2.5 font-medium">{t('tableClient')}</th>
-                    <th className="px-4 py-2.5 font-medium">{t('tableDirection')}</th>
-                    <th className="px-4 py-2.5 text-right font-medium">{t('tableLatency')}</th>
-                    <th className="px-4 py-2.5 text-right font-medium">{t('tableData')}</th>
-                    <th className="px-4 py-2.5 font-medium">{t('tableConnected')}</th>
-                    <th className="px-4 py-2.5 text-right font-medium">{t('tableHeight')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {data.peers.map((peer) => (
-                    <tr key={peer.addr} className="transition-colors hover:bg-muted/40">
-                      <td className="whitespace-nowrap px-4 py-2.5">
-                        <span className="flex items-center gap-2.5">
-                          <span
-                            className={cn(
-                              'flex size-7 shrink-0 items-center justify-center rounded-full',
-                              peer.inbound
-                                ? 'bg-primary/10 text-primary'
-                                : 'bg-muted text-muted-foreground',
-                            )}
-                          >
-                            {peer.inbound ? (
-                              <ArrowDownLeft className="size-3.5" />
-                            ) : (
-                              <ArrowUpRight className="size-3.5" />
-                            )}
-                          </span>
-                          <span className="font-mono text-foreground">{peer.addr}</span>
-                        </span>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-muted-foreground">
-                        {cleanSubver(peer.subver) || t('unknown')}
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <DirectionBadge inbound={peer.inbound} t={t} />
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-2.5 text-right font-mono tabular-nums text-muted-foreground">
-                        {formatLatency(peer.pingtime)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-2.5 text-right font-mono tabular-nums text-muted-foreground">
-                        {formatTraffic(peer)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
-                        <RelativeTime timestamp={peer.conntime} />
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-2.5 text-right font-mono tabular-nums text-muted-foreground">
-                        {formatNumber(peer.synced_headers)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
+      {data.total === 0 ? (
+        <SectionCard>
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
             <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
               <Users className="size-6" />
             </span>
             <p className="text-sm font-medium">{t('noPeers')}</p>
           </div>
-        )}
-      </SectionCard>
+        </SectionCard>
+      ) : null}
+
+      <div className="flex items-start gap-2 rounded-xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+        <Info className="mt-0.5 size-4 shrink-0 text-primary" />
+        <div className="space-y-1">
+          <p className="font-medium text-foreground">{t('privacyTitle')}</p>
+          <p>{t('privacyNote')}</p>
+        </div>
+      </div>
     </div>
-  )
-}
-
-function DirectionBadge({ inbound, t }: { inbound: boolean; t: Translate }) {
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
-        inbound ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
-      )}
-    >
-      {inbound ? <ArrowDownLeft className="size-3" /> : <ArrowUpRight className="size-3" />}
-      {inbound ? t('inboundBadge') : t('outboundBadge')}
-    </span>
-  )
-}
-
-function PeerCard({ peer, t }: { peer: Peer; t: Translate }) {
-  return (
-    <li className="flex flex-col gap-2 px-4 py-3">
-      <div className="flex items-center justify-between gap-2">
-        <span className="flex min-w-0 items-center gap-2">
-          <span
-            className={cn(
-              'flex size-7 shrink-0 items-center justify-center rounded-full',
-              peer.inbound ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
-            )}
-          >
-            {peer.inbound ? (
-              <ArrowDownLeft className="size-3.5" />
-            ) : (
-              <ArrowUpRight className="size-3.5" />
-            )}
-          </span>
-          <span className="truncate font-mono text-sm">{peer.addr}</span>
-        </span>
-        <DirectionBadge inbound={peer.inbound} t={t} />
-      </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1 pl-9 text-xs text-muted-foreground">
-        <span className="truncate font-mono">{cleanSubver(peer.subver) || t('unknown')}</span>
-        <span className="text-right tabular-nums">{formatLatency(peer.pingtime)}</span>
-        <RelativeTime timestamp={peer.conntime} />
-        <span className="text-right font-mono tabular-nums">
-          {t('tableHeight')}: {formatNumber(peer.synced_headers)}
-        </span>
-        <span className="font-mono tabular-nums">{t('tableData')}: {formatTraffic(peer)}</span>
-      </div>
-    </li>
   )
 }
 
@@ -258,16 +130,7 @@ function PeersSkeleton() {
           <Skeleton key={i} className="h-20 rounded-xl" />
         ))}
       </div>
-      <div className="rounded-xl border bg-muted/40">
-        <ul className="divide-y">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <li key={i} className="flex items-center justify-between gap-3 px-4 py-3">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-4 w-20" />
-            </li>
-          ))}
-        </ul>
-      </div>
+      <Skeleton className="h-16 w-full rounded-xl" />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Activity,
   AlertCircle,
@@ -12,8 +12,10 @@ import {
   FileText,
   Info,
   Key,
+  List,
   Monitor,
   Network,
+  Search,
   Server,
   Settings,
   Shield,
@@ -29,15 +31,22 @@ import { useTranslations } from '@/lib/i18n'
 import {
   MASTERNODE_COLLATERAL,
   REWARD_SPLIT,
+  useMasternodeList,
   useMasternodes,
+  type MasternodeEntry,
 } from '@/hooks/use-masternodes'
 import { formatNumber } from '@/lib/format'
 import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
+import { HashCell } from '@/components/detail/hash-cell'
+import { RelativeTime } from '@/components/detail/relative-time'
 import { CopyButton } from '@/components/copy-button'
 import { cn } from '@/lib/utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 
 type Translate = (key: string, params?: Record<string, string | number>) => string
 
@@ -152,13 +161,19 @@ export function MasternodesContent() {
       <RewardPanel t={t} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6">
           <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
+          <TabsTrigger value="list">{t('tabs.list')}</TabsTrigger>
           <TabsTrigger value="guide">{t('tabs.guide')}</TabsTrigger>
           <TabsTrigger value="budget">{t('tabs.budget')}</TabsTrigger>
           <TabsTrigger value="requirements">{t('tabs.requirements')}</TabsTrigger>
           <TabsTrigger value="troubleshooting">{t('tabs.troubleshooting')}</TabsTrigger>
         </TabsList>
+
+        {/* Live list */}
+        <TabsContent value="list" className="space-y-4">
+          <MasternodeListPanel t={t} />
+        </TabsContent>
 
         {/* Overview */}
         <TabsContent value="overview" className="space-y-4">
@@ -369,6 +384,197 @@ export function MasternodesContent() {
         </TabsContent>
       </Tabs>
     </div>
+  )
+}
+
+const LIST_PAGE_SIZE = 25
+
+function formatActiveDuration(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 0) return '—'
+  const days = Math.floor(seconds / 86_400)
+  const hours = Math.floor((seconds % 86_400) / 3_600)
+  if (days > 0) return `${days}d ${hours}h`
+  const minutes = Math.floor((seconds % 3_600) / 60)
+  if (hours > 0) return `${hours}h ${minutes}m`
+  return `${minutes}m`
+}
+
+function MasternodeListPanel({ t }: { t: Translate }) {
+  const common = useTranslations('common')
+  const [page, setPage] = useState(1)
+  const [searchQuery, setSearchQuery] = useState('')
+  const offset = (page - 1) * LIST_PAGE_SIZE
+  const { data, isLoading, isError, error, isFetching, refetch } = useMasternodeList(
+    LIST_PAGE_SIZE,
+    offset,
+  )
+
+  const filtered = useMemo(() => {
+    const rows = data?.masternodes ?? []
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return rows
+    return rows.filter((mn) => {
+      return (
+        mn.address.toLowerCase().includes(query) ||
+        mn.txid.toLowerCase().includes(query) ||
+        mn.status.toLowerCase().includes(query) ||
+        String(mn.rank).includes(query)
+      )
+    })
+  }, [data?.masternodes, searchQuery])
+
+  const total = data?.total ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / LIST_PAGE_SIZE))
+
+  if (isLoading) {
+    return (
+      <SectionCard title={t('list.title')} icon={List}>
+        <div className="space-y-2 p-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full rounded-lg" />
+          ))}
+        </div>
+      </SectionCard>
+    )
+  }
+
+  if (isError || !data) {
+    return (
+      <SectionCard title={t('list.title')} icon={List}>
+        <div className="flex flex-col items-center gap-3 py-8 text-center">
+          <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+            <AlertCircle className="size-6" />
+          </span>
+          <p className="text-sm text-muted-foreground">
+            {error instanceof Error ? error.message : t('list.error')}
+          </p>
+          <Button variant="outline" onClick={() => void refetch()}>
+            {common('tryAgain')}
+          </Button>
+        </div>
+      </SectionCard>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="relative w-full sm:max-w-md">
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder={t('list.searchPlaceholder')}
+          value={searchQuery}
+          onChange={(event) => {
+            setSearchQuery(event.target.value)
+            setPage(1)
+          }}
+          className="w-full pl-10"
+        />
+      </div>
+      {searchQuery.trim() ? (
+        <p className="text-xs text-muted-foreground">{t('list.filterPageOnly')}</p>
+      ) : null}
+
+      <SectionCard
+        title={t('list.title')}
+        icon={List}
+        flush
+        action={
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+            {formatNumber(total)}
+          </span>
+        }
+      >
+        {filtered.length > 0 ? (
+          <>
+            <div className="hidden items-center gap-3 border-b px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:flex">
+              <span className="w-12">{t('list.rank')}</span>
+              <span className="flex-1">{t('list.status')}</span>
+              <span className="w-40">{t('list.address')}</span>
+              <span className="w-28 text-right">{t('list.active')}</span>
+              <span className="w-28 text-right">{t('list.lastSeen')}</span>
+              <span className="min-w-0 flex-1">{t('list.collateral')}</span>
+            </div>
+            <ul className="divide-y">
+              {filtered.map((mn) => (
+                <MasternodeRow key={`${mn.txid}:${mn.outidx}`} mn={mn} t={t} />
+              ))}
+            </ul>
+          </>
+        ) : (
+          <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 px-4 py-8 text-center">
+            <span className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <Users className="size-5" />
+            </span>
+            <p className="text-sm text-muted-foreground">{t('list.empty')}</p>
+          </div>
+        )}
+
+        {totalPages > 1 ? (
+          <div className="flex items-center justify-between gap-2 border-t px-4 py-3">
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {common('page', { current: page, total: totalPages })}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1 || isFetching}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                {common('previous')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages || isFetching}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                {common('next')}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </SectionCard>
+    </div>
+  )
+}
+
+function MasternodeRow({ mn, t }: { mn: MasternodeEntry; t: Translate }) {
+  const enabled = mn.status.toUpperCase() === 'ENABLED'
+  return (
+    <li className="flex flex-col gap-2 px-4 py-3 lg:flex-row lg:items-center lg:gap-3">
+      <span className="w-12 font-mono text-sm tabular-nums text-muted-foreground">
+        #{formatNumber(mn.rank)}
+      </span>
+      <span
+        className={cn(
+          'inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium lg:w-28',
+          enabled ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+        )}
+      >
+        {mn.status || t('list.unknownStatus')}
+      </span>
+      <div className="min-w-0 flex-1">
+        {mn.address ? (
+          <HashCell value={mn.address} to="address" textClassName="text-sm" />
+        ) : (
+          <span className="text-sm text-muted-foreground">—</span>
+        )}
+      </div>
+      <span className="w-28 text-sm tabular-nums text-muted-foreground lg:text-right">
+        {formatActiveDuration(mn.activeTime)}
+      </span>
+      <span className="w-28 text-sm text-muted-foreground lg:text-right">
+        {mn.lastSeen > 0 ? <RelativeTime timestamp={mn.lastSeen} /> : '—'}
+      </span>
+      <div className="min-w-0 flex-1">
+        {mn.txid ? (
+          <HashCell value={mn.txid} to="tx" textClassName="text-xs text-muted-foreground" />
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
+      </div>
+    </li>
   )
 }
 

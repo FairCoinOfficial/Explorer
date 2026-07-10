@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery, keepPreviousData, type UseQueryResult } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
+import { useLiveRefetchInterval } from '@/contexts/blockchain-context'
 
 export interface RecentBlock {
   height: number
@@ -47,6 +48,7 @@ export function useRecentBlocks(
   offset: number = 0,
 ): UseQueryResult<RecentBlocksData> {
   const { currentNetwork } = useNetwork()
+  const liveInterval = useLiveRefetchInterval()
 
   return useQuery<RecentBlocksData>({
     queryKey: ['recent-blocks', currentNetwork, limit, offset],
@@ -69,7 +71,7 @@ export function useRecentBlocks(
     },
     placeholderData: keepPreviousData,
     // Only auto-refresh the tip window; deeper pages are stable history.
-    refetchInterval: offset === 0 ? 30_000 : false,
+    refetchInterval: offset === 0 ? liveInterval : false,
     retry: 1,
   })
 }

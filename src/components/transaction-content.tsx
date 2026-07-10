@@ -5,17 +5,18 @@ import {
   ArrowUpRight,
   CheckCircle,
   CheckCircle2,
+  Clock,
   Coins,
   Database,
   FileText,
   Hammer,
   Home,
+  Inbox,
   Info,
   Receipt,
   Send,
   Sprout,
   Undo2,
-  XCircle,
 } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
 import {
@@ -26,6 +27,7 @@ import {
   type TransactionAnalysis,
   type TransactionInput,
 } from '@/hooks/use-transaction'
+import { useMempool } from '@/hooks/use-mempool'
 import { formatNumber } from '@/lib/format'
 import { DetailBreadcrumbs } from '@/components/detail/detail-breadcrumbs'
 import { DetailHeader } from '@/components/detail/detail-header'
@@ -146,12 +148,57 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
   )
 }
 
+type TxStatus = 'confirmed' | 'mempool' | 'unconfirmed'
+
+function resolveTxStatus(
+  transaction: { confirmations?: number; txid: string },
+  mempoolTxs: { txid: string }[] | undefined,
+): TxStatus {
+  if ((transaction.confirmations ?? 0) > 0) return 'confirmed'
+  if (mempoolTxs?.some((entry) => entry.txid === transaction.txid)) return 'mempool'
+  return 'unconfirmed'
+}
+
+function TxStatusBadge({
+  status,
+  t,
+  confirmedLabel,
+}: {
+  status: TxStatus
+  t: Translate
+  confirmedLabel: string
+}) {
+  if (status === 'confirmed') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+        <CheckCircle className="size-3" />
+        {confirmedLabel}
+      </span>
+    )
+  }
+  if (status === 'mempool') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+        <Inbox className="size-3" />
+        {t('inMempool')}
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+      <Clock className="size-3" />
+      {t('unconfirmed')}
+    </span>
+  )
+}
+
 export function TransactionContent({ txid }: { txid: string }) {
   const t = useTranslations('tx')
   const common = useTranslations('common')
   const nav = useTranslations('nav')
   const navigate = useNavigate()
   const { data: transaction, isLoading, isError, error, refetch, isFetching } = useTransaction(txid)
+  const { data: mempool } = useMempool()
 
   if (isLoading) {
     return <TransactionSkeleton />
@@ -202,7 +249,7 @@ export function TransactionContent({ txid }: { txid: string }) {
   }
 
   const confirmations = transaction.confirmations ?? 0
-  const confirmed = confirmations > 0
+  const status = resolveTxStatus(transaction, mempool?.transactions)
   const analysis = analyzeTransaction(transaction)
   const hero = describeHero(analysis, t)
   const changeTotal = analysis.outputs
@@ -237,15 +284,7 @@ export function TransactionContent({ txid }: { txid: string }) {
             </span>
             <h3 className="text-sm font-semibold tracking-tight">{hero.title}</h3>
           </div>
-          <span
-            className={cn(
-              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
-              confirmed ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive',
-            )}
-          >
-            {confirmed ? <CheckCircle className="size-3" /> : <XCircle className="size-3" />}
-            {confirmed ? common('confirmed') : t('unconfirmed')}
-          </span>
+          <TxStatusBadge status={status} t={t} confirmedLabel={common('confirmed')} />
         </header>
 
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">

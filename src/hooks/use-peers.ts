@@ -1,5 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
+import { useLiveRefetchInterval } from '@/contexts/blockchain-context'
 
 export interface Peer {
   addr: string
@@ -32,6 +33,7 @@ export interface PeersData {
 
 export function usePeers(): UseQueryResult<PeersData> {
   const { currentNetwork } = useNetwork()
+  const refetchInterval = useLiveRefetchInterval()
 
   return useQuery<PeersData>({
     queryKey: ['peers', currentNetwork],
@@ -52,7 +54,7 @@ export function usePeers(): UseQueryResult<PeersData> {
         outbound: peers.length - inbound,
       }
     },
-    refetchInterval: 30_000,
+    refetchInterval,
     retry: 1,
   })
 }
