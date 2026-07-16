@@ -35,7 +35,7 @@ export function GithubCard() {
 
   const action =
     stars !== null ? (
-      <span className="inline-flex items-center gap-1 rounded-full bg-muted/70 px-2 py-0.5 text-xs font-medium tabular-nums">
+      <span className="inline-flex items-center gap-1 text-xs font-medium tabular-nums text-muted-foreground">
         <Star className="size-3" />
         {formatCompactNumber(stars)}
       </span>

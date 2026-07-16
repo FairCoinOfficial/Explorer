@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   Blocks as BlocksIcon,
   Calendar,
-  Database,
   Layers,
   Network,
   Search,
@@ -122,12 +121,6 @@ export function BlocksContent() {
         subtitle={t('subtitle')}
         onRefresh={() => void refetch()}
         isRefreshing={isFetching}
-        badge={
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-            <Database className="size-3" />
-            {t('height', { height: formatNumber(height) })}
-          </span>
-        }
       />
 
       {/* Summary tiles — same language as the home stat strip. */}
@@ -190,7 +183,7 @@ export function BlocksContent() {
         icon={BlocksIcon}
         flush
         action={
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {t('blocksCount', { count: filteredBlocks.length })}
           </span>
         }

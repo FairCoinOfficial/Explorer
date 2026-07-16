@@ -100,7 +100,7 @@ export function StatsContent() {
         onRefresh={() => void refetch()}
         isRefreshing={isFetching}
         action={
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
             <Activity className="size-3 animate-pulse" />
             {phaseLabel}
           </span>
@@ -251,7 +251,7 @@ function SupplyHero({
           </span>
           <h3 className="text-sm font-semibold tracking-tight">{t('supplyEconomics')}</h3>
         </div>
-        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium tabular-nums text-primary">
+        <span className="text-xs font-medium tabular-nums text-primary">
           {t('supplyProgress', { percentage: percent.toFixed(2) })}
         </span>
       </header>

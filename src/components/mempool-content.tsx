@@ -178,7 +178,7 @@ export default function MempoolContent() {
         icon={Clock}
         flush
         action={
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {t('pendingCount', { count: data.transactions.length })}
           </span>
         }
@@ -242,7 +242,7 @@ function MempoolRow({
         <span className="hidden w-20 text-right text-muted-foreground sm:inline">
           {t('satValue', { value: formatNumber(satoshis) })}
         </span>
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
+        <span className="font-medium tabular-nums text-primary">
           {t('feeRateValue', { rate: tx.feeRate.toFixed(1) })}
         </span>
       </div>

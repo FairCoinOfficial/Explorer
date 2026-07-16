@@ -105,7 +105,7 @@ export function SupplyBar() {
           </span>
           <h3 className="text-sm font-semibold tracking-tight">{t('supplyTitle')}</h3>
         </div>
-        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
+        <span className="text-xs font-medium tabular-nums text-primary">
           {t('supplyMinted', { percent: percent.toFixed(2) })}
         </span>
       </header>

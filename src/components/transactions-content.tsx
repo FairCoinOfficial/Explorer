@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, ChevronLeft, ChevronRight, Clock, Inbox, Receipt, Search } from 'lucide-react'
+import { AlertTriangle, ChevronLeft, ChevronRight, Clock, Inbox, Search } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
 import { useRecentTransactions } from '@/hooks/use-recent-transactions'
 import { formatNumber } from '@/lib/format'
@@ -74,12 +74,6 @@ export function TransactionsContent() {
         subtitle={t('subtitle')}
         onRefresh={() => void refetch()}
         isRefreshing={isFetching}
-        action={
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-            <Receipt className="size-3" />
-            {t('showingCount', { count: formatNumber(transactions.length) })}
-          </span>
-        }
       />
 
       <SectionCard title={t('lookupTitle')} icon={Search}>
@@ -103,7 +97,7 @@ export function TransactionsContent() {
         icon={Clock}
         flush
         action={
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {t('feedHint', { total: formatNumber(total) })}
           </span>
         }

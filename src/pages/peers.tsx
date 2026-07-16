@@ -1,11 +1,4 @@
-import {
-  AlertTriangle,
-  ArrowDownLeft,
-  ArrowUpRight,
-  Info,
-  Network,
-  Users,
-} from 'lucide-react'
+import { AlertTriangle, ArrowDownLeft, ArrowUpRight, Info, Users } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
 import { usePeers } from '@/hooks/use-peers'
 import { formatNumber } from '@/lib/format'
@@ -64,12 +57,6 @@ export default function PeersPage() {
         subtitle={t('subtitle')}
         onRefresh={() => void refetch()}
         isRefreshing={isFetching}
-        badge={
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-            <Network className="size-3" />
-            {t('totalPeers')}: {formatNumber(data.total)}
-          </span>
-        }
       />
 
       <StatTileGrid className="grid-cols-2 sm:grid-cols-3">

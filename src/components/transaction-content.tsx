@@ -162,23 +162,23 @@ function TxStatusBadge({
 }) {
   if (status === 'confirmed') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-        <CheckCircle className="size-3" />
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+        <CheckCircle className="size-3.5" />
         {confirmedLabel}
       </span>
     )
   }
   if (status === 'mempool') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
-        <Inbox className="size-3" />
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+        <Inbox className="size-3.5" />
         {t('inMempool')}
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-      <Clock className="size-3" />
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
+      <Clock className="size-3.5" />
       {t('unconfirmed')}
     </span>
   )
@@ -389,7 +389,7 @@ export function TransactionContent({ txid }: { txid: string }) {
         icon={ArrowDownLeft}
         flush
         action={
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {t('inputsCount', { count: transaction.vin.length })}
           </span>
         }
@@ -410,7 +410,7 @@ export function TransactionContent({ txid }: { txid: string }) {
         icon={ArrowUpRight}
         flush
         action={
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {t('outputsCount', { count: transaction.vout.length })}
           </span>
         }

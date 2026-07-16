@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import {
-  Activity,
   AlertCircle,
   Award,
   Calendar,
@@ -26,7 +25,6 @@ import {
   Zap,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useNetwork } from '@/contexts/network-context'
 import { useTranslations } from '@/lib/i18n'
 import {
   MASTERNODE_COLLATERAL,
@@ -108,7 +106,6 @@ const REQUIREMENT_GROUPS = [
 ] as const
 
 export function MasternodesContent() {
-  const { currentNetwork } = useNetwork()
   const t = useTranslations('masternodes')
   const [activeTab, setActiveTab] = useState('overview')
   const { data: stats, refetch, isFetching } = useMasternodes()
@@ -122,12 +119,6 @@ export function MasternodesContent() {
         subtitle={t('header.subtitle')}
         onRefresh={() => void refetch()}
         isRefreshing={isFetching}
-        action={
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-            <Activity className="size-3" />
-            {currentNetwork.toUpperCase()}
-          </span>
-        }
       />
 
       {/* Live stats */}
@@ -481,7 +472,7 @@ function MasternodeListPanel({ t }: { t: Translate }) {
         icon={List}
         flush
         action={
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {formatNumber(total)}
           </span>
         }
@@ -532,10 +523,17 @@ function MasternodeRow({ mn, t }: { mn: MasternodeEntry; t: Translate }) {
       </span>
       <span
         className={cn(
-          'inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium lg:w-28',
-          enabled ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+          'inline-flex w-fit items-center gap-1.5 text-xs font-medium lg:w-28',
+          enabled ? 'text-primary' : 'text-muted-foreground',
         )}
       >
+        <span
+          className={cn(
+            'size-1.5 shrink-0 rounded-full',
+            enabled ? 'bg-primary' : 'bg-muted-foreground/50',
+          )}
+          aria-hidden
+        />
         {mn.status || t('list.unknownStatus')}
       </span>
       <div className="min-w-0 flex-1">
@@ -581,7 +579,7 @@ function RewardPanel({ t }: { t: Translate }) {
           </span>
           <h3 className="text-sm font-semibold tracking-tight">{t('rewards.title')}</h3>
         </div>
-        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
+        <span className="text-xs font-medium tabular-nums text-primary">
           {REWARD_SPLIT.masternode}% / {REWARD_SPLIT.staker}%
         </span>
       </header>

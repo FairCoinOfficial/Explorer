@@ -87,12 +87,6 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
         subtitle={t('details')}
         onRefresh={() => void refetch()}
         isRefreshing={isFetching}
-        action={
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-            <Database className="size-3" />
-            {common('transactions')}: {formatNumber(txCount)}
-          </span>
-        }
       />
 
       {/* Hero: block height + hash as the confident primary identity. */}
@@ -199,7 +193,7 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
         icon={Receipt}
         flush
         action={
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {formatNumber(txCount)} {common('transactions')}
           </span>
         }
@@ -226,11 +220,11 @@ function ConfirmationPill({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums',
-        confirmed ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+        'inline-flex items-center gap-1 text-xs font-medium tabular-nums',
+        confirmed ? 'text-primary' : 'text-muted-foreground',
       )}
     >
-      <CheckCircle2 className="size-3" />
+      <CheckCircle2 className="size-3.5" />
       {formatNumber(confirmations)} {label}
     </span>
   )

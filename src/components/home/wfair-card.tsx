@@ -38,10 +38,10 @@ export function WfairCard() {
   const action = (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
-        peg.tone === 'healthy' && 'bg-primary/10 text-primary',
-        peg.tone === 'unhealthy' && 'bg-destructive/10 text-destructive',
-        peg.tone === 'pending' && 'bg-muted/70 text-muted-foreground',
+        'inline-flex items-center gap-1 text-xs font-medium',
+        peg.tone === 'healthy' && 'text-primary',
+        peg.tone === 'unhealthy' && 'text-destructive',
+        peg.tone === 'pending' && 'text-muted-foreground',
       )}
     >
       <PegIcon className="size-3" />

@@ -80,12 +80,6 @@ export function AddressContent({ address }: { address: string }) {
         subtitle={t('subtitle')}
         onRefresh={() => void refetch()}
         isRefreshing={isFetching}
-        action={
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-            <Receipt className="size-3" />
-            {t('transactionsCount', { count: info.txCount })}
-          </span>
-        }
       />
 
       {/* Hero: balance as the confident primary figure + address identity. */}
@@ -192,7 +186,7 @@ function AddressTransactionsSection({
               {t('exportCsv')}
             </Button>
           ) : null}
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {t('transactionsCount', { count: total })}
           </span>
         </div>
