@@ -29,3 +29,38 @@ export interface PushMessage {
 
 /** Delivers one silent push to one device. Implemented by the FCM/APNS dispatcher. */
 export type PushDispatcher = (target: PushTarget, message: PushMessage) => Promise<void>
+
+/** Outcome of a single provider send. */
+export interface PushSendResult {
+  /** The provider reports this token is permanently invalid; the caller prunes it. */
+  deadToken: boolean
+}
+
+/**
+ * The FCM data message — the COMPLETE application payload sent to Google. Every
+ * value is a string (FCM data constraint) and the only keys are the content-free
+ * wake signal. No amount/address/balance ever appears here.
+ */
+export interface PushData {
+  txid: string
+  event: NotificationEvent
+  subscriptionId: string
+}
+
+/** Sends a data-only FCM message. Transient failures throw; a dead token resolves. */
+export type FcmSender = (deviceToken: string, data: PushData) => Promise<PushSendResult>
+
+/**
+ * The APNS background-push payload: a silent `content-available` aps dictionary
+ * plus the same content-free wake signal. No `alert`, so nothing is displayed by
+ * the OS — the app composes the visible notification on-device.
+ */
+export interface ApnsPayload {
+  aps: { 'content-available': 1 }
+  txid: string
+  event: NotificationEvent
+  subscriptionId: string
+}
+
+/** Sends a silent APNS push. Transient failures throw; a dead token resolves. */
+export type ApnsSender = (deviceToken: string, payload: ApnsPayload) => Promise<PushSendResult>
