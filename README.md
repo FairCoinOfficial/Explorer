@@ -38,6 +38,16 @@ npm run build           # outputs dist/
 npm run server          # serves dist/ + API + WebSocket on :8080
 ```
 
+> **MongoDB in production.** The cache DB is a plain local MongoDB — point
+> `MONGODB_URI` at `mongodb://localhost:27017/faircoin-explorer`. On the
+> `fcexplorer` host it runs as a Docker container: `docker run -d --name mongo
+> --restart=always -p 127.0.0.1:27017:27017 -v mongo-exp:/data/db mongo:4.4`.
+> Use **`mongo:4.4`** on hosts whose kernel/CPU trips MongoDB 5+/8 (the box needs
+> AVX for 5+, and Mongo 8 refuses kernel ≥6.19). The cache self-populates from
+> the node's RPC on demand, so a fresh empty DB recovers on its own. Do **not**
+> use a DigitalOcean managed cluster — that dependency was removed after the DO
+> account was lost.
+
 ## Scripts
 
 | Script | Description |
