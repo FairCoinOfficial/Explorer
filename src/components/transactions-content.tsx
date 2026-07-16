@@ -159,6 +159,14 @@ export function TransactionsContent() {
                   </div>
 
                   <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs">
+                    {typeof tx.amount === 'number' ? (
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {tx.amount.toLocaleString(undefined, {
+                          maximumFractionDigits: 8,
+                        })}{' '}
+                        FAIR
+                      </span>
+                    ) : null}
                     {tx.blockHeight !== null ? (
                       <Link
                         to={`/block/${tx.blockHeight}`}

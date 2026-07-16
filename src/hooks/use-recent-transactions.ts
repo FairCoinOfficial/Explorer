@@ -9,6 +9,8 @@ export interface RecentTransaction {
   unconfirmed: boolean
   size?: number
   fee?: number
+  /** Total output value (FAIR). Provided by the /api/transactions feed. */
+  amount?: number
 }
 
 export interface RecentTransactionsData {
