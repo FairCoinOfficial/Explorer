@@ -15,6 +15,8 @@ import { formatNumber } from '@/lib/format'
 import { ListHeader } from '@/components/detail/list-header'
 import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
+import { EmptyState } from '@/components/detail/empty-state'
+import { Pagination } from '@/components/detail/pagination'
 import { BlockRow } from '@/components/block-row'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -200,38 +202,20 @@ export function BlocksContent() {
             ))}
           </ul>
         ) : (
-          <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 px-4 py-8 text-center">
-            <span className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
-              <BlocksIcon className="size-5" />
-            </span>
-            <p className="text-sm text-muted-foreground">{common('noResults')}</p>
-          </div>
+          <EmptyState icon={BlocksIcon} title={common('noResults')} tone="muted" />
         )}
 
         {totalPages > 1 ? (
-          <div className="flex items-center justify-between gap-2 border-t px-4 py-3">
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {t('pageOf', { current: page, total: totalPages, count: total })}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1 || isFetching}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                {common('previous')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages || isFetching}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              >
-                {common('next')}
-              </Button>
-            </div>
-          </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+            label={t('pageOf', { current: page, total: totalPages, count: total })}
+            prevLabel={common('previous')}
+            nextLabel={common('next')}
+            disabled={isFetching}
+          />
         ) : null}
       </SectionCard>
     </div>

@@ -41,6 +41,8 @@ import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
 import { HashCell } from '@/components/detail/hash-cell'
 import { RelativeTime } from '@/components/detail/relative-time'
+import { EmptyState } from '@/components/detail/empty-state'
+import { Pagination } from '@/components/detail/pagination'
 import { CopyButton } from '@/components/copy-button'
 import { cn } from '@/lib/utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -486,10 +488,10 @@ function MasternodeListPanel({ t }: { t: Translate }) {
       >
         {filtered.length > 0 ? (
           <>
-            <div className="hidden items-center gap-3 border-b px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:flex">
+            <div className="hidden items-center gap-4 border-b px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:flex">
               <span className="w-12">{t('list.rank')}</span>
-              <span className="flex-1">{t('list.status')}</span>
-              <span className="w-40">{t('list.address')}</span>
+              <span className="w-28">{t('list.status')}</span>
+              <span className="min-w-0 flex-1">{t('list.address')}</span>
               <span className="w-28 text-right">{t('list.active')}</span>
               <span className="w-28 text-right">{t('list.lastSeen')}</span>
               <span className="min-w-0 flex-1">{t('list.collateral')}</span>
@@ -501,38 +503,20 @@ function MasternodeListPanel({ t }: { t: Translate }) {
             </ul>
           </>
         ) : (
-          <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 px-4 py-8 text-center">
-            <span className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
-              <Users className="size-5" />
-            </span>
-            <p className="text-sm text-muted-foreground">{t('list.empty')}</p>
-          </div>
+          <EmptyState icon={Users} title={t('list.empty')} tone="muted" />
         )}
 
         {totalPages > 1 ? (
-          <div className="flex items-center justify-between gap-2 border-t px-4 py-3">
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {common('page', { current: page, total: totalPages })}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1 || isFetching}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                {common('previous')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages || isFetching}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              >
-                {common('next')}
-              </Button>
-            </div>
-          </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+            label={common('page', { current: page, total: totalPages })}
+            prevLabel={common('previous')}
+            nextLabel={common('next')}
+            disabled={isFetching}
+          />
         ) : null}
       </SectionCard>
     </div>
@@ -542,7 +526,7 @@ function MasternodeListPanel({ t }: { t: Translate }) {
 function MasternodeRow({ mn, t }: { mn: MasternodeEntry; t: Translate }) {
   const enabled = mn.status.toUpperCase() === 'ENABLED'
   return (
-    <li className="flex flex-col gap-2 px-4 py-3 lg:flex-row lg:items-center lg:gap-3">
+    <li className="group flex flex-col gap-2 px-4 py-2.5 transition-colors hover:bg-muted/40 lg:flex-row lg:items-center lg:gap-4">
       <span className="w-12 font-mono text-sm tabular-nums text-muted-foreground">
         #{formatNumber(mn.rank)}
       </span>
@@ -556,7 +540,7 @@ function MasternodeRow({ mn, t }: { mn: MasternodeEntry; t: Translate }) {
       </span>
       <div className="min-w-0 flex-1">
         {mn.address ? (
-          <HashCell value={mn.address} to="address" textClassName="text-sm" />
+          <HashCell value={mn.address} to="address" fill hideCopy textClassName="text-sm" />
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
         )}
@@ -569,7 +553,7 @@ function MasternodeRow({ mn, t }: { mn: MasternodeEntry; t: Translate }) {
       </span>
       <div className="min-w-0 flex-1">
         {mn.txid ? (
-          <HashCell value={mn.txid} to="tx" textClassName="text-xs text-muted-foreground" />
+          <HashCell value={mn.txid} to="tx" fill hideCopy textClassName="text-xs text-muted-foreground" />
         ) : (
           <span className="text-xs text-muted-foreground">—</span>
         )}

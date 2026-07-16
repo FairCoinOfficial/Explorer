@@ -12,6 +12,7 @@ import { formatNumber } from '@/lib/format'
 import { ListHeader } from '@/components/detail/list-header'
 import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
+import { EmptyState } from '@/components/detail/empty-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -71,7 +72,7 @@ export default function PeersPage() {
         }
       />
 
-      <StatTileGrid className="grid-cols-3">
+      <StatTileGrid className="grid-cols-2 sm:grid-cols-3">
         <StatTile
           icon={Users}
           label={t('totalPeers')}
@@ -95,12 +96,7 @@ export default function PeersPage() {
 
       {data.total === 0 ? (
         <SectionCard>
-          <div className="flex flex-col items-center gap-3 py-10 text-center">
-            <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-              <Users className="size-6" />
-            </span>
-            <p className="text-sm font-medium">{t('noPeers')}</p>
-          </div>
+          <EmptyState icon={Users} title={t('noPeers')} tone="muted" />
         </SectionCard>
       ) : null}
 

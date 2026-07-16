@@ -4,7 +4,6 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   CheckCircle,
-  CheckCircle2,
   Clock,
   Coins,
   CornerDownRight,
@@ -29,7 +28,7 @@ import {
   type TransactionInput,
 } from '@/hooks/use-transaction'
 import { useMempool } from '@/hooks/use-mempool'
-import { formatNumber } from '@/lib/format'
+import { formatFair, formatNumber } from '@/lib/format'
 import { DetailBreadcrumbs } from '@/components/detail/detail-breadcrumbs'
 import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
@@ -37,6 +36,8 @@ import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
 import { InfoGrid, InfoRow } from '@/components/detail/info-row'
 import { HashCell } from '@/components/detail/hash-cell'
 import { RelativeTime } from '@/components/detail/relative-time'
+import { ConfirmationMeter } from '@/components/detail/confirmation-meter'
+import { RowIndex } from '@/components/detail/row-index'
 import { CopyButton } from '@/components/copy-button'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -46,16 +47,6 @@ import { cn } from '@/lib/utils'
 const ZERO_HASH = '0000000000000000000000000000000000000000000000000000000000000000'
 
 type Translate = (key: string, params?: Record<string, string | number>) => string
-
-/** Confirmations at which a transaction is treated as fully settled for the meter. */
-const MATURE_CONFIRMATIONS = 100
-
-/** Gradient fill for the confirmation meter: brand primary → bright accent. */
-const PROGRESS_GRADIENT = 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))'
-
-function formatFair(value: number): string {
-  return `${value.toFixed(8)} FAIR`
-}
 
 /** The headline figure + framing the hero shows for a given transaction kind. */
 interface HeroDescriptor {
@@ -446,64 +437,6 @@ export function TransactionContent({ txid }: { txid: string }) {
         </code>
       </SectionCard>
     </div>
-  )
-}
-
-/**
- * Gradient confirmation meter mirroring the home supply bar: a thin track that
- * fills primary→accent and caps at {@link MATURE_CONFIRMATIONS}.
- */
-function ConfirmationMeter({
-  confirmations,
-  label,
-  className,
-}: {
-  confirmations: number
-  label: string
-  className?: string
-}) {
-  const fraction = Math.min(Math.max(confirmations, 0) / MATURE_CONFIRMATIONS, 1)
-  const fillWidth = confirmations > 0 ? Math.max(fraction * 100, 4) : 0
-  const percent = Math.round(fraction * 1000) / 10
-
-  return (
-    <div className={cn('space-y-1.5', className)}>
-      <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-        <span className="inline-flex items-center gap-1">
-          <CheckCircle2 className="size-3" />
-          {label}
-        </span>
-        <span className="tabular-nums">
-          {formatNumber(confirmations)} / {formatNumber(MATURE_CONFIRMATIONS)}
-        </span>
-      </div>
-      <div
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={percent}
-        aria-label={label}
-        className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted"
-      >
-        <div
-          className="relative h-full rounded-full transition-[width] duration-500 ease-out"
-          style={{ width: `${fillWidth}%`, backgroundImage: PROGRESS_GRADIENT }}
-        >
-          {confirmations > 0 ? (
-            <span className="absolute inset-y-0 right-0 w-1.5 rounded-full bg-accent" aria-hidden />
-          ) : null}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/** Fixed-width muted index cell shared by input/output rows (e.g. "#0"). */
-function RowIndex({ n }: { n: number }) {
-  return (
-    <span className="w-8 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-      #{n}
-    </span>
   )
 }
 
