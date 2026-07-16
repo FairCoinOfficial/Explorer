@@ -27,6 +27,7 @@ import mcpInfoRouter from './routes/mcp-info'
 import transactionsRouter from './routes/transactions'
 import notificationsRouter from './routes/notifications'
 import { createMcpPostHandler, handleMcpMethodNotAllowed, handleMcpOptions } from './mcp/http'
+import { isNotificationsEnabled } from './lib/notifications/config'
 import packageJson from '../package.json' with { type: 'json' }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -800,6 +801,18 @@ wss.on('connection', async (ws, request) => {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`> API server ready on http://0.0.0.0:${PORT}`)
   console.log(`> WebSocket server ready on ws://0.0.0.0:${PORT}/api/ws`)
+
+  // The blockchain monitor (which drives payment notifications) lives in the
+  // WebSocket handler module, normally loaded lazily on the first WS client. When
+  // notifications are configured, load it now so pushes fire regardless of
+  // whether any browser ever opens a WebSocket.
+  if (isNotificationsEnabled()) {
+    void loadWsHandler().then((handler) => {
+      if (handler) {
+        console.log('> Background payment notifications enabled')
+      }
+    })
+  }
 })
 
 process.on('SIGTERM', () => { console.log('SIGTERM: closing'); process.exit(0) })
