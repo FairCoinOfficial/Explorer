@@ -4,14 +4,19 @@ import mongoose from 'mongoose'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 
 // Shared test harness: an in-memory MongoDB the notification DB tests connect
-// mongoose to. It uses the machine's already-installed `mongod` binary
-// (resolved from PATH, overridable via MONGOMS_SYSTEM_BINARY) so tests need no
-// network download. NOT a `*.test.ts` file, so vitest never runs it directly.
+// mongoose to. It prefers an already-installed `mongod` (from PATH, overridable
+// via MONGOMS_SYSTEM_BINARY) so offline/local runs need no download; when none
+// is present (e.g. a clean CI runner) it lets mongodb-memory-server download and
+// cache its own binary. NOT a `*.test.ts` file, so vitest never runs it directly.
 
 let memoryServer: MongoMemoryServer | null = null
 
-/** Locate the `mongod` executable on PATH without invoking a shell. */
-function resolveMongodBinary(): string {
+/**
+ * Locate an already-installed `mongod` (env override, then PATH) without
+ * invoking a shell, or return null when none is found so the caller can fall
+ * back to mongodb-memory-server's own download.
+ */
+function resolveMongodBinary(): string | null {
   const fromEnv = process.env.MONGOMS_SYSTEM_BINARY
   if (fromEnv) return fromEnv
   const dirs = (process.env.PATH ?? '').split(delimiter).filter(Boolean)
@@ -19,14 +24,17 @@ function resolveMongodBinary(): string {
     const candidate = join(dir, 'mongod')
     if (existsSync(candidate)) return candidate
   }
-  throw new Error('mongod not found on PATH; set MONGOMS_SYSTEM_BINARY to its location')
+  return null
 }
 
 /** Boot an in-memory MongoDB and connect mongoose to it. Call in beforeAll. */
 export async function setupMemoryMongo(): Promise<void> {
-  memoryServer = await MongoMemoryServer.create({
-    binary: { systemBinary: resolveMongodBinary() },
-  })
+  const systemBinary = resolveMongodBinary()
+  // Use a system binary when present (no network); otherwise omit `binary` so
+  // mongodb-memory-server resolves, downloads, and caches one itself.
+  memoryServer = await MongoMemoryServer.create(
+    systemBinary ? { binary: { systemBinary } } : undefined,
+  )
   await mongoose.connect(memoryServer.getUri(), { dbName: 'notifications_test' })
 }
 
