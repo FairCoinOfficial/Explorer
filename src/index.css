@@ -40,76 +40,80 @@
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
-/* ---- Light theme ---- */
+/* ---- Light theme ----
+   Clean, near-white neutral canvas; green stays an accent only. */
 :root {
-  --background: 0 0% 95%;
-  --foreground: 67 52% 10%;
+  --background: 150 14% 97%;
+  --foreground: 155 20% 12%;
   --card: 0 0% 100%;
-  --card-foreground: 67 52% 10%;
+  --card-foreground: 155 20% 12%;
   --popover: 0 0% 100%;
-  --popover-foreground: 67 52% 10%;
-  --primary: 90 96% 18%;
+  --popover-foreground: 155 20% 12%;
+  --primary: 96 68% 26%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 84 15% 90%;
-  --secondary-foreground: 67 52% 10%;
-  --muted: 84 10% 92%;
-  --muted-foreground: 67 20% 40%;
-  --accent: 84 59% 63%;
-  --accent-foreground: 67 52% 10%;
-  --destructive: 0 84% 60%;
+  --secondary: 150 14% 94%;
+  --secondary-foreground: 155 20% 14%;
+  --muted: 150 14% 95%;
+  --muted-foreground: 155 8% 42%;
+  --accent: 150 14% 93%;
+  --accent-foreground: 155 20% 14%;
+  --destructive: 0 74% 52%;
   --destructive-foreground: 0 0% 100%;
-  --border: 84 10% 85%;
-  --input: 84 10% 85%;
-  --ring: 90 96% 18%;
-  --chart-1: 90 60% 78%;
-  --chart-2: 90 55% 65%;
-  --chart-3: 90 60% 50%;
-  --chart-4: 90 70% 38%;
-  --chart-5: 90 80% 28%;
+  --border: 150 12% 89%;
+  --input: 150 12% 89%;
+  --ring: 96 68% 26%;
+  --chart-1: 92 55% 74%;
+  --chart-2: 94 52% 60%;
+  --chart-3: 98 58% 46%;
+  --chart-4: 102 64% 34%;
+  --chart-5: 106 72% 26%;
   --sidebar: 0 0% 100%;
-  --sidebar-foreground: 67 52% 10%;
-  --sidebar-primary: 90 96% 18%;
+  --sidebar-foreground: 155 20% 12%;
+  --sidebar-primary: 96 68% 26%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 84 10% 92%;
-  --sidebar-accent-foreground: 67 52% 10%;
-  --sidebar-border: 84 10% 85%;
-  --sidebar-ring: 90 96% 18%;
+  --sidebar-accent: 150 14% 94%;
+  --sidebar-accent-foreground: 155 20% 14%;
+  --sidebar-border: 150 12% 89%;
+  --sidebar-ring: 96 68% 26%;
 }
 
-/* ---- Dark theme ---- */
+/* ---- Dark theme ----
+   Apple-style neutral canvas: a near-black, very-low-saturation base with the
+   FairCoin green reserved purely as an accent (primary / links / active nav /
+   focus). Surfaces separate by lightness, not by hue. */
 .dark {
-  --background: 75 60% 6%;
-  --foreground: 80 10% 90%;
-  --card: 90 96% 18%;
-  --card-foreground: 80 10% 90%;
-  --popover: 90 96% 18%;
-  --popover-foreground: 80 10% 90%;
-  --primary: 90 86% 63%;
-  --primary-foreground: 67 52% 10%;
-  --secondary: 90 40% 14%;
-  --secondary-foreground: 80 10% 90%;
-  --muted: 90 50% 15%;
-  --muted-foreground: 80 10% 60%;
-  --accent: 84 59% 63%;
-  --accent-foreground: 67 52% 10%;
-  --destructive: 0 72% 51%;
+  --background: 156 8% 6%;
+  --foreground: 150 6% 94%;
+  --card: 155 7% 9%;
+  --card-foreground: 150 6% 94%;
+  --popover: 155 8% 10%;
+  --popover-foreground: 150 6% 94%;
+  --primary: 88 82% 62%;
+  --primary-foreground: 150 45% 8%;
+  --secondary: 152 6% 14%;
+  --secondary-foreground: 150 6% 92%;
+  --muted: 152 6% 13%;
+  --muted-foreground: 150 5% 60%;
+  --accent: 152 6% 16%;
+  --accent-foreground: 150 6% 94%;
+  --destructive: 0 72% 55%;
   --destructive-foreground: 0 0% 100%;
-  --border: 90 30% 22%;
-  --input: 90 30% 24%;
-  --ring: 90 86% 63%;
-  --chart-1: 90 70% 75%;
-  --chart-2: 90 60% 62%;
-  --chart-3: 90 55% 50%;
-  --chart-4: 90 50% 40%;
-  --chart-5: 90 45% 30%;
-  --sidebar: 90 97% 13%;
-  --sidebar-foreground: 80 10% 90%;
-  --sidebar-primary: 90 86% 63%;
-  --sidebar-primary-foreground: 67 52% 10%;
-  --sidebar-accent: 90 50% 15%;
-  --sidebar-accent-foreground: 80 10% 90%;
-  --sidebar-border: 90 30% 22%;
-  --sidebar-ring: 90 86% 63%;
+  --border: 150 6% 15%;
+  --input: 150 6% 18%;
+  --ring: 88 82% 62%;
+  --chart-1: 90 72% 72%;
+  --chart-2: 92 62% 60%;
+  --chart-3: 96 55% 48%;
+  --chart-4: 100 50% 40%;
+  --chart-5: 104 46% 32%;
+  --sidebar: 156 8% 7%;
+  --sidebar-foreground: 150 6% 88%;
+  --sidebar-primary: 88 82% 62%;
+  --sidebar-primary-foreground: 150 45% 8%;
+  --sidebar-accent: 152 6% 13%;
+  --sidebar-accent-foreground: 150 6% 94%;
+  --sidebar-border: 150 6% 13%;
+  --sidebar-ring: 88 82% 62%;
 }
 
 /* ---- Base styles ---- */
@@ -132,10 +136,10 @@ body {
   font-family: var(--font-sans);
 }
 
-/* ---- Scrollbar ---- */
+/* ---- Scrollbar (subtle, neutral — not the brand accent) ---- */
 html, body {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--primary)) hsl(var(--muted));
+  scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
 }
 
 html::-webkit-scrollbar, body::-webkit-scrollbar {
@@ -144,27 +148,25 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 }
 
 html::-webkit-scrollbar-track, body::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
-  border-radius: 4px;
+  background: transparent;
 }
 
 html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary));
-  border-radius: 4px;
-  border: 1px solid hsl(var(--muted));
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 999px;
 }
 
 html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--accent));
+  background: hsl(var(--muted-foreground) / 0.5);
 }
 
 html::-webkit-scrollbar-corner, body::-webkit-scrollbar-corner {
-  background: hsl(var(--muted));
+  background: transparent;
 }
 
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--primary)) hsl(var(--muted));
+  scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -173,22 +175,20 @@ html::-webkit-scrollbar-corner, body::-webkit-scrollbar-corner {
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
-  border-radius: 4px;
+  background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary));
-  border-radius: 4px;
-  border: 1px solid hsl(var(--muted));
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--accent));
+  background: hsl(var(--muted-foreground) / 0.5);
 }
 
 .custom-scrollbar::-webkit-scrollbar-corner {
-  background: hsl(var(--muted));
+  background: transparent;
 }
 
 /* ---- Utilities ---- */
