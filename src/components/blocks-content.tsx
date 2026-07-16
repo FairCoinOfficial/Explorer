@@ -3,12 +3,9 @@ import {
   AlertTriangle,
   Blocks as BlocksIcon,
   Calendar,
-  Clock,
   Database,
   Layers,
   Network,
-  Receipt,
-  Ruler,
   Search,
 } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
@@ -197,29 +194,11 @@ export function BlocksContent() {
         }
       >
         {filteredBlocks.length > 0 ? (
-          <>
-            {/* Column header — aligns the row columns and adds list legibility. */}
-            <div className="hidden items-center gap-3 border-b px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:flex">
-              <span className="flex-1">{common('height')}</span>
-              <span className="inline-flex w-24 items-center justify-end gap-1">
-                <Receipt className="size-3" />
-                {common('transactions')}
-              </span>
-              <span className="inline-flex w-28 items-center justify-end gap-1">
-                <Clock className="size-3" />
-                {common('time')}
-              </span>
-              <span className="inline-flex w-16 items-center justify-end gap-1">
-                <Ruler className="size-3" />
-                {common('size')}
-              </span>
-            </div>
-            <ul className="divide-y">
-              {filteredBlocks.map((block) => (
-                <BlockRow key={block.height} block={block} />
-              ))}
-            </ul>
-          </>
+          <ul className="divide-y">
+            {filteredBlocks.map((block) => (
+              <BlockRow key={block.height} block={block} />
+            ))}
+          </ul>
         ) : (
           <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 px-4 py-8 text-center">
             <span className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">

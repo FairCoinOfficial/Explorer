@@ -1,51 +1,46 @@
-import { Blocks as BlocksIcon } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useTranslations } from '@/lib/i18n'
 import type { RecentBlock } from '@/hooks/use-recent-blocks'
 import { HashCell } from '@/components/detail/hash-cell'
 import { RelativeTime } from '@/components/detail/relative-time'
-import { formatBytes } from '@/lib/format'
+import { formatBytes, formatNumber } from '@/lib/format'
 
 /**
  * Canonical block feed row, shared by the `/blocks` list and the home
- * "recent blocks" card so both surfaces stay pixel-identical: a leading glyph,
- * the height over its hash on the left, then fixed-width tx-count / time / size
- * columns a header can align to. Renders as an `<li>`; the caller provides the
- * surrounding `<ul className="divide-y">`.
+ * "recent blocks" card so both surfaces stay pixel-identical. Ledger style: no
+ * per-row glyph — the height is the anchor, the hash fills the remaining width
+ * and ellipsizes only on overflow, and tx-count · time · size trail on the
+ * right. Renders as an `<li>`; the caller supplies the `<ul className="divide-y">`.
  */
 export function BlockRow({ block }: { block: RecentBlock }) {
   const t = useTranslations('blocks')
   const txCount = block.nTx ?? block.tx.length
 
   return (
-    <li className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <BlocksIcon className="size-4" />
-      </span>
-
-      <div className="flex min-w-0 flex-1 flex-col">
+    <li className="group flex items-center gap-4 px-4 py-2.5 transition-colors hover:bg-muted/40">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <Link
+          to={`/block/${block.height}`}
+          className="self-start text-sm font-semibold tabular-nums text-primary hover:underline"
+        >
+          #{formatNumber(block.height)}
+        </Link>
         <HashCell
-          value={String(block.height)}
+          value={block.hash}
           to="block"
+          fill
           hideCopy
-          textClassName="text-sm font-semibold tabular-nums"
+          textClassName="text-xs text-muted-foreground"
         />
-        <HashCell value={block.hash} to="block" textClassName="text-xs text-muted-foreground" />
       </div>
 
-      <span className="hidden w-24 shrink-0 justify-end text-right sm:flex">
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
-          {t('txCount', { count: txCount })}
-        </span>
-      </span>
-
-      <RelativeTime
-        timestamp={block.time}
-        className="w-28 shrink-0 text-right text-xs text-muted-foreground"
-      />
-
-      <span className="hidden w-16 shrink-0 text-right text-xs text-muted-foreground tabular-nums sm:inline">
-        {formatBytes(block.size)}
-      </span>
+      <div className="flex shrink-0 items-center gap-2 text-xs tabular-nums text-muted-foreground">
+        <span className="font-medium text-primary">{t('txCount', { count: txCount })}</span>
+        <span aria-hidden className="opacity-40">·</span>
+        <RelativeTime timestamp={block.time} />
+        <span aria-hidden className="hidden opacity-40 sm:inline">·</span>
+        <span className="hidden sm:inline">{formatBytes(block.size)}</span>
+      </div>
     </li>
   )
 }
