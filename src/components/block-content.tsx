@@ -216,6 +216,14 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
                   #{index}
                 </span>
                 <HashCell value={txid} to="tx" lead={10} tail={8} className="min-w-0 flex-1" />
+                {typeof block.txValues?.[index] === 'number' ? (
+                  <span className="shrink-0 text-xs font-semibold tabular-nums text-foreground">
+                    {(block.txValues[index] as number).toLocaleString(undefined, {
+                      maximumFractionDigits: 8,
+                    })}{' '}
+                    FAIR
+                  </span>
+                ) : null}
               </li>
             ))}
           </ul>

@@ -235,7 +235,31 @@ app.get('/api/block/:hashOrHeight', async (req, res) => {
     const network = parseNetwork(req.query.network)
     const { hashOrHeight } = req.params
     const block = await blockCache.getBlock(hashOrHeight, network, true)
-    res.json({ block, network })
+
+    // Enrich with a parallel array of per-tx total output values (FAIR) so the
+    // block page can show an amount next to each txid. Bounded to reasonably
+    // sized blocks to keep RPC load in check; larger blocks omit txValues.
+    const MAX_TX_VALUE_ENRICH = 50
+    let txValues: Array<number | null> | undefined
+    const txids = Array.isArray((block as { tx?: unknown }).tx)
+      ? ((block as { tx: string[] }).tx)
+      : []
+    if (txids.length > 0 && txids.length <= MAX_TX_VALUE_ENRICH) {
+      txValues = await Promise.all(
+        txids.map(async (txid) => {
+          try {
+            const tx = await blockCache.getTransaction(txid, network, true)
+            const vout = (tx as { vout?: Array<{ value?: number }> }).vout
+            if (!Array.isArray(vout)) return null
+            return vout.reduce((sum, o) => sum + (Number(o.value) || 0), 0)
+          } catch {
+            return null
+          }
+        }),
+      )
+    }
+
+    res.json({ block, txValues, network })
   } catch (error) {
     handleRouteError(res, 'Error fetching block', error)
   }

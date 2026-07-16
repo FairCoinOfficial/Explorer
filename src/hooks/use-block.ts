@@ -17,6 +17,9 @@ export interface Block {
   size: number
   weight?: number
   tx: string[]
+  /** Per-tx total output value (FAIR), parallel to `tx`. From the API's
+   * `txValues`; undefined for oversized blocks that skip enrichment. */
+  txValues?: Array<number | null>
   previousblockhash?: string
   nextblockhash?: string
   confirmations: number
@@ -24,6 +27,7 @@ export interface Block {
 
 interface BlockResponse {
   block: Block
+  txValues?: Array<number | null>
   network: string
 }
 
@@ -41,7 +45,7 @@ export function useBlock(hashOrHeight: string): UseQueryResult<Block> {
         throw new Error(await readErrorMessage(response, 'block'))
       }
       const data = (await response.json()) as BlockResponse
-      return data.block
+      return { ...data.block, txValues: data.txValues }
     },
     refetchInterval,
     retry: 1,

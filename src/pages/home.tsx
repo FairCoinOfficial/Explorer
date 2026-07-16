@@ -34,7 +34,7 @@ export default function HomePage() {
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <RecentBlocksList blocks={blocks} isLoading={isLoading} isError={isError} />
-        <LatestTxList blocks={blocks} isLoading={isLoading} isError={isError} max={TX_FEED_LIMIT} />
+        <LatestTxList max={TX_FEED_LIMIT} />
       </div>
     </div>
   )
