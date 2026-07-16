@@ -13,13 +13,12 @@ import {
 } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
 import { useNetwork } from '@/contexts/network-context'
-import { useRecentBlocks, type RecentBlock } from '@/hooks/use-recent-blocks'
-import { formatBytes, formatNumber } from '@/lib/format'
+import { useRecentBlocks } from '@/hooks/use-recent-blocks'
+import { formatNumber } from '@/lib/format'
 import { ListHeader } from '@/components/detail/list-header'
 import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
-import { HashCell } from '@/components/detail/hash-cell'
-import { RelativeTime } from '@/components/detail/relative-time'
+import { BlockRow } from '@/components/block-row'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -217,7 +216,7 @@ export function BlocksContent() {
             </div>
             <ul className="divide-y">
               {filteredBlocks.map((block) => (
-                <BlockRow key={block.height} block={block} t={t} />
+                <BlockRow key={block.height} block={block} />
               ))}
             </ul>
           </>
@@ -257,49 +256,6 @@ export function BlocksContent() {
         ) : null}
       </SectionCard>
     </div>
-  )
-}
-
-function BlockRow({
-  block,
-  t,
-}: {
-  block: RecentBlock
-  t: (key: string, params?: Record<string, string | number>) => string
-}) {
-  const txCount = block.nTx ?? block.tx.length
-
-  return (
-    <li className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <BlocksIcon className="size-4" />
-      </span>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <HashCell
-          value={String(block.height)}
-          to="block"
-          hideCopy
-          textClassName="text-sm font-semibold tabular-nums"
-        />
-        <HashCell value={block.hash} to="block" textClassName="text-xs text-muted-foreground" />
-      </div>
-
-      <span className="hidden w-24 shrink-0 justify-end text-right sm:flex">
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
-          {t('txCount', { count: txCount })}
-        </span>
-      </span>
-
-      <RelativeTime
-        timestamp={block.time}
-        className="w-28 shrink-0 text-right text-xs text-muted-foreground"
-      />
-
-      <span className="hidden w-16 shrink-0 text-right text-xs text-muted-foreground tabular-nums sm:inline">
-        {formatBytes(block.size)}
-      </span>
-    </li>
   )
 }
 

@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Clock,
   Coins,
+  CornerDownRight,
   Database,
   FileText,
   Hammer,
@@ -390,45 +391,42 @@ export function TransactionContent({ txid }: { txid: string }) {
         </div>
       </SectionCard>
 
-      {/* Inputs */}
+      {/* Inputs — compact divided rows: source address leads, the spent outpoint
+          sits under it as a subordinate reference, value is right-aligned. */}
       <SectionCard
         title={t('transactionInputs')}
         icon={ArrowDownLeft}
+        flush
         action={
           <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
             {t('inputsCount', { count: transaction.vin.length })}
           </span>
         }
       >
-        <ul className="space-y-2">
+        <ul className="divide-y">
           {transaction.vin.map((input, index) => (
-            <li key={index} className="rounded-xl bg-muted/60 p-3">
+            <li key={index} className="transition-colors hover:bg-muted/40">
               <InputRow input={input} index={index} />
             </li>
           ))}
         </ul>
       </SectionCard>
 
-      {/* Outputs — change/reward outputs are de-emphasized and badged so the real
-          recipient output(s) stand out. */}
+      {/* Outputs — same compact rows; change/reward outputs are de-emphasized (muted
+          value + badge) so the real recipient output(s) stand out. */}
       <SectionCard
         title={t('transactionOutputs')}
         icon={ArrowUpRight}
+        flush
         action={
           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
             {t('outputsCount', { count: transaction.vout.length })}
           </span>
         }
       >
-        <ul className="space-y-2">
+        <ul className="divide-y">
           {analysis.outputs.map((entry) => (
-            <li
-              key={entry.output.n}
-              className={cn(
-                'rounded-xl p-3',
-                entry.role === 'recipient' ? 'bg-muted/60' : 'bg-muted/30',
-              )}
-            >
+            <li key={entry.output.n} className="transition-colors hover:bg-muted/40">
               <OutputRow entry={entry} t={t} />
             </li>
           ))}
@@ -500,19 +498,26 @@ function ConfirmationMeter({
   )
 }
 
+/** Fixed-width muted index cell shared by input/output rows (e.g. "#0"). */
+function RowIndex({ n }: { n: number }) {
+  return (
+    <span className="w-8 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+      #{n}
+    </span>
+  )
+}
+
 function InputRow({ input, index }: { input: TransactionInput; index: number }) {
   const t = useTranslations('tx')
 
   if (isCoinbaseInput(input)) {
     return (
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-medium">{t('input', { index })}</span>
-          <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-accent-foreground">
-            {t('coinbaseTransaction')}
-          </span>
+      <div className="flex items-center gap-3 px-4 py-3">
+        <RowIndex n={index} />
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="text-sm font-medium">{t('coinbaseTransaction')}</span>
+          <span className="text-xs text-muted-foreground">{t('coinbaseDescription')}</span>
         </div>
-        <p className="text-xs text-muted-foreground">{t('coinbaseDescription')}</p>
       </div>
     )
   }
@@ -522,38 +527,36 @@ function InputRow({ input, index }: { input: TransactionInput; index: number }) 
   const prevAddress = input.prevout?.addresses?.[0]
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium">{t('input', { index })}</span>
-        {input.prevout ? (
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold tabular-nums text-muted-foreground">
-            {formatFair(input.prevout.value)}
+    <div className="flex items-center gap-3 px-4 py-3">
+      <RowIndex n={index} />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        {prevAddress ? (
+          <HashCell value={prevAddress} to="address" lead={16} tail={8} textClassName="font-medium" />
+        ) : (
+          <span className="text-sm text-muted-foreground">
+            {isNullPrev ? t('coinbaseTransaction') : t('fromAddress')}
+          </span>
+        )}
+        {!isNullPrev ? (
+          <span className="inline-flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+            <CornerDownRight className="size-3 shrink-0" />
+            <HashCell
+              value={prevTxid}
+              to="tx"
+              lead={8}
+              tail={6}
+              hideCopy
+              textClassName="text-xs text-muted-foreground hover:text-foreground"
+            />
+            <span className="shrink-0 tabular-nums">#{input.vout}</span>
           </span>
         ) : null}
       </div>
-      {isNullPrev ? (
-        <span className="text-xs text-muted-foreground">{t('coinbaseTransaction')}</span>
-      ) : (
-        <>
-          {prevAddress ? (
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t('fromAddress')}
-              </span>
-              <HashCell value={prevAddress} to="address" full />
-            </div>
-          ) : null}
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t('previousTransaction')}
-            </span>
-            <div className="flex items-center gap-2">
-              <HashCell value={prevTxid} to="tx" />
-              <span className="shrink-0 text-xs text-muted-foreground tabular-nums">#{input.vout}</span>
-            </div>
-          </div>
-        </>
-      )}
+      {input.prevout ? (
+        <span className="shrink-0 text-sm font-semibold tabular-nums">
+          {formatFair(input.prevout.value)}
+        </span>
+      ) : null}
     </div>
   )
 }
@@ -577,45 +580,42 @@ function OutputRow({ entry, t }: { entry: ClassifiedOutput; t: Translate }) {
   const Icon = meta?.icon
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="text-sm font-medium">{t('output', { index: output.n })}</span>
-          {meta ? (
-            <Badge variant={meta.variant} className="gap-1">
-              {Icon ? <Icon /> : null}
-              {t(meta.labelKey)}
-            </Badge>
-          ) : null}
-        </div>
-        <span
-          className={cn(
-            'rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums',
-            deEmphasized ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary',
-          )}
-        >
-          {formatFair(output.value)}
-        </span>
-      </div>
-      <div className="flex flex-col gap-1">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {t('scriptType')}
-        </span>
-        <span className="font-mono text-xs">{output.scriptPubKey.type}</span>
-      </div>
-      {address ? (
-        <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {role === 'change' ? t('changeAddress') : t('address')}
-          </span>
+    <div className="flex items-center gap-3 px-4 py-3">
+      <RowIndex n={output.n} />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        {address ? (
           <HashCell
             value={address}
             to="address"
-            full
-            textClassName={deEmphasized ? 'text-muted-foreground' : undefined}
+            lead={16}
+            tail={8}
+            textClassName={cn('font-medium', deEmphasized && 'text-muted-foreground')}
           />
-        </div>
-      ) : null}
+        ) : (
+          <span className={cn('text-sm', deEmphasized ? 'text-muted-foreground' : 'font-medium')}>
+            {output.scriptPubKey.type}
+          </span>
+        )}
+        {address || meta ? (
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            {address ? <span className="font-mono">{output.scriptPubKey.type}</span> : null}
+            {meta ? (
+              <Badge variant={meta.variant} className="gap-1">
+                {Icon ? <Icon /> : null}
+                {t(meta.labelKey)}
+              </Badge>
+            ) : null}
+          </span>
+        ) : null}
+      </div>
+      <span
+        className={cn(
+          'shrink-0 text-sm font-semibold tabular-nums',
+          deEmphasized ? 'text-muted-foreground' : 'text-primary',
+        )}
+      >
+        {formatFair(output.value)}
+      </span>
     </div>
   )
 }
