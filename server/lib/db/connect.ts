@@ -31,6 +31,14 @@ if (!globalWithMongoose.mongoose) {
 }
 
 async function connectToDatabase() {
+  // Reuse any already-active mongoose connection (readyState 1 = connected),
+  // even one opened outside this module's cache (e.g. an in-memory server in
+  // tests). Without this, a second mongoose.connect() with a different URI
+  // throws, and callers would reconnect needlessly.
+  if (mongoose.connection.readyState === 1) {
+    return mongoose
+  }
+
   if (cached.conn) {
     return cached.conn
   }

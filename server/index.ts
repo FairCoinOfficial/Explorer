@@ -25,6 +25,7 @@ import feeEstimateRouter from './routes/fee-estimate'
 import githubRouter from './routes/github'
 import mcpInfoRouter from './routes/mcp-info'
 import transactionsRouter from './routes/transactions'
+import notificationsRouter from './routes/notifications'
 import { createMcpPostHandler, handleMcpMethodNotAllowed, handleMcpOptions } from './mcp/http'
 import packageJson from '../package.json' with { type: 'json' }
 
@@ -298,6 +299,10 @@ app.use('/api/github', githubRouter)
 
 // MCP server metadata (endpoint + transport + tool catalog) for the /tools/mcp page
 app.use('/api/mcp/info', mcpInfoRouter)
+
+// Push-notification subscriptions (watch-only xpub register/unregister). A write
+// path that touches the DB, so it gets the stricter rate limit like /tx/broadcast.
+app.use('/api/notifications', strictLimiter, notificationsRouter)
 
 app.get('/api/mempool', async (req, res) => {
   try {
