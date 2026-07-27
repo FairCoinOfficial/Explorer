@@ -81,6 +81,15 @@ describe('assessNodeHealth', () => {
     expect(health.status).toBe('ok')
   })
 
+  it('never reports a negative tip age', () => {
+    // PoS blocks are accepted with timestamps slightly ahead of our clock, so a
+    // fresh tip can legitimately be "in the future". Reporting -10s as an age is
+    // just confusing to anyone reading the endpoint.
+    const health = assessNodeHealth({ nodeHeight: 100, tipTime: NOW + 10, peerHeights: [100], now: NOW })
+    expect(health.tipAgeSeconds).toBe(0)
+    expect(health.status).toBe('ok')
+  })
+
   it('never reports a negative lag', () => {
     const health = assessNodeHealth({ nodeHeight: 200, tipTime: FRESH, peerHeights: [100], now: NOW })
     expect(health.lagBlocks).toBe(0)

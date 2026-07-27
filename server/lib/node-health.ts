@@ -54,7 +54,9 @@ export function assessNodeHealth(input: NodeHealthInput): NodeHealth {
   const knownPeerHeights = peerHeights.filter((height) => Number.isFinite(height) && height >= 0)
   const networkHeight = Math.max(nodeHeight, ...knownPeerHeights)
   const lagBlocks = Math.max(0, networkHeight - nodeHeight)
-  const tipAgeSeconds = now - tipTime
+  // PoS blocks are accepted with timestamps slightly ahead of local time, so a
+  // fresh tip can sit in the future; a negative "age" is meaningless to report.
+  const tipAgeSeconds = Math.max(0, now - tipTime)
   const tipIsCold = tipAgeSeconds > STALE_TIP_SECONDS
 
   if (lagBlocks > 0) {
