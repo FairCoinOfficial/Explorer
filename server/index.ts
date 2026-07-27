@@ -16,6 +16,7 @@ import { handleRouteError, parseNetwork, parseLimit, parseOffset, parseBlockOffs
 import { computeCirculatingSupply, currentBlockReward } from '../shared/supply'
 import { logger } from './lib/logger'
 import { toPublicNetworkInfo } from './lib/network-info'
+import { assessNodeHealth } from './lib/node-health'
 import { rpcWithNetwork } from '@fairco.in/rpc-client'
 import priceRouter from './routes/price'
 import statsHistoryRouter from './routes/stats-history'
@@ -473,6 +474,45 @@ app.get('/api/peers', async (req, res) => {
     res.json({ peers, network })
   } catch (error) {
     handleRouteError(res, 'Error fetching peer info', error)
+  }
+})
+
+/**
+ * Is the tip we are serving still the chain's tip?
+ *
+ * Every other endpoint answers 200 with whatever height the node reports, which
+ * is indistinguishable from a healthy answer when the node has silently stopped
+ * following the chain. This is the one endpoint that compares our height against
+ * what our peers claim and says so out loud — and it answers 503 when we are
+ * demonstrably behind, so an uptime check catches it without a human noticing.
+ */
+app.get('/api/health', async (req, res) => {
+  const network = parseNetwork(req.query.network)
+  try {
+    // Short TTLs: a health probe that reads a minute-old cache cannot detect a
+    // node that stopped a minute ago.
+    const [nodeHeight, tipHash, peers] = await Promise.all([
+      blockCache.get<number>('getblockcount', [], { network, ttl: 10 }),
+      blockCache.get<string>('getbestblockhash', [], { network, ttl: 10 }),
+      blockCache
+        .get<Array<{ synced_headers?: number; startingheight?: number }>>('getpeerinfo', [], { network, ttl: 20 })
+        .catch(() => []),
+    ])
+    const tip = await blockCache.getBlock(tipHash, network, true)
+    const health = assessNodeHealth({
+      nodeHeight,
+      tipTime: Number(tip?.time ?? 0),
+      peerHeights: (Array.isArray(peers) ? peers : []).flatMap((peer) => [
+        Number(peer?.synced_headers ?? -1),
+        Number(peer?.startingheight ?? -1),
+      ]),
+      now: Math.floor(Date.now() / 1000),
+    })
+    res.status(health.status === 'stalled' ? 503 : 200).json({ ...health, network })
+  } catch (error) {
+    logger.error('Health check failed:', error)
+    // An unreachable node is never "ok" — fail loud rather than answer 200.
+    res.status(503).json({ status: 'unknown', error: 'node unreachable', network })
   }
 })
 
