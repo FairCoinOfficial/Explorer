@@ -1,4 +1,9 @@
 {
+  "nodeHealth.stalled": "This explorer's node has stopped following the chain. The data shown is out of date.",
+  "nodeHealth.lagging": "This explorer's node is catching up. Recent blocks may be missing.",
+  "nodeHealth.unknown": "Cannot confirm this explorer's node is on the chain tip. The data shown may be out of date.",
+  "nodeHealth.unreachable": "Cannot check whether this explorer's data is current.",
+  "nodeHealth.lagSuffix": "({blocks} blocks behind)",
   "nav.home": "Home",
   "nav.search": "Search",
   "nav.blocks": "Blocks",
