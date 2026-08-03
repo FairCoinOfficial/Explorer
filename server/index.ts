@@ -182,11 +182,12 @@ app.use(express.json({ limit: '64kb' }))
 // Apply the global rate limit to the API surface only (static assets are exempt).
 app.use('/api', globalLimiter)
 
-// The recent-transactions feed (plural) must be mounted BEFORE the singular
-// `/api/transaction` limiter below: under Express 5 that mount prefix-matches
-// `/api/transactions` and breaks its routing (the request fell through to the
-// SPA fallback), so register the terminal plural router first.
-app.use('/api/transactions', transactionsRouter)
+// The recent-transactions feed (plural) can fan out to daemon transaction
+// lookups when enriching amounts, so protect it with the same strict limiter as
+// other RPC-backed lookup paths. Keep the terminal plural router mounted before
+// the singular `/api/transaction` middleware so Express does not route the feed
+// through the SPA fallback.
+app.use('/api/transactions', strictLimiter, transactionsRouter)
 
 // Stricter limits on the expensive RPC fan-out paths (search, transaction and
 // address lookups), the broadcast write path, and the public MCP endpoint, which

@@ -105,11 +105,19 @@ router.get("/", async (req: Request, res: Response) => {
     const page = combined.slice(offset, offset + limit);
 
     // Enrich only the page (not every scanned block's txs) with the total
-    // output value so the list can show an amount, keeping RPC load bounded.
+    // output value so the list can show an amount. This feed only needs vout
+    // totals, not input prevouts, so share a zero lookup budget across the page
+    // to avoid multiplying parent-transaction RPC/cache lookups per item.
+    const prevoutLookupBudget = { remaining: 0 };
     const enrichedPage = await Promise.all(
       page.map(async (item) => {
         try {
-          const tx = await blockCache.getTransaction(item.txid, network, true);
+          const tx = await blockCache.getTransaction(
+            item.txid,
+            network,
+            true,
+            { prevoutLookupBudget },
+          );
           const vout = (tx as { vout?: Array<{ value?: number }> }).vout;
           if (!Array.isArray(vout)) return item;
           const amount = vout.reduce(
