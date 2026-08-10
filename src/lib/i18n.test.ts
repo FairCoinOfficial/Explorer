@@ -10,7 +10,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { getLocale, setLocale, useTranslations } from './i18n'
+import { getLocale, setLocale, SUPPORTED_LOCALES, useTranslations } from './i18n'
 
 describe('useTranslations', () => {
   beforeEach(() => {
@@ -68,6 +68,11 @@ describe('useTranslations', () => {
 })
 
 describe('setLocale / getLocale', () => {
+  it('offers at least 15 languages including Catalan', () => {
+    expect(SUPPORTED_LOCALES.length).toBeGreaterThanOrEqual(15)
+    expect(SUPPORTED_LOCALES.some(({ code }) => code === 'ca')).toBe(true)
+  })
+
   it('updates the active locale and propagates to <html lang>', () => {
     act(() => setLocale('fr'))
     expect(getLocale()).toBe('fr')
@@ -79,5 +84,12 @@ describe('setLocale / getLocale', () => {
     const before = document.documentElement.lang
     setLocale('en')
     expect(document.documentElement.lang).toBe(before)
+  })
+
+  it('sets right-to-left direction for Arabic and Urdu', () => {
+    setLocale('ar')
+    expect(document.documentElement.dir).toBe('rtl')
+    setLocale('ca')
+    expect(document.documentElement.dir).toBe('ltr')
   })
 })

@@ -1,5 +1,5 @@
 import { formatDistanceToNow, type Locale as DateFnsLocale } from 'date-fns'
-import { enUS, es, fr, de, ru, zhCN, ja, ko } from 'date-fns/locale'
+import { enUS, es, fr, de, ru, zhCN, ja, ko, ca, hi, ar, bn, pt, id, tr, vi } from 'date-fns/locale'
 import { useLocale, type Locale } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
@@ -18,6 +18,15 @@ const DATE_FNS_LOCALES: Record<Locale, DateFnsLocale> = {
   zh: zhCN,
   ja,
   ko,
+  ca,
+  hi,
+  ar,
+  bn,
+  pt,
+  id,
+  ur: ar,
+  tr,
+  vi,
 }
 
 /**
