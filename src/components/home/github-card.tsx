@@ -1,6 +1,6 @@
 import { Github, Star, Download, Tag } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
-import { enUS, es, fr, de, ru, zhCN, ja, ko } from 'date-fns/locale'
+import { enUS, es, fr, de, ru, zhCN, ja, ko, ca, hi, ar, bn, pt, id, tr, vi } from 'date-fns/locale'
 import { useLocale, useTranslations, type Locale } from '@/lib/i18n'
 import { useGithubStats, type GithubReleaseAsset } from '@/hooks/use-github-stats'
 import { ModuleCard } from '@/components/home/module-card'
@@ -17,6 +17,15 @@ const DATE_FNS_LOCALES: Record<Locale, typeof enUS> = {
   zh: zhCN,
   ja,
   ko,
+  ca,
+  hi,
+  ar,
+  bn,
+  pt,
+  id,
+  ur: ar,
+  tr,
+  vi,
 }
 
 const REPO_URL = 'https://github.com/FairCoinOfficial/FairCoin'

@@ -8,8 +8,17 @@ import ru from '@/messages/ru.json'
 import zh from '@/messages/zh.json'
 import ja from '@/messages/ja.json'
 import ko from '@/messages/ko.json'
+import ca from '@/messages/ca.json'
+import hi from '@/messages/hi.json'
+import ar from '@/messages/ar.json'
+import bn from '@/messages/bn.json'
+import pt from '@/messages/pt.json'
+import id from '@/messages/id.json'
+import ur from '@/messages/ur.json'
+import tr from '@/messages/tr.json'
+import vi from '@/messages/vi.json'
 
-export type Locale = 'en' | 'es' | 'fr' | 'de' | 'ru' | 'zh' | 'ja' | 'ko'
+export type Locale = 'en' | 'es' | 'fr' | 'de' | 'ru' | 'zh' | 'ja' | 'ko' | 'ca' | 'hi' | 'ar' | 'bn' | 'pt' | 'id' | 'ur' | 'tr' | 'vi'
 
 export interface LocaleConfig {
   code: Locale
@@ -26,6 +35,15 @@ export const SUPPORTED_LOCALES: LocaleConfig[] = [
   { code: 'zh', name: 'Chinese', nativeName: '中文' },
   { code: 'ja', name: 'Japanese', nativeName: '日本語' },
   { code: 'ko', name: 'Korean', nativeName: '한국어' },
+  { code: 'ca', name: 'Catalan', nativeName: 'Català' },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
+  { code: 'ar', name: 'Arabic', nativeName: 'العربية' },
+  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' },
+  { code: 'pt', name: 'Portuguese', nativeName: 'Português' },
+  { code: 'id', name: 'Indonesian', nativeName: 'Bahasa Indonesia' },
+  { code: 'ur', name: 'Urdu', nativeName: 'اردو' },
+  { code: 'tr', name: 'Turkish', nativeName: 'Türkçe' },
+  { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt' },
 ]
 
 const STORAGE_KEY = 'faircoin-locale'
@@ -42,6 +60,22 @@ const messagesByLocale: Record<Locale, Messages> = {
   zh: zh as Messages,
   ja: ja as Messages,
   ko: ko as Messages,
+  ca: ca as Messages,
+  hi: hi as Messages,
+  ar: ar as Messages,
+  bn: bn as Messages,
+  pt: pt as Messages,
+  id: id as Messages,
+  ur: ur as Messages,
+  tr: tr as Messages,
+  vi: vi as Messages,
+}
+
+const RTL_LOCALES = new Set<Locale>(['ar', 'ur'])
+
+function syncDocumentLanguage(locale: Locale): void {
+  document.documentElement.lang = locale
+  document.documentElement.dir = RTL_LOCALES.has(locale) ? 'rtl' : 'ltr'
 }
 
 // ── External store for locale (allows all components to react to changes) ──
@@ -55,7 +89,7 @@ let currentLocale: Locale = (() => {
 
 // Keep <html lang> in sync with the active locale (a11y + SEO).
 if (typeof document !== 'undefined') {
-  document.documentElement.lang = currentLocale
+  syncDocumentLanguage(currentLocale)
 }
 
 const listeners = new Set<() => void>()
@@ -79,7 +113,7 @@ export function setLocale(locale: Locale): void {
   if (locale === currentLocale) return
   currentLocale = locale
   localStorage.setItem(STORAGE_KEY, locale)
-  document.documentElement.lang = locale
+  syncDocumentLanguage(locale)
   emitChange()
 }
 

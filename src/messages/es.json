@@ -1073,5 +1073,6 @@
   "masternodes.list.unknownStatus": "Unknown",
   "stats.totalTransactionsEstimated": "Total Transactions (estimated)",
   "stats.mainnetHistoryOnly": "Sparkline history is sampled for mainnet only. Live stats above still reflect the selected network.",
-  "tx.inMempool": "In mempool"
+  "tx.inMempool": "In mempool",
+  "common.languageChanged": "Language changed to {language}"
 }
