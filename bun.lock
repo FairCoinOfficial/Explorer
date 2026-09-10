@@ -6,7 +6,7 @@
       "name": "faircoin-explorer",
       "dependencies": {
         "@base-ui/react": "^1.1.0",
-        "@fairco.in/core": "0.1.1",
+        "@fairco.in/core": "0.4.0",
         "@fairco.in/rpc-client": "^0.1.1",
         "@hugeicons/core-free-icons": "^3.1.1",
         "@hugeicons/react": "^1.1.4",
@@ -237,7 +237,7 @@
 
     "@exodus/bytes": ["@exodus/bytes@1.15.1", "", { "peerDependencies": { "@noble/hashes": "^1.8.0 || ^2.0.0" }, "optionalPeers": ["@noble/hashes"] }, "sha512-S6mL0yNB/Abt9Ei4tq8gDhcczc4S3+vQ4ra7vxnAf+YHC02srtqxKKZghx2Dq6p0e66THKwR6r8N6P95wEty7Q=="],
 
-    "@fairco.in/core": ["@fairco.in/core@0.1.1", "", { "dependencies": { "@noble/hashes": "^1.8.0", "@noble/secp256k1": "^2.2.3", "@scure/bip32": "^1.7.0", "@scure/bip39": "^1.6.0", "bs58": "^6.0.0" } }, "sha512-xdIrAlr3Yyp01XbsQP4yWeFGbyYEzT72x0QttV0q6gvv8uKoByGWNkYbaVLS6f6ZwW7KQu8oXoPd0cWRJLXf5w=="],
+    "@fairco.in/core": ["@fairco.in/core@0.4.0", "", { "dependencies": { "@noble/hashes": "^1.8.0", "@noble/secp256k1": "^2.2.3", "@scure/bip32": "^1.7.0", "@scure/bip39": "^1.6.0", "bs58": "^6.0.0" } }, "sha512-+K1cBBg/eF+jpSsirbYrTZs2B1HPzjqhwgLjqbyvY5KkY61bRnOmkG0khw1zUADzVcAMeHYB2x5cirxIjaJUfw=="],
 
     "@fairco.in/rpc-client": ["@fairco.in/rpc-client@0.1.1", "", {}, "sha512-U0z0ctDuQhuqlgrQwMIOPzEbWZYGLuJEDCG9H+sud2PJ2m/thRfC2tnm8wjSiGSltIxzyUwqEYxFSCd3mtaKRA=="],
 
