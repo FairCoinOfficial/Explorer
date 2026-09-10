@@ -71,12 +71,6 @@ export function McpContent() {
       <DetailHeader
         title={t('title')}
         subtitle={t('subtitle')}
-        action={
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-            <Plug className="size-3" />
-            MCP
-          </span>
-        }
       />
 
       {/* Intro */}

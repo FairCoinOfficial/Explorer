@@ -1,22 +1,20 @@
 import { Link } from 'react-router-dom'
 import { Receipt } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
-import { useLatestTransactions, type RecentBlock } from '@/hooks/use-recent-blocks'
+import { useRecentTransactions } from '@/hooks/use-recent-transactions'
 import { Skeleton } from '@/components/ui/skeleton'
-import { CopyButton } from '@/components/copy-button'
-import { RelativeTime } from '@/components/detail/relative-time'
-import { shortHash } from '@/lib/format'
+import { TransactionRow } from '@/components/transaction-row'
 
 interface LatestTxListProps {
-  blocks: RecentBlock[] | undefined
-  isLoading: boolean
-  isError: boolean
   max?: number
 }
 
-export function LatestTxList({ blocks, isLoading, isError, max = 20 }: LatestTxListProps) {
+export function LatestTxList({ max = 20 }: LatestTxListProps) {
   const t = useTranslations('home')
-  const transactions = useLatestTransactions(blocks, max)
+  // Use the recent-transactions feed (includes the total output amount) rather
+  // than deriving bare txids from recent blocks, so each row can show a value.
+  const { data, isLoading, isError } = useRecentTransactions(max)
+  const transactions = data?.transactions ?? []
 
   return (
     <div className="flex h-full flex-col rounded-2xl border bg-muted/30">
@@ -42,36 +40,7 @@ export function LatestTxList({ blocks, isLoading, isError, max = 20 }: LatestTxL
         ) : (
           <ul className="divide-y">
             {transactions.map((tx) => (
-              <li
-                key={tx.txid}
-                className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40"
-              >
-                <div className="flex min-w-0 flex-1 items-center gap-2">
-                  <Link
-                    to={`/tx/${tx.txid}`}
-                    className="truncate font-mono text-sm font-medium text-primary hover:underline"
-                  >
-                    {shortHash(tx.txid, 10, 8)}
-                  </Link>
-                  <CopyButton
-                    text={tx.txid}
-                    className="size-6 shrink-0 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
-                  />
-                </div>
-
-                <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs">
-                  <Link
-                    to={`/block/${tx.blockHeight}`}
-                    className="font-medium text-muted-foreground tabular-nums hover:text-foreground"
-                  >
-                    #{tx.blockHeight.toLocaleString()}
-                  </Link>
-                  <RelativeTime
-                    timestamp={tx.blockTime}
-                    className="text-muted-foreground"
-                  />
-                </div>
-              </li>
+              <TransactionRow key={`${tx.txid}-${tx.blockHeight ?? 'mempool'}`} tx={tx} />
             ))}
           </ul>
         )}

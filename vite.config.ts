@@ -10,6 +10,8 @@ import path from 'path'
 // win is the per-route code-splitting from React.lazy() in src/App.tsx (the 14
 // non-home pages, and recharts via the lazy /stats page, stay out of the home).
 
+const apiTarget = process.env.VITE_API_TARGET || 'http://localhost:8080'
+
 export default defineConfig({
   plugins: [tailwindcss(), react()],
   resolve: {
@@ -28,7 +30,13 @@ export default defineConfig({
       // Override target with VITE_API_TARGET to point at a remote API (e.g. prod)
       // when no local FairCoin node is running.
       // Not used by the production build (Express serves the static dist).
-      '/api': process.env.VITE_API_TARGET || 'http://localhost:8080',
+      // `ws: true` upgrades `/api/ws` so the browser socket reaches the API in
+      // local dev instead of silently falling back to 30s HTTP polling.
+      '/api': {
+        target: apiTarget,
+        changeOrigin: true,
+        ws: true,
+      },
     },
   },
 })

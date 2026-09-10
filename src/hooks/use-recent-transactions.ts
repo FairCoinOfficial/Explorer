@@ -1,5 +1,6 @@
 import { useQuery, keepPreviousData, type UseQueryResult } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
+import { useLiveRefetchInterval } from '@/contexts/blockchain-context'
 
 export interface RecentTransaction {
   txid: string
@@ -8,6 +9,8 @@ export interface RecentTransaction {
   unconfirmed: boolean
   size?: number
   fee?: number
+  /** Total output value (FAIR). Provided by the /api/transactions feed. */
+  amount?: number
 }
 
 export interface RecentTransactionsData {
@@ -41,6 +44,7 @@ export function useRecentTransactions(
   includeMempool = true,
 ): UseQueryResult<RecentTransactionsData> {
   const { currentNetwork } = useNetwork()
+  const liveInterval = useLiveRefetchInterval()
 
   return useQuery<RecentTransactionsData>({
     queryKey: ['recent-transactions', currentNetwork, limit, offset, includeMempool],
@@ -68,7 +72,7 @@ export function useRecentTransactions(
       }
     },
     placeholderData: keepPreviousData,
-    refetchInterval: offset === 0 ? 30_000 : false,
+    refetchInterval: offset === 0 ? liveInterval : false,
     retry: 1,
   })
 }

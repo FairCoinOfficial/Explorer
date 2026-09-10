@@ -1,9 +1,5 @@
 import {
   AlertTriangle,
-  ArrowDownLeft,
-  ArrowUpRight,
-  ChevronLeft,
-  ChevronRight,
   Download,
   Hash,
   Info,
@@ -18,7 +14,7 @@ import { Link } from 'react-router-dom'
 import { useTranslations } from '@/lib/i18n'
 import { useNetwork } from '@/contexts/network-context'
 import { useAddress, useAddressTransactions, type AddressTransaction } from '@/hooks/use-address'
-import { formatNumber } from '@/lib/format'
+import { formatFair, formatNumber } from '@/lib/format'
 import { downloadCsv } from '@/lib/download-csv'
 import { getKnownAddressLabel } from '@/lib/known-addresses'
 import { DetailBreadcrumbs } from '@/components/detail/detail-breadcrumbs'
@@ -27,13 +23,11 @@ import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
 import { HashCell } from '@/components/detail/hash-cell'
 import { RelativeTime } from '@/components/detail/relative-time'
+import { EmptyState } from '@/components/detail/empty-state'
+import { Pagination } from '@/components/detail/pagination'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-
-function formatFair(value: number): string {
-  return `${value.toFixed(8)} FAIR`
-}
 
 export function AddressContent({ address }: { address: string }) {
   const t = useTranslations('address')
@@ -86,12 +80,6 @@ export function AddressContent({ address }: { address: string }) {
         subtitle={t('subtitle')}
         onRefresh={() => void refetch()}
         isRefreshing={isFetching}
-        action={
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-            <Receipt className="size-3" />
-            {t('transactionsCount', { count: info.txCount })}
-          </span>
-        }
       />
 
       {/* Hero: balance as the confident primary figure + address identity. */}
@@ -112,10 +100,6 @@ export function AddressContent({ address }: { address: string }) {
               </span>
             ) : null}
           </div>
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
-            <Hash className="size-3" />
-            {t('transactionsCount', { count: info.txCount })}
-          </span>
         </header>
 
         <div className="flex items-baseline gap-2">
@@ -127,21 +111,7 @@ export function AddressContent({ address }: { address: string }) {
           </span>
         </div>
 
-        {/* Received / sent flow summary, inline under the hero balance. */}
-        <dl className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
-          <div className="flex items-center gap-1.5">
-            <TrendingUp className="size-3.5 text-primary" />
-            <dt className="text-muted-foreground">{t('totalReceived')}</dt>
-            <dd className="font-semibold tabular-nums">{formatFair(info.totalReceived)}</dd>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <TrendingDown className="size-3.5 text-muted-foreground" />
-            <dt className="text-muted-foreground">{t('totalSent')}</dt>
-            <dd className="font-semibold tabular-nums">{formatFair(info.totalSent)}</dd>
-          </div>
-        </dl>
-
-        <div className="mt-3">
+        <div className="mt-4">
           <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             {t('address')}
           </span>
@@ -216,7 +186,7 @@ function AddressTransactionsSection({
               {t('exportCsv')}
             </Button>
           ) : null}
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {t('transactionsCount', { count: total })}
           </span>
         </div>
@@ -229,13 +199,11 @@ function AddressTransactionsSection({
           ))}
         </div>
       ) : transactions.length === 0 ? (
-        <div className="flex min-h-[140px] flex-col items-center justify-center gap-2 px-4 py-8 text-center">
-          <span className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <Receipt className="size-5" />
-          </span>
-          <p className="text-sm font-medium">{t('noTransactions')}</p>
-          <p className="text-xs text-muted-foreground">{t('noTransactionsDesc')}</p>
-        </div>
+        <EmptyState
+          icon={Receipt}
+          title={t('noTransactions')}
+          description={t('noTransactionsDesc')}
+        />
       ) : (
         <>
           <ul className="divide-y">
@@ -244,29 +212,15 @@ function AddressTransactionsSection({
             ))}
           </ul>
           {totalPages > 1 ? (
-            <div className="flex items-center justify-between border-t px-4 py-2.5">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                <ChevronLeft className="size-4" />
-                {t('previous')}
-              </Button>
-              <span className="text-xs tabular-nums text-muted-foreground">
-                {t('pageOf', { page, total: totalPages })}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              >
-                {t('next')}
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPrev={() => setPage((p) => Math.max(1, p - 1))}
+              onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+              label={t('pageOf', { page, total: totalPages })}
+              prevLabel={t('previous')}
+              nextLabel={t('next')}
+            />
           ) : null}
         </>
       )}
@@ -285,18 +239,9 @@ function AddressTransactionRow({
   const confirmed = tx.confirmations > 0
 
   return (
-    <li className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40">
-      <span
-        className={cn(
-          'flex size-8 shrink-0 items-center justify-center rounded-full',
-          received ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
-        )}
-      >
-        {received ? <ArrowDownLeft className="size-4" /> : <ArrowUpRight className="size-4" />}
-      </span>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <HashCell value={tx.txid} to="tx" lead={10} tail={8} />
+    <li className="group flex items-center gap-4 px-4 py-2.5 transition-colors hover:bg-muted/40">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <HashCell value={tx.txid} to="tx" fill hideCopy textClassName="font-medium" />
         <span className="text-xs text-muted-foreground">
           <RelativeTime timestamp={tx.time} />
           {' · '}
@@ -312,7 +257,7 @@ function AddressTransactionRow({
           )}
         >
           {received ? '+' : '−'}
-          {Math.abs(tx.amount).toFixed(8)}
+          {formatFair(Math.abs(tx.amount))}
         </span>
         {tx.blockHeight ? (
           <Link

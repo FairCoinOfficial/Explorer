@@ -1,5 +1,6 @@
-import { useQuery, type UseQueryResult } from '@tanstack/react-query'
+import { useQuery, keepPreviousData, type UseQueryResult } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
+import { useLiveRefetchInterval } from '@/contexts/blockchain-context'
 
 /**
  * FairCoin v3.0.0 protocol constants. The masternode collateral and reward split
@@ -43,6 +44,7 @@ const EMPTY_STATS: MasternodeStats = {
 
 export function useMasternodes(): UseQueryResult<MasternodeStats> {
   const { currentNetwork } = useNetwork()
+  const refetchInterval = useLiveRefetchInterval()
 
   return useQuery<MasternodeStats>({
     queryKey: ['masternodes', currentNetwork],
@@ -56,7 +58,77 @@ export function useMasternodes(): UseQueryResult<MasternodeStats> {
       const data = (await response.json()) as MasternodesResponse
       return { ...EMPTY_STATS, ...data.stats }
     },
-    refetchInterval: 30_000,
+    refetchInterval,
+    retry: 1,
+  })
+}
+
+export interface MasternodeEntry {
+  txid: string
+  outidx: number
+  address: string
+  protocol: number
+  status: string
+  activeTime: number
+  lastSeen: number
+  lastPaid: number
+  rank: number
+}
+
+export interface MasternodeListPage {
+  masternodes: MasternodeEntry[]
+  stats: MasternodeStats
+  total: number
+  limit: number
+  offset: number
+}
+
+interface MasternodeListResponse {
+  masternodes: MasternodeEntry[]
+  stats?: Partial<MasternodeStats>
+  network: string
+  pagination: { total: number; limit: number; offset: number }
+}
+
+const DEFAULT_LIST_LIMIT = 25
+
+/**
+ * Paginated masternode rows from `GET /api/masternodes?include=list`.
+ * Stats-only callers should keep using {@link useMasternodes}.
+ */
+export function useMasternodeList(
+  limit: number = DEFAULT_LIST_LIMIT,
+  offset: number = 0,
+): UseQueryResult<MasternodeListPage> {
+  const { currentNetwork } = useNetwork()
+  const refetchInterval = useLiveRefetchInterval()
+
+  return useQuery<MasternodeListPage>({
+    queryKey: ['masternode-list', currentNetwork, limit, offset],
+    queryFn: async (): Promise<MasternodeListPage> => {
+      const params = new URLSearchParams({
+        network: currentNetwork,
+        include: 'list',
+        limit: String(limit),
+        offset: String(offset),
+      })
+      const response = await fetch(`/api/masternodes?${params}`, {
+        headers: { Accept: 'application/json' },
+      })
+      if (!response.ok) {
+        throw new Error(`Failed to load masternode list (${response.status})`)
+      }
+      const data = (await response.json()) as MasternodeListResponse
+      return {
+        masternodes: data.masternodes ?? [],
+        stats: { ...EMPTY_STATS, ...data.stats },
+        total: data.pagination?.total ?? 0,
+        limit: data.pagination?.limit ?? limit,
+        offset: data.pagination?.offset ?? offset,
+      }
+    },
+    placeholderData: keepPreviousData,
+    refetchInterval,
     retry: 1,
   })
 }

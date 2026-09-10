@@ -4,18 +4,19 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   CheckCircle,
-  CheckCircle2,
+  Clock,
   Coins,
+  CornerDownRight,
   Database,
   FileText,
   Hammer,
   Home,
+  Inbox,
   Info,
   Receipt,
   Send,
   Sprout,
   Undo2,
-  XCircle,
 } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
 import {
@@ -26,7 +27,8 @@ import {
   type TransactionAnalysis,
   type TransactionInput,
 } from '@/hooks/use-transaction'
-import { formatNumber } from '@/lib/format'
+import { useMempool } from '@/hooks/use-mempool'
+import { formatFair, formatNumber } from '@/lib/format'
 import { DetailBreadcrumbs } from '@/components/detail/detail-breadcrumbs'
 import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
@@ -34,6 +36,8 @@ import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
 import { InfoGrid, InfoRow } from '@/components/detail/info-row'
 import { HashCell } from '@/components/detail/hash-cell'
 import { RelativeTime } from '@/components/detail/relative-time'
+import { ConfirmationMeter } from '@/components/detail/confirmation-meter'
+import { RowIndex } from '@/components/detail/row-index'
 import { CopyButton } from '@/components/copy-button'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -43,16 +47,6 @@ import { cn } from '@/lib/utils'
 const ZERO_HASH = '0000000000000000000000000000000000000000000000000000000000000000'
 
 type Translate = (key: string, params?: Record<string, string | number>) => string
-
-/** Confirmations at which a transaction is treated as fully settled for the meter. */
-const MATURE_CONFIRMATIONS = 100
-
-/** Gradient fill for the confirmation meter: brand primary → bright accent. */
-const PROGRESS_GRADIENT = 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))'
-
-function formatFair(value: number): string {
-  return `${value.toFixed(8)} FAIR`
-}
 
 /** The headline figure + framing the hero shows for a given transaction kind. */
 interface HeroDescriptor {
@@ -146,12 +140,57 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
   )
 }
 
+type TxStatus = 'confirmed' | 'mempool' | 'unconfirmed'
+
+function resolveTxStatus(
+  transaction: { confirmations?: number; txid: string },
+  mempoolTxs: { txid: string }[] | undefined,
+): TxStatus {
+  if ((transaction.confirmations ?? 0) > 0) return 'confirmed'
+  if (mempoolTxs?.some((entry) => entry.txid === transaction.txid)) return 'mempool'
+  return 'unconfirmed'
+}
+
+function TxStatusBadge({
+  status,
+  t,
+  confirmedLabel,
+}: {
+  status: TxStatus
+  t: Translate
+  confirmedLabel: string
+}) {
+  if (status === 'confirmed') {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+        <CheckCircle className="size-3.5" />
+        {confirmedLabel}
+      </span>
+    )
+  }
+  if (status === 'mempool') {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+        <Inbox className="size-3.5" />
+        {t('inMempool')}
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
+      <Clock className="size-3.5" />
+      {t('unconfirmed')}
+    </span>
+  )
+}
+
 export function TransactionContent({ txid }: { txid: string }) {
   const t = useTranslations('tx')
   const common = useTranslations('common')
   const nav = useTranslations('nav')
   const navigate = useNavigate()
   const { data: transaction, isLoading, isError, error, refetch, isFetching } = useTransaction(txid)
+  const { data: mempool } = useMempool()
 
   if (isLoading) {
     return <TransactionSkeleton />
@@ -202,7 +241,7 @@ export function TransactionContent({ txid }: { txid: string }) {
   }
 
   const confirmations = transaction.confirmations ?? 0
-  const confirmed = confirmations > 0
+  const status = resolveTxStatus(transaction, mempool?.transactions)
   const analysis = analyzeTransaction(transaction)
   const hero = describeHero(analysis, t)
   const changeTotal = analysis.outputs
@@ -237,15 +276,7 @@ export function TransactionContent({ txid }: { txid: string }) {
             </span>
             <h3 className="text-sm font-semibold tracking-tight">{hero.title}</h3>
           </div>
-          <span
-            className={cn(
-              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
-              confirmed ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive',
-            )}
-          >
-            {confirmed ? <CheckCircle className="size-3" /> : <XCircle className="size-3" />}
-            {confirmed ? common('confirmed') : t('unconfirmed')}
-          </span>
+          <TxStatusBadge status={status} t={t} confirmedLabel={common('confirmed')} />
         </header>
 
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -351,45 +382,42 @@ export function TransactionContent({ txid }: { txid: string }) {
         </div>
       </SectionCard>
 
-      {/* Inputs */}
+      {/* Inputs — compact divided rows: source address leads, the spent outpoint
+          sits under it as a subordinate reference, value is right-aligned. */}
       <SectionCard
         title={t('transactionInputs')}
         icon={ArrowDownLeft}
+        flush
         action={
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {t('inputsCount', { count: transaction.vin.length })}
           </span>
         }
       >
-        <ul className="space-y-2">
+        <ul className="divide-y">
           {transaction.vin.map((input, index) => (
-            <li key={index} className="rounded-xl bg-muted/60 p-3">
+            <li key={index} className="transition-colors hover:bg-muted/40">
               <InputRow input={input} index={index} />
             </li>
           ))}
         </ul>
       </SectionCard>
 
-      {/* Outputs — change/reward outputs are de-emphasized and badged so the real
-          recipient output(s) stand out. */}
+      {/* Outputs — same compact rows; change/reward outputs are de-emphasized (muted
+          value + badge) so the real recipient output(s) stand out. */}
       <SectionCard
         title={t('transactionOutputs')}
         icon={ArrowUpRight}
+        flush
         action={
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {t('outputsCount', { count: transaction.vout.length })}
           </span>
         }
       >
-        <ul className="space-y-2">
+        <ul className="divide-y">
           {analysis.outputs.map((entry) => (
-            <li
-              key={entry.output.n}
-              className={cn(
-                'rounded-xl p-3',
-                entry.role === 'recipient' ? 'bg-muted/60' : 'bg-muted/30',
-              )}
-            >
+            <li key={entry.output.n} className="transition-colors hover:bg-muted/40">
               <OutputRow entry={entry} t={t} />
             </li>
           ))}
@@ -412,68 +440,17 @@ export function TransactionContent({ txid }: { txid: string }) {
   )
 }
 
-/**
- * Gradient confirmation meter mirroring the home supply bar: a thin track that
- * fills primary→accent and caps at {@link MATURE_CONFIRMATIONS}.
- */
-function ConfirmationMeter({
-  confirmations,
-  label,
-  className,
-}: {
-  confirmations: number
-  label: string
-  className?: string
-}) {
-  const fraction = Math.min(Math.max(confirmations, 0) / MATURE_CONFIRMATIONS, 1)
-  const fillWidth = confirmations > 0 ? Math.max(fraction * 100, 4) : 0
-  const percent = Math.round(fraction * 1000) / 10
-
-  return (
-    <div className={cn('space-y-1.5', className)}>
-      <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-        <span className="inline-flex items-center gap-1">
-          <CheckCircle2 className="size-3" />
-          {label}
-        </span>
-        <span className="tabular-nums">
-          {formatNumber(confirmations)} / {formatNumber(MATURE_CONFIRMATIONS)}
-        </span>
-      </div>
-      <div
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={percent}
-        aria-label={label}
-        className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted"
-      >
-        <div
-          className="relative h-full rounded-full transition-[width] duration-500 ease-out"
-          style={{ width: `${fillWidth}%`, backgroundImage: PROGRESS_GRADIENT }}
-        >
-          {confirmations > 0 ? (
-            <span className="absolute inset-y-0 right-0 w-1.5 rounded-full bg-accent" aria-hidden />
-          ) : null}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function InputRow({ input, index }: { input: TransactionInput; index: number }) {
   const t = useTranslations('tx')
 
   if (isCoinbaseInput(input)) {
     return (
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-medium">{t('input', { index })}</span>
-          <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-accent-foreground">
-            {t('coinbaseTransaction')}
-          </span>
+      <div className="flex items-center gap-3 px-4 py-3">
+        <RowIndex n={index} />
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="text-sm font-medium">{t('coinbaseTransaction')}</span>
+          <span className="text-xs text-muted-foreground">{t('coinbaseDescription')}</span>
         </div>
-        <p className="text-xs text-muted-foreground">{t('coinbaseDescription')}</p>
       </div>
     )
   }
@@ -483,38 +460,36 @@ function InputRow({ input, index }: { input: TransactionInput; index: number }) 
   const prevAddress = input.prevout?.addresses?.[0]
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium">{t('input', { index })}</span>
-        {input.prevout ? (
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold tabular-nums text-muted-foreground">
-            {formatFair(input.prevout.value)}
+    <div className="flex items-center gap-3 px-4 py-3">
+      <RowIndex n={index} />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        {prevAddress ? (
+          <HashCell value={prevAddress} to="address" lead={16} tail={8} textClassName="font-medium" />
+        ) : (
+          <span className="text-sm text-muted-foreground">
+            {isNullPrev ? t('coinbaseTransaction') : t('fromAddress')}
+          </span>
+        )}
+        {!isNullPrev ? (
+          <span className="inline-flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+            <CornerDownRight className="size-3 shrink-0" />
+            <HashCell
+              value={prevTxid}
+              to="tx"
+              lead={8}
+              tail={6}
+              hideCopy
+              textClassName="text-xs text-muted-foreground hover:text-foreground"
+            />
+            <span className="shrink-0 tabular-nums">#{input.vout}</span>
           </span>
         ) : null}
       </div>
-      {isNullPrev ? (
-        <span className="text-xs text-muted-foreground">{t('coinbaseTransaction')}</span>
-      ) : (
-        <>
-          {prevAddress ? (
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t('fromAddress')}
-              </span>
-              <HashCell value={prevAddress} to="address" full />
-            </div>
-          ) : null}
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t('previousTransaction')}
-            </span>
-            <div className="flex items-center gap-2">
-              <HashCell value={prevTxid} to="tx" />
-              <span className="shrink-0 text-xs text-muted-foreground tabular-nums">#{input.vout}</span>
-            </div>
-          </div>
-        </>
-      )}
+      {input.prevout ? (
+        <span className="shrink-0 text-sm font-semibold tabular-nums">
+          {formatFair(input.prevout.value)}
+        </span>
+      ) : null}
     </div>
   )
 }
@@ -538,45 +513,42 @@ function OutputRow({ entry, t }: { entry: ClassifiedOutput; t: Translate }) {
   const Icon = meta?.icon
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="text-sm font-medium">{t('output', { index: output.n })}</span>
-          {meta ? (
-            <Badge variant={meta.variant} className="gap-1">
-              {Icon ? <Icon /> : null}
-              {t(meta.labelKey)}
-            </Badge>
-          ) : null}
-        </div>
-        <span
-          className={cn(
-            'rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums',
-            deEmphasized ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary',
-          )}
-        >
-          {formatFair(output.value)}
-        </span>
-      </div>
-      <div className="flex flex-col gap-1">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {t('scriptType')}
-        </span>
-        <span className="font-mono text-xs">{output.scriptPubKey.type}</span>
-      </div>
-      {address ? (
-        <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {role === 'change' ? t('changeAddress') : t('address')}
-          </span>
+    <div className="flex items-center gap-3 px-4 py-3">
+      <RowIndex n={output.n} />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        {address ? (
           <HashCell
             value={address}
             to="address"
-            full
-            textClassName={deEmphasized ? 'text-muted-foreground' : undefined}
+            lead={16}
+            tail={8}
+            textClassName={cn('font-medium', deEmphasized && 'text-muted-foreground')}
           />
-        </div>
-      ) : null}
+        ) : (
+          <span className={cn('text-sm', deEmphasized ? 'text-muted-foreground' : 'font-medium')}>
+            {output.scriptPubKey.type}
+          </span>
+        )}
+        {address || meta ? (
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            {address ? <span className="font-mono">{output.scriptPubKey.type}</span> : null}
+            {meta ? (
+              <Badge variant={meta.variant} className="gap-1">
+                {Icon ? <Icon /> : null}
+                {t(meta.labelKey)}
+              </Badge>
+            ) : null}
+          </span>
+        ) : null}
+      </div>
+      <span
+        className={cn(
+          'shrink-0 text-sm font-semibold tabular-nums',
+          deEmphasized ? 'text-muted-foreground' : 'text-primary',
+        )}
+      >
+        {formatFair(output.value)}
+      </span>
     </div>
   )
 }

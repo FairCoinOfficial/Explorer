@@ -1,5 +1,6 @@
 import { useQuery, keepPreviousData, type UseQueryResult } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
+import { useLiveRefetchInterval } from '@/contexts/blockchain-context'
 import { readErrorMessage } from '@/lib/read-error-message'
 
 export interface AddressTransaction {
@@ -41,6 +42,7 @@ interface AddressResponse {
 
 export function useAddress(address: string): UseQueryResult<AddressInfo> {
   const { currentNetwork } = useNetwork()
+  const refetchInterval = useLiveRefetchInterval()
 
   return useQuery<AddressInfo>({
     queryKey: ['address', address, currentNetwork],
@@ -54,7 +56,7 @@ export function useAddress(address: string): UseQueryResult<AddressInfo> {
       const data = (await response.json()) as AddressResponse
       return data.addressInfo
     },
-    refetchInterval: 30_000,
+    refetchInterval,
     retry: 1,
   })
 }
@@ -79,6 +81,7 @@ export function useAddressTransactions(
   limit = 20,
 ): UseQueryResult<AddressTxsPage> {
   const { currentNetwork } = useNetwork()
+  const refetchInterval = useLiveRefetchInterval()
 
   return useQuery<AddressTxsPage>({
     queryKey: ['address-txs', address, page, limit, currentNetwork],
@@ -93,7 +96,7 @@ export function useAddressTransactions(
       return (await response.json()) as AddressTxsPage
     },
     placeholderData: keepPreviousData,
-    refetchInterval: 30_000,
+    refetchInterval,
     retry: 1,
   })
 }

@@ -1,5 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
+import { useLiveRefetchInterval } from '@/contexts/blockchain-context'
 
 export interface MempoolTransaction {
   txid: string
@@ -26,6 +27,7 @@ interface MempoolResponse {
 
 export function useMempool(): UseQueryResult<MempoolInfo> {
   const { currentNetwork } = useNetwork()
+  const refetchInterval = useLiveRefetchInterval()
 
   return useQuery<MempoolInfo>({
     queryKey: ['mempool', currentNetwork],
@@ -44,7 +46,7 @@ export function useMempool(): UseQueryResult<MempoolInfo> {
         transactions: info?.transactions ?? [],
       }
     },
-    refetchInterval: 30_000,
+    refetchInterval,
     retry: 1,
   })
 }

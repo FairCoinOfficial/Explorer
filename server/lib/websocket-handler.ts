@@ -3,6 +3,7 @@
 import { WebSocket } from 'ws'
 import { getWebSocketManager, shutdownWebSocketManager } from './websocket-manager'
 import { getBlockchainMonitor, shutdownBlockchainMonitor } from './blockchain-monitor'
+import { buildDispatcher } from './notifications/config'
 import {
   NetworkType,
   ClientMessage,
@@ -29,10 +30,18 @@ const MONITOR_NETWORKS = (process.env.WEBSOCKET_NETWORKS || 'mainnet,testnet')
   .filter((n): n is NetworkType => n === 'mainnet' || n === 'testnet')
 
 const blockchainMonitor = getBlockchainMonitor(wsManager, {
-  pollInterval: parseInt(process.env.BLOCKCHAIN_POLL_INTERVAL || '10000'),
+  pollInterval: parseInt(process.env.BLOCKCHAIN_POLL_INTERVAL || '4000', 10),
   networks: MONITOR_NETWORKS.length > 0 ? MONITOR_NETWORKS : ['mainnet'],
-  enabled: process.env.WEBSOCKET_ENABLED !== 'false'
+  enabled: process.env.WEBSOCKET_ENABLED !== 'false',
 })
+
+// Wire background payment notifications. With no FCM/APNS credentials configured
+// this returns null and the monitor's notification path stays an inert no-op.
+const notificationDispatcher = buildDispatcher()
+if (notificationDispatcher) {
+  blockchainMonitor.setNotificationDispatcher(notificationDispatcher)
+  logger.info('[WebSocketHandler] Background payment notifications enabled')
+}
 
 // Start blockchain monitor once at module load (this module is evaluated a
 // single time via the lazy import in server/index.ts).

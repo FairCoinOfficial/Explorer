@@ -1,5 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
+import { useLiveRefetchInterval } from '@/contexts/blockchain-context'
 
 interface BlockCountResponse {
   blockcount: number
@@ -45,6 +46,7 @@ async function fetchJson<T>(url: string): Promise<T | null> {
 
 export function useNodeStatus(): UseQueryResult<NodeStatus> {
   const { currentNetwork } = useNetwork()
+  const refetchInterval = useLiveRefetchInterval()
 
   return useQuery<NodeStatus>({
     queryKey: ['node-status', currentNetwork],
@@ -71,7 +73,7 @@ export function useNodeStatus(): UseQueryResult<NodeStatus> {
         relayFee: networkInfo?.relayfee ?? 0,
       }
     },
-    refetchInterval: 30_000,
+    refetchInterval,
     retry: 1,
   })
 }

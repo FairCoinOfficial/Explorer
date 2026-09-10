@@ -1,31 +1,47 @@
 import { Badge } from '@/components/ui/badge'
 import { useNetwork } from '@/contexts/network-context'
+import { useLiveMode } from '@/contexts/blockchain-context'
 import { useStats } from '@/hooks/use-stats'
-import { Wifi, WifiOff } from 'lucide-react'
+import { useTranslations } from '@/lib/i18n'
+import { Wifi, WifiOff, RefreshCw } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 /**
  * Compact network pill (name + tip height) used in page headers.
- * Reads from the shared `useStats` React Query cache — no separate poll.
+ * Border/icon reflect WebSocket health, not just HTTP success.
  */
 export function NetworkStatus() {
   const { networkConfig } = useNetwork()
-  const { data: stats, isError, isSuccess } = useStats()
+  const { data: stats } = useStats()
+  const mode = useLiveMode()
+  const t = useTranslations('home')
 
-  const isConnected = isSuccess && !isError
   const blockCount = stats?.blockHeight
+  const modeLabel =
+    mode === 'live' ? t('live') : mode === 'polling' ? t('polling') : t('offline')
 
   return (
     <Badge
       variant="outline"
-      className={`rounded-full bg-secondary/10 text-secondary-foreground border-secondary/20 ${
-        isConnected ? 'border-green-500/30' : 'border-red-500/30'
-      }`}
+      className={cn(
+        'rounded-full bg-secondary/10 text-secondary-foreground border-secondary/20',
+        mode === 'live' && 'border-green-500/30',
+        mode === 'polling' && 'border-amber-500/30',
+        mode === 'offline' && 'border-red-500/30',
+      )}
     >
-      {isConnected ? <Wifi className="w-3 h-3 mr-1" /> : <WifiOff className="w-3 h-3 mr-1" />}
+      {mode === 'live' ? (
+        <Wifi className="mr-1 size-3" />
+      ) : mode === 'polling' ? (
+        <RefreshCw className="mr-1 size-3" />
+      ) : (
+        <WifiOff className="mr-1 size-3" />
+      )}
       {networkConfig.displayName}
       {typeof blockCount === 'number' && blockCount > 0 ? (
         <span className="ml-1 text-xs opacity-70">#{blockCount.toLocaleString()}</span>
       ) : null}
+      <span className="ml-1 text-xs opacity-70">· {modeLabel}</span>
     </Badge>
   )
 }

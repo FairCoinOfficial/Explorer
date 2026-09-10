@@ -91,12 +91,6 @@ export function FeeCalculatorContent() {
       <DetailHeader
         title={t('title')}
         subtitle={t('subtitle')}
-        action={
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-            <Calculator className="size-3" />
-            {currentNetwork.toUpperCase()}
-          </span>
-        }
       />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">

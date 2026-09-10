@@ -2,6 +2,10 @@
 
 Modern, responsive block explorer for **FairCoin**. Vite + React SPA frontend with an Express API server (run with Bun) that talks JSON-RPC to a FairCoin node and caches responses in MongoDB. Real-time updates are pushed over WebSocket.
 
+## Realtime model
+
+WebSocket (`WS /api/ws`) pushes **change notifications** (new blocks, mempool updates, network stats, transaction confirmations). Canonical blockchain data is always loaded over **HTTP** (`GET /api/*`) via React Query: the client invalidates (and optionally paints) caches on push, then refetches the full API shape. When the socket is down, live hooks fall back to a 30s HTTP poll. In local dev, Vite proxies `/api` with `ws: true` so the browser can upgrade `/api/ws` to the API server.
+
 ## Stack
 
 - **Frontend**: Vite, React 18, TypeScript, TanStack Query, Tailwind CSS 4, shadcn/Radix UI, react-router
@@ -34,6 +38,16 @@ npm run build           # outputs dist/
 npm run server          # serves dist/ + API + WebSocket on :8080
 ```
 
+> **MongoDB in production.** The cache DB is a plain local MongoDB — point
+> `MONGODB_URI` at `mongodb://localhost:27017/faircoin-explorer`. On the
+> `fcexplorer` host it runs as a Docker container: `docker run -d --name mongo
+> --restart=always -p 127.0.0.1:27017:27017 -v mongo-exp:/data/db mongo:4.4`.
+> Use **`mongo:4.4`** on hosts whose kernel/CPU trips MongoDB 5+/8 (the box needs
+> AVX for 5+, and Mongo 8 refuses kernel ≥6.19). The cache self-populates from
+> the node's RPC on demand, so a fresh empty DB recovers on its own. Do **not**
+> use a DigitalOcean managed cluster — that dependency was removed after the DO
+> account was lost.
+
 ## Scripts
 
 | Script | Description |
@@ -62,7 +76,7 @@ MONGODB_URI=mongodb://localhost:27017/faircoin-explorer
 # WebSocket / realtime monitor
 WEBSOCKET_ENABLED=true
 WEBSOCKET_NETWORKS=mainnet          # comma-separated; add testnet if you run a testnet node
-BLOCKCHAIN_POLL_INTERVAL=10000
+BLOCKCHAIN_POLL_INTERVAL=4000       # block/mempool poll (ms); default 4s
 WEBSOCKET_HEARTBEAT_INTERVAL=30000
 WEBSOCKET_MAX_CONNECTIONS_PER_IP=5
 WEBSOCKET_MAX_PAYLOAD_BYTES=65536
@@ -88,7 +102,7 @@ The Express server exposes a read-only JSON API under `/api`:
 - `GET /api/validate-address?address=`, `/api/fee-estimate`
 - `GET /api/price`, `/api/price/history`, `/api/stats/history`
 - `GET /api/bridge/reserves` (proxied WFAIR bridge reserves)
-- `WS /api/ws` (new blocks, mempool updates, network stats)
+- `WS /api/ws` — push of chain changes (`new-block`, `block-count`, `mempool-update` with top-N txs, `transaction-confirmed`, `network-stats`). Canonical data still comes from HTTP `/api/*`; the socket tells the client when to refetch.
 
 ## MCP server (for AI assistants)
 
@@ -149,5 +163,6 @@ Only key generation is done in-process (using the audited `@noble/curves` secp25
 
 ## Notes
 
+- Realtime model: the server polls the FairCoin RPC (default every 4s) and pushes change events on `WS /api/ws`. Clients should treat HTTP `/api/*` as the source of truth and use the socket to invalidate/refetch.
 - Address balances/history require a FairCoin node with `addressindex=1`; without it the explorer degrades gracefully to validation-only data.
-- The MongoDB cache populates on demand; `npm run sync-db` (full historical sync) is optional.
+- The MongoDB cache populates on demand; `bun run sync-db` (full historical sync) is optional.

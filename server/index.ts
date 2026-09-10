@@ -16,6 +16,7 @@ import { handleRouteError, parseNetwork, parseLimit, parseOffset, parseBlockOffs
 import { computeCirculatingSupply, currentBlockReward } from '../shared/supply'
 import { logger } from './lib/logger'
 import { toPublicNetworkInfo } from './lib/network-info'
+import { assessNodeHealth } from './lib/node-health'
 import { rpcWithNetwork } from '@fairco.in/rpc-client'
 import priceRouter from './routes/price'
 import statsHistoryRouter from './routes/stats-history'
@@ -25,7 +26,9 @@ import feeEstimateRouter from './routes/fee-estimate'
 import githubRouter from './routes/github'
 import mcpInfoRouter from './routes/mcp-info'
 import transactionsRouter from './routes/transactions'
+import notificationsRouter from './routes/notifications'
 import { createMcpPostHandler, handleMcpMethodNotAllowed, handleMcpOptions } from './mcp/http'
+import { isNotificationsEnabled } from './lib/notifications/config'
 import packageJson from '../package.json' with { type: 'json' }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -153,6 +156,9 @@ const INLINE_SCRIPT_HASHES = [
 
 app.use(
   helmet({
+    // Public JSON API is meant to be readable from any site; helmet's default
+    // CORP `same-origin` would block cross-origin fetches even with CORS open.
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
@@ -178,6 +184,12 @@ app.use(express.json({ limit: '64kb' }))
 
 // Apply the global rate limit to the API surface only (static assets are exempt).
 app.use('/api', globalLimiter)
+
+// The recent-transactions feed (plural) must be mounted BEFORE the singular
+// `/api/transaction` limiter below: under Express 5 that mount prefix-matches
+// `/api/transactions` and breaks its routing (the request fell through to the
+// SPA fallback), so register the terminal plural router first.
+app.use('/api/transactions', transactionsRouter)
 
 // Stricter limits on the expensive RPC fan-out paths (search, transaction and
 // address lookups), the broadcast write path, and the public MCP endpoint, which
@@ -227,7 +239,31 @@ app.get('/api/block/:hashOrHeight', async (req, res) => {
     const network = parseNetwork(req.query.network)
     const { hashOrHeight } = req.params
     const block = await blockCache.getBlock(hashOrHeight, network, true)
-    res.json({ block, network })
+
+    // Enrich with a parallel array of per-tx total output values (FAIR) so the
+    // block page can show an amount next to each txid. Bounded to reasonably
+    // sized blocks to keep RPC load in check; larger blocks omit txValues.
+    const MAX_TX_VALUE_ENRICH = 50
+    let txValues: Array<number | null> | undefined
+    const txids = Array.isArray((block as { tx?: unknown }).tx)
+      ? ((block as { tx: string[] }).tx)
+      : []
+    if (txids.length > 0 && txids.length <= MAX_TX_VALUE_ENRICH) {
+      txValues = await Promise.all(
+        txids.map(async (txid) => {
+          try {
+            const tx = await blockCache.getTransaction(txid, network, true)
+            const vout = (tx as { vout?: Array<{ value?: number }> }).vout
+            if (!Array.isArray(vout)) return null
+            return vout.reduce((sum, o) => sum + (Number(o.value) || 0), 0)
+          } catch {
+            return null
+          }
+        }),
+      )
+    }
+
+    res.json({ block, txValues, network })
   } catch (error) {
     handleRouteError(res, 'Error fetching block', error)
   }
@@ -244,8 +280,7 @@ app.get('/api/transaction/:txid', async (req, res) => {
   }
 })
 
-// Paginated recent-transaction feed (blocks + optional mempool tip)
-app.use('/api/transactions', transactionsRouter)
+// (recent-transaction feed mounted earlier, before the singular limiter)
 
 // Address routes (addressindex RPC + fallback)
 app.use('/api/address', addressRouter)
@@ -267,6 +302,10 @@ app.use('/api/github', githubRouter)
 
 // MCP server metadata (endpoint + transport + tool catalog) for the /tools/mcp page
 app.use('/api/mcp/info', mcpInfoRouter)
+
+// Push-notification subscriptions (watch-only xpub register/unregister). A write
+// path that touches the DB, so it gets the stricter rate limit like /tx/broadcast.
+app.use('/api/notifications', strictLimiter, notificationsRouter)
 
 app.get('/api/mempool', async (req, res) => {
   try {
@@ -436,6 +475,45 @@ app.get('/api/peers', async (req, res) => {
     res.json({ peers, network })
   } catch (error) {
     handleRouteError(res, 'Error fetching peer info', error)
+  }
+})
+
+/**
+ * Is the tip we are serving still the chain's tip?
+ *
+ * Every other endpoint answers 200 with whatever height the node reports, which
+ * is indistinguishable from a healthy answer when the node has silently stopped
+ * following the chain. This is the one endpoint that compares our height against
+ * what our peers claim and says so out loud — and it answers 503 when we are
+ * demonstrably behind, so an uptime check catches it without a human noticing.
+ */
+app.get('/api/health', async (req, res) => {
+  const network = parseNetwork(req.query.network)
+  try {
+    // Short TTLs: a health probe that reads a minute-old cache cannot detect a
+    // node that stopped a minute ago.
+    const [nodeHeight, tipHash, peers] = await Promise.all([
+      blockCache.get<number>('getblockcount', [], { network, ttl: 10 }),
+      blockCache.get<string>('getbestblockhash', [], { network, ttl: 10 }),
+      blockCache
+        .get<Array<{ synced_headers?: number; startingheight?: number }>>('getpeerinfo', [], { network, ttl: 20 })
+        .catch(() => []),
+    ])
+    const tip = await blockCache.getBlock(tipHash, network, true)
+    const health = assessNodeHealth({
+      nodeHeight,
+      tipTime: Number(tip?.time ?? 0),
+      peerHeights: (Array.isArray(peers) ? peers : []).flatMap((peer) => [
+        Number(peer?.synced_headers ?? -1),
+        Number(peer?.startingheight ?? -1),
+      ]),
+      now: Math.floor(Date.now() / 1000),
+    })
+    res.status(health.status === 'stalled' ? 503 : 200).json({ ...health, network })
+  } catch (error) {
+    logger.error('Health check failed:', error)
+    // An unreachable node is never "ok" — fail loud rather than answer 200.
+    res.status(503).json({ status: 'unknown', error: 'node unreachable', network })
   }
 })
 
@@ -764,6 +842,18 @@ wss.on('connection', async (ws, request) => {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`> API server ready on http://0.0.0.0:${PORT}`)
   console.log(`> WebSocket server ready on ws://0.0.0.0:${PORT}/api/ws`)
+
+  // The blockchain monitor (which drives payment notifications) lives in the
+  // WebSocket handler module, normally loaded lazily on the first WS client. When
+  // notifications are configured, load it now so pushes fire regardless of
+  // whether any browser ever opens a WebSocket.
+  if (isNotificationsEnabled()) {
+    void loadWsHandler().then((handler) => {
+      if (handler) {
+        console.log('> Background payment notifications enabled')
+      }
+    })
+  }
 })
 
 process.on('SIGTERM', () => { console.log('SIGTERM: closing'); process.exit(0) })

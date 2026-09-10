@@ -1,26 +1,15 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import {
-  AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Hash,
-  Inbox,
-  Receipt,
-  Search,
-} from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { AlertTriangle, ChevronLeft, ChevronRight, Clock, Inbox, Search } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
 import { useRecentTransactions } from '@/hooks/use-recent-transactions'
 import { formatNumber } from '@/lib/format'
 import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
-import { HashCell } from '@/components/detail/hash-cell'
-import { RelativeTime } from '@/components/detail/relative-time'
+import { TransactionRow } from '@/components/transaction-row'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
 
 const TXS_PER_PAGE = 25
 
@@ -85,12 +74,6 @@ export function TransactionsContent() {
         subtitle={t('subtitle')}
         onRefresh={() => void refetch()}
         isRefreshing={isFetching}
-        action={
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-            <Receipt className="size-3" />
-            {t('showingCount', { count: formatNumber(transactions.length) })}
-          </span>
-        }
       />
 
       <SectionCard title={t('lookupTitle')} icon={Search}>
@@ -114,7 +97,7 @@ export function TransactionsContent() {
         icon={Clock}
         flush
         action={
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {t('feedHint', { total: formatNumber(total) })}
           </span>
         }
@@ -131,51 +114,7 @@ export function TransactionsContent() {
           <>
             <ul className="divide-y">
               {transactions.map((tx) => (
-                <li
-                  key={`${tx.txid}-${tx.blockHeight ?? 'mempool'}`}
-                  className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40"
-                >
-                  <span
-                    className={cn(
-                      'flex size-8 shrink-0 items-center justify-center rounded-full',
-                      tx.unconfirmed
-                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                        : 'bg-primary/10 text-primary',
-                    )}
-                  >
-                    <Hash className="size-4" />
-                  </span>
-
-                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <HashCell value={tx.txid} to="tx" textClassName="font-medium" />
-                    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <RelativeTime timestamp={tx.time} />
-                      {tx.unconfirmed ? (
-                        <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 font-medium text-amber-700 dark:text-amber-300">
-                          {t('unconfirmed')}
-                        </span>
-                      ) : null}
-                    </span>
-                  </div>
-
-                  <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs">
-                    {tx.blockHeight !== null ? (
-                      <Link
-                        to={`/block/${tx.blockHeight}`}
-                        className="font-medium tabular-nums text-muted-foreground hover:text-foreground"
-                      >
-                        #{formatNumber(tx.blockHeight)}
-                      </Link>
-                    ) : (
-                      <Link
-                        to="/mempool"
-                        className="font-medium text-muted-foreground hover:text-foreground"
-                      >
-                        {t('mempool')}
-                      </Link>
-                    )}
-                  </div>
-                </li>
+                <TransactionRow key={`${tx.txid}-${tx.blockHeight ?? 'mempool'}`} tx={tx} />
               ))}
             </ul>
 

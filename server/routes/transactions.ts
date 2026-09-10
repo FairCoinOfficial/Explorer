@@ -20,6 +20,8 @@ export interface RecentTransactionItem {
   unconfirmed: boolean;
   size?: number;
   fee?: number;
+  /** Total output value (FAIR) of the transaction. Undefined if lookup failed. */
+  amount?: number;
 }
 
 /**
@@ -101,10 +103,30 @@ router.get("/", async (req: Request, res: Response) => {
 
     const combined = [...mempoolItems, ...confirmed];
     const page = combined.slice(offset, offset + limit);
+
+    // Enrich only the page (not every scanned block's txs) with the total
+    // output value so the list can show an amount, keeping RPC load bounded.
+    const enrichedPage = await Promise.all(
+      page.map(async (item) => {
+        try {
+          const tx = await blockCache.getTransaction(item.txid, network, true);
+          const vout = (tx as { vout?: Array<{ value?: number }> }).vout;
+          if (!Array.isArray(vout)) return item;
+          const amount = vout.reduce(
+            (sum, o) => sum + (Number(o.value) || 0),
+            0,
+          );
+          return { ...item, amount };
+        } catch {
+          return item;
+        }
+      }),
+    );
+
     const height = await blockCache.getBlockCount(network).catch(() => 0);
 
     res.json({
-      transactions: page,
+      transactions: enrichedPage,
       total: combined.length,
       offset,
       limit,

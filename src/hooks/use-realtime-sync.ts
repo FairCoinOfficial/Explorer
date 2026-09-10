@@ -6,31 +6,20 @@ import {
   NewBlockEvent,
   BlockCountEvent,
   NetworkStatsEvent,
+  MempoolUpdateEvent,
+  TransactionConfirmedEvent,
 } from '@shared/websocket-types'
 
 /**
- * Real-time cache sync for the home dashboard.
+ * Real-time cache sync for live explorer views.
  *
- * The home reads live blockchain data through React Query hooks that poll every
- * 30s as a baseline. This hook upgrades that to true real-time by listening to
- * the already-open blockchain WebSocket (see `useBlockchainWebSocket`, mounted
- * once by `BlockchainProvider`) and, on the relevant push events, invalidating
- * the matching React Query caches so they refetch immediately instead of waiting
- * for the next poll.
+ * Listens to the single blockchain WebSocket (via `BlockchainProvider`) and
+ * invalidates the matching React Query caches so they refetch the canonical
+ * HTTP API shape. Invalidate-on-event is intentional: it is robust, typed, and
+ * React Query coalesces overlapping refetches.
  *
- * Design notes:
- * - It consumes the SINGLE existing socket via the `lastMessage` value the
- *   provider already exposes — it never opens a second connection.
- * - Invalidate-on-event is intentional: it is robust (always fetches the
- *   canonical server state) and React Query coalesces overlapping refetches, so
- *   bursts of events do not cause fetch storms.
- * - The 30s `refetchInterval` on the underlying hooks stays in place as a
- *   fallback, so the home keeps updating even if the socket drops (e.g. in local
- *   dev where the Vite proxy does not forward `/api/ws`).
- *
- * The effect here is a legitimate external-subscription effect: it reacts to the
- * newest WebSocket message. It performs no work and throws nothing when the
- * socket is absent (`event` is simply `null`).
+ * Live hooks use `useLiveRefetchInterval` so HTTP polling is only a fallback
+ * when the socket is down.
  */
 export function useRealtimeSync(event: WebSocketEvent | null): void {
   const queryClient = useQueryClient()
@@ -38,58 +27,58 @@ export function useRealtimeSync(event: WebSocketEvent | null): void {
 
   useEffect(() => {
     if (!event) return
-
-    // Ignore events for a network the user is not currently viewing so we don't
-    // refetch the wrong network's data.
     if (event.network !== currentNetwork) return
 
     switch (event.type) {
-      // A new block (or a bare height bump) changes the tip: the recent-blocks
-      // feed, the derived latest-tx feed (it reads the same query), the
-      // height-driven header pill and the stat-strip height all need to update.
-      // Invalidating these two keys refetches everything the home derives from
-      // them. The query keys carry the network, so invalidating the prefix
-      // refreshes the active network's cache.
       case 'new-block':
       case 'block-count': {
         void queryClient.invalidateQueries({ queryKey: ['recent-blocks'] })
         void queryClient.invalidateQueries({ queryKey: ['recent-transactions'] })
-        // Must match useStats / useNetworkStats (`['stats', network]`).
         void queryClient.invalidateQueries({ queryKey: ['stats'] })
-        // Append the freshly-sampled tip to the stat-strip sparkline series.
-        void queryClient.invalidateQueries({ queryKey: ['stats-history'] })
+        void queryClient.invalidateQueries({ queryKey: ['block'] })
+        void queryClient.invalidateQueries({ queryKey: ['transaction'] })
+        void queryClient.invalidateQueries({ queryKey: ['address'] })
+        void queryClient.invalidateQueries({ queryKey: ['address-txs'] })
+        void queryClient.invalidateQueries({ queryKey: ['node-status'] })
+        void queryClient.invalidateQueries({ queryKey: ['masternodes'] })
+        void queryClient.invalidateQueries({ queryKey: ['masternode-list'] })
+        void queryClient.invalidateQueries({ queryKey: ['peers'] })
         break
       }
 
-      // Difficulty / connections / hashrate moved — refresh the stats the
-      // header pill, stat-strip, supply bar and network card read.
       case 'network-stats': {
         void queryClient.invalidateQueries({ queryKey: ['stats'] })
+        void queryClient.invalidateQueries({ queryKey: ['peers'] })
+        void queryClient.invalidateQueries({ queryKey: ['node-status'] })
         break
       }
 
       case 'mempool-update': {
         void queryClient.invalidateQueries({ queryKey: ['mempool'] })
         void queryClient.invalidateQueries({ queryKey: ['recent-transactions'] })
-        // memPoolSize on the stats strip also changes with the pool.
         void queryClient.invalidateQueries({ queryKey: ['stats'] })
         break
       }
 
+      case 'transaction-confirmed': {
+        if (!isTransactionConfirmedEvent(event)) break
+        void queryClient.invalidateQueries({
+          queryKey: ['transaction', event.data.txid, currentNetwork],
+        })
+        void queryClient.invalidateQueries({ queryKey: ['address'] })
+        void queryClient.invalidateQueries({ queryKey: ['address-txs'] })
+        void queryClient.invalidateQueries({ queryKey: ['recent-transactions'] })
+        void queryClient.invalidateQueries({ queryKey: ['mempool'] })
+        break
+      }
+
       default:
-        // Other event types (transaction-confirmed, ping/pong,
-        // subscribe/unsubscribe, error) do not feed the dashboard caches,
-        // so there is nothing to invalidate here.
         break
     }
   }, [event, currentNetwork, queryClient])
 }
 
-/**
- * Narrowing helpers for callers that need the typed payload of an event (e.g. to
- * prepend a block for zero-flicker). Exposed alongside the hook so consumers can
- * discriminate `WebSocketEvent` without unsafe casts.
- */
+/** Narrowing helpers for typed WebSocket payloads (base `WebSocketEvent` is not a union). */
 export function isNewBlockEvent(event: WebSocketEvent): event is NewBlockEvent {
   return event.type === 'new-block'
 }
@@ -100,4 +89,14 @@ export function isBlockCountEvent(event: WebSocketEvent): event is BlockCountEve
 
 export function isNetworkStatsEvent(event: WebSocketEvent): event is NetworkStatsEvent {
   return event.type === 'network-stats'
+}
+
+export function isMempoolUpdateEvent(event: WebSocketEvent): event is MempoolUpdateEvent {
+  return event.type === 'mempool-update'
+}
+
+export function isTransactionConfirmedEvent(
+  event: WebSocketEvent,
+): event is TransactionConfirmedEvent {
+  return event.type === 'transaction-confirmed'
 }

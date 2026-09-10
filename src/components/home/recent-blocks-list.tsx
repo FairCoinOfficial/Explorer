@@ -3,9 +3,7 @@ import { Blocks } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
 import type { RecentBlock } from '@/hooks/use-recent-blocks'
 import { Skeleton } from '@/components/ui/skeleton'
-import { CopyButton } from '@/components/copy-button'
-import { RelativeTime } from '@/components/detail/relative-time'
-import { shortHash, formatBytes } from '@/lib/format'
+import { BlockRow } from '@/components/block-row'
 
 interface RecentBlocksListProps {
   blocks: RecentBlock[] | undefined
@@ -40,42 +38,7 @@ export function RecentBlocksList({ blocks, isLoading, isError }: RecentBlocksLis
         ) : (
           <ul className="divide-y">
             {blocks.map((block) => (
-              <li key={block.height} className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40">
-                <div className="flex min-w-0 flex-1 flex-col">
-                  <div className="flex items-center gap-2">
-                    <Link
-                      to={`/block/${block.height}`}
-                      className="text-sm font-semibold text-primary tabular-nums hover:underline"
-                    >
-                      #{block.height.toLocaleString()}
-                    </Link>
-                    <CopyButton
-                      text={block.hash}
-                      className="size-6 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
-                    />
-                  </div>
-                  <Link
-                    to={`/block/${block.hash}`}
-                    className="truncate font-mono text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    {shortHash(block.hash)}
-                  </Link>
-                </div>
-
-                <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs">
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary tabular-nums">
-                    {t('txCount', { count: (block.nTx ?? block.tx.length).toString() })}
-                  </span>
-                  <RelativeTime
-                    timestamp={block.time}
-                    className="text-muted-foreground"
-                  />
-                </div>
-
-                <span className="hidden w-16 shrink-0 text-right text-xs text-muted-foreground tabular-nums sm:inline">
-                  {formatBytes(block.size)}
-                </span>
-              </li>
+              <BlockRow key={block.height} block={block} />
             ))}
           </ul>
         )}
