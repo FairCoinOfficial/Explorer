@@ -75,8 +75,8 @@ export function NetworkStatusContent() {
         action={
           <span
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium',
-              online ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive',
+              'inline-flex items-center gap-1.5 text-xs font-medium',
+              online ? 'text-primary' : 'text-destructive',
             )}
           >
             <span
@@ -214,8 +214,8 @@ function StatusIndicator({ ok, label, t }: { ok: boolean; label: string; t: Tran
       </span>
       <span
         className={cn(
-          'rounded-full px-2 py-0.5 text-xs font-medium',
-          ok ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive',
+          'text-xs font-medium',
+          ok ? 'text-primary' : 'text-destructive',
         )}
       >
         {ok ? t('connected') : t('disconnected')}

@@ -217,7 +217,7 @@
   "address.refresh": "Refresh",
   "address.previous": "이전",
   "address.next": "다음",
-  "address.pageOf": "{total}페이지 중 {page}페이지",
+  "address.pageOf": "{page}페이지 중 {total}페이지",
   "stats.title": "Network Statistics",
   "stats.subtitle": "Comprehensive FairCoin blockchain analytics and metrics",
   "stats.loading": "Loading network statistics...",
@@ -1068,5 +1068,11 @@
   "masternodes.list.unknownStatus": "Unknown",
   "stats.totalTransactionsEstimated": "Total Transactions (estimated)",
   "stats.mainnetHistoryOnly": "Sparkline history is sampled for mainnet only. Live stats above still reflect the selected network.",
-  "tx.inMempool": "In mempool"
+  "tx.inMempool": "In mempool",
+  "nodeHealth.stalled": "This explorer's node has stopped following the chain. The data shown is out of date.",
+  "nodeHealth.lagging": "This explorer's node is catching up. Recent blocks may be missing.",
+  "nodeHealth.unknown": "Cannot confirm this explorer's node is on the chain tip. The data shown may be out of date.",
+  "nodeHealth.unreachable": "Cannot check whether this explorer's data is current.",
+  "nodeHealth.lagSuffix": "({blocks} blocks behind)",
+  "common.languageChanged": "Language changed to {language}"
 }

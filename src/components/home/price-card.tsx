@@ -71,8 +71,8 @@ export function PriceCard() {
     change !== null ? (
       <span
         className={cn(
-          'inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums',
-          isUp ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive',
+          'inline-flex items-center gap-0.5 text-xs font-medium tabular-nums',
+          isUp ? 'text-primary' : 'text-destructive',
         )}
       >
         {isUp ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}

@@ -12,6 +12,12 @@ interface HashCellProps {
   to?: HashLinkKind
   /** Render the full value (e.g. primary hash on a detail page) instead of truncating. */
   full?: boolean
+  /**
+   * Show the full value on a single line that fills the available width and
+   * ellipsizes only the overflow — instead of hard-chopping to `lead`+`tail`.
+   * Use in list rows where the column has spare horizontal room.
+   */
+  fill?: boolean
   /** Leading chars kept when truncating. */
   lead?: number
   /** Trailing chars kept when truncating. */
@@ -37,17 +43,19 @@ export function HashCell({
   value,
   to,
   full = false,
+  fill = false,
   lead = 8,
   tail = 6,
   hideCopy = false,
   className,
   textClassName,
 }: HashCellProps) {
-  const display = full ? value : shortHash(value, lead, tail)
+  const display = full || fill ? value : shortHash(value, lead, tail)
 
   const textClasses = cn(
     'font-mono text-sm',
-    full ? 'break-all' : 'truncate',
+    full && !fill ? 'break-all' : 'truncate',
+    fill && 'flex-1',
     to ? 'text-primary hover:underline' : 'text-foreground',
     textClassName,
   )
@@ -63,7 +71,13 @@ export function HashCell({
   )
 
   return (
-    <span className={cn('group/hash inline-flex min-w-0 items-center gap-1.5', className)}>
+    <span
+      className={cn(
+        'group/hash min-w-0 items-center gap-1.5',
+        fill ? 'flex' : 'inline-flex',
+        className,
+      )}
+    >
       {text}
       {hideCopy ? null : (
         <CopyButton

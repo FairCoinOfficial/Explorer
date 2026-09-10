@@ -1,4 +1,9 @@
 {
+  "nodeHealth.stalled": "El nodo de este explorador ha dejado de seguir la cadena. Los datos mostrados están desactualizados.",
+  "nodeHealth.lagging": "El nodo de este explorador se está poniendo al día. Puede que falten bloques recientes.",
+  "nodeHealth.unknown": "No se puede confirmar que el nodo de este explorador esté en la punta de la cadena. Los datos pueden estar desactualizados.",
+  "nodeHealth.unreachable": "No se puede comprobar si los datos de este explorador están actualizados.",
+  "nodeHealth.lagSuffix": "({blocks} bloques por detrás)",
   "nav.home": "Inicio",
   "nav.search": "Buscar",
   "nav.blocks": "Bloques",
@@ -1068,5 +1073,6 @@
   "masternodes.list.unknownStatus": "Unknown",
   "stats.totalTransactionsEstimated": "Total Transactions (estimated)",
   "stats.mainnetHistoryOnly": "Sparkline history is sampled for mainnet only. Live stats above still reflect the selected network.",
-  "tx.inMempool": "In mempool"
+  "tx.inMempool": "In mempool",
+  "common.languageChanged": "Language changed to {language}"
 }

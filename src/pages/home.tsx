@@ -9,8 +9,8 @@ import { NetworkCard } from '@/components/home/network-card'
 import { RecentBlocksList } from '@/components/home/recent-blocks-list'
 import { LatestTxList } from '@/components/home/latest-tx-list'
 
-const BLOCKS_LIMIT = 10
-const TX_FEED_LIMIT = 12
+const BLOCKS_LIMIT = 20
+const TX_FEED_LIMIT = 20
 
 export default function HomePage() {
   const { data, isLoading, isError } = useRecentBlocks(BLOCKS_LIMIT)
@@ -18,21 +18,21 @@ export default function HomePage() {
   const height = data?.height
 
   return (
-    <div className="flex-1 space-y-5">
+    <div className="flex-1 space-y-4">
       <HomeHeader />
 
       <StatStrip height={height} />
 
       <SupplyBar />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <PriceCard />
         <GithubCard />
         <WfairCard />
         <NetworkCard />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <RecentBlocksList blocks={blocks} isLoading={isLoading} isError={isError} />
         <LatestTxList max={TX_FEED_LIMIT} />
       </div>

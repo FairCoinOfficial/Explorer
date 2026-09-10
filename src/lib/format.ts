@@ -26,6 +26,15 @@ export function formatNumber(value: number, maximumFractionDigits = 0): string {
   return new Intl.NumberFormat(intlTag(getLocale()), { maximumFractionDigits }).format(value)
 }
 
+/**
+ * Format a FAIR amount with full 8-decimal precision and locale grouping,
+ * suffixed with the ticker (e.g. `11,790.12345678 FAIR`). One source of truth so
+ * hero headlines, stat tiles, and list cells never disagree on grouping.
+ */
+export function formatFair(value: number): string {
+  return `${formatNumber(value, 8)} FAIR`
+}
+
 /** Human-readable byte sizes (e.g. 462 B, 1.2 KB, 3.4 MB). */
 export function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'
