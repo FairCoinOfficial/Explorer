@@ -197,6 +197,7 @@ app.use('/api/transactions', strictLimiter, transactionsRouter)
 // can invoke daemon-backed wallet tools.
 app.use('/api/search', strictLimiter)
 app.use('/api/transaction', strictLimiter)
+app.use('/api/transactions', strictLimiter)
 app.use('/api/address', strictLimiter)
 app.use('/api/tx/broadcast', strictLimiter)
 
