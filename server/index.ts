@@ -16,6 +16,7 @@ import { handleRouteError, parseNetwork, parseLimit, parseOffset, parseBlockOffs
 import { computeCirculatingSupply, currentBlockReward } from '../shared/supply'
 import { logger } from './lib/logger'
 import { toPublicNetworkInfo } from './lib/network-info'
+import { assessNodeHealth } from './lib/node-health'
 import { rpcWithNetwork } from '@fairco.in/rpc-client'
 import priceRouter from './routes/price'
 import statsHistoryRouter from './routes/stats-history'
@@ -25,7 +26,9 @@ import feeEstimateRouter from './routes/fee-estimate'
 import githubRouter from './routes/github'
 import mcpInfoRouter from './routes/mcp-info'
 import transactionsRouter from './routes/transactions'
+import notificationsRouter from './routes/notifications'
 import { createMcpPostHandler, handleMcpMethodNotAllowed, handleMcpOptions } from './mcp/http'
+import { isNotificationsEnabled } from './lib/notifications/config'
 import packageJson from '../package.json' with { type: 'json' }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -301,6 +304,10 @@ app.use('/api/github', githubRouter)
 // MCP server metadata (endpoint + transport + tool catalog) for the /tools/mcp page
 app.use('/api/mcp/info', mcpInfoRouter)
 
+// Push-notification subscriptions (watch-only xpub register/unregister). A write
+// path that touches the DB, so it gets the stricter rate limit like /tx/broadcast.
+app.use('/api/notifications', strictLimiter, notificationsRouter)
+
 app.get('/api/mempool', async (req, res) => {
   try {
     const network = parseNetwork(req.query.network)
@@ -469,6 +476,45 @@ app.get('/api/peers', async (req, res) => {
     res.json({ peers, network })
   } catch (error) {
     handleRouteError(res, 'Error fetching peer info', error)
+  }
+})
+
+/**
+ * Is the tip we are serving still the chain's tip?
+ *
+ * Every other endpoint answers 200 with whatever height the node reports, which
+ * is indistinguishable from a healthy answer when the node has silently stopped
+ * following the chain. This is the one endpoint that compares our height against
+ * what our peers claim and says so out loud — and it answers 503 when we are
+ * demonstrably behind, so an uptime check catches it without a human noticing.
+ */
+app.get('/api/health', async (req, res) => {
+  const network = parseNetwork(req.query.network)
+  try {
+    // Short TTLs: a health probe that reads a minute-old cache cannot detect a
+    // node that stopped a minute ago.
+    const [nodeHeight, tipHash, peers] = await Promise.all([
+      blockCache.get<number>('getblockcount', [], { network, ttl: 10 }),
+      blockCache.get<string>('getbestblockhash', [], { network, ttl: 10 }),
+      blockCache
+        .get<Array<{ synced_headers?: number; startingheight?: number }>>('getpeerinfo', [], { network, ttl: 20 })
+        .catch(() => []),
+    ])
+    const tip = await blockCache.getBlock(tipHash, network, true)
+    const health = assessNodeHealth({
+      nodeHeight,
+      tipTime: Number(tip?.time ?? 0),
+      peerHeights: (Array.isArray(peers) ? peers : []).flatMap((peer) => [
+        Number(peer?.synced_headers ?? -1),
+        Number(peer?.startingheight ?? -1),
+      ]),
+      now: Math.floor(Date.now() / 1000),
+    })
+    res.status(health.status === 'stalled' ? 503 : 200).json({ ...health, network })
+  } catch (error) {
+    logger.error('Health check failed:', error)
+    // An unreachable node is never "ok" — fail loud rather than answer 200.
+    res.status(503).json({ status: 'unknown', error: 'node unreachable', network })
   }
 })
 
@@ -797,6 +843,18 @@ wss.on('connection', async (ws, request) => {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`> API server ready on http://0.0.0.0:${PORT}`)
   console.log(`> WebSocket server ready on ws://0.0.0.0:${PORT}/api/ws`)
+
+  // The blockchain monitor (which drives payment notifications) lives in the
+  // WebSocket handler module, normally loaded lazily on the first WS client. When
+  // notifications are configured, load it now so pushes fire regardless of
+  // whether any browser ever opens a WebSocket.
+  if (isNotificationsEnabled()) {
+    void loadWsHandler().then((handler) => {
+      if (handler) {
+        console.log('> Background payment notifications enabled')
+      }
+    })
+  }
 })
 
 process.on('SIGTERM', () => { console.log('SIGTERM: closing'); process.exit(0) })

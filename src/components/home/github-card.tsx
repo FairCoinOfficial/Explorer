@@ -1,6 +1,6 @@
 import { Github, Star, Download, Tag } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
-import { enUS, es, fr, de, ru, zhCN, ja, ko } from 'date-fns/locale'
+import { enUS, es, fr, de, ru, zhCN, ja, ko, ca, hi, ar, bn, pt, id, tr, vi } from 'date-fns/locale'
 import { useLocale, useTranslations, type Locale } from '@/lib/i18n'
 import { useGithubStats, type GithubReleaseAsset } from '@/hooks/use-github-stats'
 import { ModuleCard } from '@/components/home/module-card'
@@ -17,6 +17,15 @@ const DATE_FNS_LOCALES: Record<Locale, typeof enUS> = {
   zh: zhCN,
   ja,
   ko,
+  ca,
+  hi,
+  ar,
+  bn,
+  pt,
+  id,
+  ur: ar,
+  tr,
+  vi,
 }
 
 const REPO_URL = 'https://github.com/FairCoinOfficial/FairCoin'
@@ -35,7 +44,7 @@ export function GithubCard() {
 
   const action =
     stars !== null ? (
-      <span className="inline-flex items-center gap-1 rounded-full bg-muted/70 px-2 py-0.5 text-xs font-medium tabular-nums">
+      <span className="inline-flex items-center gap-1 text-xs font-medium tabular-nums text-muted-foreground">
         <Star className="size-3" />
         {formatCompactNumber(stars)}
       </span>

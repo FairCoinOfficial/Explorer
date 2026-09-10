@@ -23,6 +23,14 @@ jobs:
       - name: Typecheck (frontend + server)
         run: bun run typecheck
 
+      # The notification DB tests spin up mongodb-memory-server. No system
+      # `mongod` on the runner, so it downloads one — cache it across runs.
+      - name: Cache mongodb-memory-server binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}
+
       - name: Test
         run: bun run test
 

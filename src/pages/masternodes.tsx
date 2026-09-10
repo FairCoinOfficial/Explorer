@@ -1,11 +1,11 @@
 import { Suspense } from 'react'
 import { MasternodesContent } from '@/components/masternodes-content'
+import { PageLoading } from '@/components/page-loading'
+
 export default function MasternodesPage() {
   return (
-    <div className="flex-1 space-y-3 sm:space-y-4">
-      <Suspense fallback={<div>Loading masternodes...</div>}>
-        <MasternodesContent />
-      </Suspense>
-    </div>
+    <Suspense fallback={<PageLoading />}>
+      <MasternodesContent />
+    </Suspense>
   )
 }

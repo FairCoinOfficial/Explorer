@@ -45,10 +45,10 @@ function LivePill({ mode, phase, height, label }: LivePillProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
-        mode === 'live' && 'bg-primary/10 text-primary',
-        mode === 'polling' && 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
-        mode === 'offline' && 'bg-destructive/10 text-destructive',
+        'inline-flex items-center gap-1.5 text-xs font-medium',
+        mode === 'live' && 'text-primary',
+        mode === 'polling' && 'text-amber-700 dark:text-amber-400',
+        mode === 'offline' && 'text-destructive',
       )}
     >
       <span

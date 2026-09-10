@@ -16,12 +16,17 @@ import {
 } from '../../shared/websocket-types'
 import { blockCache } from './cache'
 import { logger } from './logger'
+import { matchBlock, type ParsedBlockTx } from './notifications/matcher'
+import type { PushDispatcher } from './push/types'
 
 /** Default block/mempool poll interval (ms). Overridable via BLOCKCHAIN_POLL_INTERVAL. */
 const DEFAULT_POLL_INTERVAL_MS = 4000
 
 /** Cap on `transaction-confirmed` events emitted per new block. */
 const TRANSACTION_CONFIRMED_CAP = 50
+
+/** Cap on transactions scanned per block/mempool batch for notification matching. */
+const NOTIFICATION_TX_SCAN_CAP = 500
 
 /** Top-N mempool txs included in `mempool-update` (aligned with GET /api/mempool). */
 const MEMPOOL_TX_SUMMARY_LIMIT = 20
@@ -80,6 +85,14 @@ export class BlockchainMonitor {
   private lastBroadcastVersion = new Map<NetworkType, string>()
   private lastBroadcastSubversion = new Map<NetworkType, string | undefined>()
   private lastBroadcastProtocol = new Map<NetworkType, number | undefined>()
+  /**
+   * Silent-push dispatcher for background payment notifications. Null (and the
+   * whole notification path inert) until wired at startup with FCM/APNS creds —
+   * Phase-1-safe: no creds → no dispatcher → no matching, no RPC overhead.
+   */
+  private notificationDispatcher: PushDispatcher | null = null
+  /** Mempool txids already notified as first-seen (per network), so a lingering tx notifies once. */
+  private notifiedMempoolTxids = new Map<NetworkType, Set<string>>()
 
   constructor(wsManager: WebSocketManager, config?: Partial<BlockchainMonitorConfig>) {
     this.wsManager = wsManager
@@ -109,6 +122,15 @@ export class BlockchainMonitor {
     })
 
     logger.debug('[BlockchainMonitor] Initialized with config:', this.config)
+  }
+
+  /**
+   * Wire (or clear) the silent-push dispatcher. Called at startup only when
+   * FCM/APNS credentials are configured; while null the notification path is a
+   * complete no-op.
+   */
+  setNotificationDispatcher(dispatch: PushDispatcher | null): void {
+    this.notificationDispatcher = dispatch
   }
 
   async start(): Promise<void> {
@@ -286,11 +308,111 @@ export class BlockchainMonitor {
         }
         this.wsManager.broadcast(confirmedEvent, network)
       }
+
+      // Background payment notifications: match this mined block's txs against
+      // watched addresses and dispatch silent pushes. Isolated below so an RPC or
+      // DB hiccup never disrupts block broadcasting.
+      if (this.notificationDispatcher) {
+        await this.notifyBlockMatches(network, txids)
+      }
     } catch (error) {
       logger.error(
         `[BlockchainMonitor] Error handling new block ${height} on ${network}:`,
         error,
       )
+    }
+  }
+
+  /**
+   * Reduce transactions to the address facts the matcher needs. Fetches each
+   * verbose tx (output addresses + resolved input prevout addresses), bounded by
+   * {@link NOTIFICATION_TX_SCAN_CAP}. Best-effort: a tx that fails to load is
+   * skipped rather than aborting the batch.
+   */
+  private async buildParsedTxs(network: NetworkType, txids: string[]): Promise<ParsedBlockTx[]> {
+    const capped = txids.slice(0, NOTIFICATION_TX_SCAN_CAP)
+    if (txids.length > NOTIFICATION_TX_SCAN_CAP) {
+      logger.warn(
+        `[BlockchainMonitor] ${network}: ${txids.length} txs exceed notification scan cap ${NOTIFICATION_TX_SCAN_CAP}; tail unscanned`,
+      )
+    }
+
+    const parsed: ParsedBlockTx[] = []
+    for (const txid of capped) {
+      try {
+        const tx = await blockCache.getTransaction(txid, network, true)
+        if (!tx) {
+          continue
+        }
+        const outputAddresses: string[] = []
+        for (const out of tx.vout ?? []) {
+          for (const address of out.scriptPubKey?.addresses ?? []) {
+            outputAddresses.push(address)
+          }
+        }
+        const inputAddresses: string[] = []
+        for (const input of tx.vin ?? []) {
+          for (const address of input.prevout?.addresses ?? []) {
+            inputAddresses.push(address)
+          }
+        }
+        parsed.push({ txid, outputAddresses, inputAddresses })
+      } catch (error) {
+        logger.debug(`[BlockchainMonitor] notification tx fetch failed for ${txid}:`, error)
+      }
+    }
+    return parsed
+  }
+
+  /** Match a mined block (depth 1) against watched addresses and dispatch pushes. */
+  private async notifyBlockMatches(network: NetworkType, txids: string[]): Promise<void> {
+    const dispatch = this.notificationDispatcher
+    if (!dispatch) {
+      return
+    }
+    try {
+      const parsed = await this.buildParsedTxs(network, txids)
+      if (parsed.length === 0) {
+        return
+      }
+      await matchBlock({ network, depth: 1, txs: parsed }, { dispatch })
+    } catch (error) {
+      logger.error(`[BlockchainMonitor] notification match failed on ${network}:`, error)
+    }
+  }
+
+  /**
+   * Match newly-seen mempool transactions (depth 0) for first-seen
+   * `incoming_pending` alerts. Dedupes against txids already notified while they
+   * linger in the mempool, and prunes that set as txids leave.
+   */
+  private async notifyMempoolMatches(network: NetworkType, rawMempool: string[]): Promise<void> {
+    const dispatch = this.notificationDispatcher
+    if (!dispatch) {
+      return
+    }
+    try {
+      const notified = this.notifiedMempoolTxids.get(network) ?? new Set<string>()
+      const fresh = rawMempool.filter((txid) => !notified.has(txid))
+      if (fresh.length > 0) {
+        const parsed = await this.buildParsedTxs(network, fresh)
+        if (parsed.length > 0) {
+          await matchBlock({ network, depth: 0, txs: parsed }, { dispatch })
+        }
+        for (const txid of fresh) {
+          notified.add(txid)
+        }
+      }
+      // Prune txids that have left the mempool so the set stays bounded.
+      const inMempool = new Set(rawMempool)
+      for (const txid of notified) {
+        if (!inMempool.has(txid)) {
+          notified.delete(txid)
+        }
+      }
+      this.notifiedMempoolTxids.set(network, notified)
+    } catch (error) {
+      logger.error(`[BlockchainMonitor] mempool notification match failed on ${network}:`, error)
     }
   }
 
@@ -363,6 +485,14 @@ export class BlockchainMonitor {
           },
         }
         this.wsManager.broadcast(mempoolEvent, network)
+
+        // First-seen payment notifications from the mempool (depth 0).
+        if (this.notificationDispatcher) {
+          const rawMempool = await rpcWithNetwork<string[]>('getrawmempool', [], network).catch(
+            () => [] as string[],
+          )
+          await this.notifyMempoolMatches(network, rawMempool)
+        }
       }
     } catch (error) {
       logger.error(`[BlockchainMonitor] Error polling mempool for ${network}:`, error)

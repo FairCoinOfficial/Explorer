@@ -1,4 +1,4 @@
-import { useLocale, setLocale, SUPPORTED_LOCALES } from '@/lib/i18n'
+import { useLocale, useTranslations, setLocale, SUPPORTED_LOCALES } from '@/lib/i18n'
 import { Globe } from 'lucide-react'
 import {
   DropdownMenu,
@@ -15,6 +15,7 @@ interface LanguageSelectorProps {
 
 export function LanguageSelector({ collapsed }: LanguageSelectorProps) {
   const locale = useLocale()
+  const t = useTranslations('common')
   const current = SUPPORTED_LOCALES.find((l) => l.code === locale)
 
   return (
@@ -40,7 +41,7 @@ export function LanguageSelector({ collapsed }: LanguageSelectorProps) {
             key={loc.code}
             onClick={() => {
               setLocale(loc.code)
-              toast.success(`Language changed to ${loc.name}`)
+              toast.success(t('languageChanged', { language: loc.nativeName }))
             }}
             className={cn(
               'cursor-pointer',

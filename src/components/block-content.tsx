@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   AlertTriangle,
@@ -12,7 +13,7 @@ import {
 } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
 import { useBlock } from '@/hooks/use-block'
-import { formatBytes, formatNumber } from '@/lib/format'
+import { formatBytes, formatFair, formatNumber } from '@/lib/format'
 import { DetailBreadcrumbs } from '@/components/detail/detail-breadcrumbs'
 import { DetailHeader } from '@/components/detail/detail-header'
 import { SectionCard } from '@/components/detail/section-card'
@@ -20,15 +21,13 @@ import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
 import { InfoGrid, InfoRow } from '@/components/detail/info-row'
 import { HashCell } from '@/components/detail/hash-cell'
 import { RelativeTime } from '@/components/detail/relative-time'
+import { ConfirmationMeter } from '@/components/detail/confirmation-meter'
+import { RowIndex } from '@/components/detail/row-index'
+import { EmptyState } from '@/components/detail/empty-state'
+import { Pagination } from '@/components/detail/pagination'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-
-/** Confirmations at which a block is treated as fully matured for the progress meter. */
-const MATURE_CONFIRMATIONS = 100
-
-/** Gradient fill for confirmation/progress meters: brand primary → bright accent. */
-const PROGRESS_GRADIENT = 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))'
 
 export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
   const t = useTranslations('block')
@@ -88,12 +87,6 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
         subtitle={t('details')}
         onRefresh={() => void refetch()}
         isRefreshing={isFetching}
-        action={
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-            <Database className="size-3" />
-            {common('transactions')}: {formatNumber(txCount)}
-          </span>
-        }
       />
 
       {/* Hero: block height + hash as the confident primary identity. */}
@@ -200,38 +193,12 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
         icon={Receipt}
         flush
         action={
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {formatNumber(txCount)} {common('transactions')}
           </span>
         }
       >
-        {block.tx.length > 0 ? (
-          <ul className="divide-y">
-            {block.tx.map((txid, index) => (
-              <li
-                key={txid}
-                className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40"
-              >
-                <span className="w-10 shrink-0 text-xs text-muted-foreground tabular-nums">
-                  #{index}
-                </span>
-                <HashCell value={txid} to="tx" lead={10} tail={8} className="min-w-0 flex-1" />
-                {typeof block.txValues?.[index] === 'number' ? (
-                  <span className="shrink-0 text-xs font-semibold tabular-nums text-foreground">
-                    {(block.txValues[index] as number).toLocaleString(undefined, {
-                      maximumFractionDigits: 8,
-                    })}{' '}
-                    FAIR
-                  </span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="flex min-h-[120px] items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
-            {t('noTransactions')}
-          </div>
-        )}
+        <BlockTransactions txids={block.tx} txValues={block.txValues} />
       </SectionCard>
     </div>
   )
@@ -253,61 +220,72 @@ function ConfirmationPill({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums',
-        confirmed ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+        'inline-flex items-center gap-1 text-xs font-medium tabular-nums',
+        confirmed ? 'text-primary' : 'text-muted-foreground',
       )}
     >
-      <CheckCircle2 className="size-3" />
+      <CheckCircle2 className="size-3.5" />
       {formatNumber(confirmations)} {label}
     </span>
   )
 }
 
-/**
- * Gradient confirmation meter mirroring the home supply bar: a thin track that
- * fills primary→accent and caps at {@link MATURE_CONFIRMATIONS}, giving a tasteful
- * read on how deeply a block is buried without overstating tiny counts.
- */
-function ConfirmationMeter({
-  confirmations,
-  label,
-  className,
+const TXS_PER_PAGE = 25
+
+/** Paginated list of a block's transactions with per-tx total-output values. */
+function BlockTransactions({
+  txids,
+  txValues,
 }: {
-  confirmations: number
-  label: string
-  className?: string
+  txids: string[]
+  txValues?: Array<number | null>
 }) {
-  const fraction = Math.min(Math.max(confirmations, 0) / MATURE_CONFIRMATIONS, 1)
-  // Keep a sliver of fill visible for any confirmed block so it never reads empty.
-  const fillWidth = confirmations > 0 ? Math.max(fraction * 100, 4) : 0
-  const percent = Math.round(fraction * 1000) / 10
+  const t = useTranslations('block')
+  const common = useTranslations('common')
+  const [page, setPage] = useState(1)
+
+  if (txids.length === 0) {
+    return <EmptyState icon={Receipt} title={t('noTransactions')} />
+  }
+
+  const totalPages = Math.max(1, Math.ceil(txids.length / TXS_PER_PAGE))
+  const start = (page - 1) * TXS_PER_PAGE
+  const pageTx = txids.slice(start, start + TXS_PER_PAGE)
 
   return (
-    <div className={cn('space-y-1.5', className)}>
-      <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-        <span>{label}</span>
-        <span className="tabular-nums">
-          {formatNumber(confirmations)} / {formatNumber(MATURE_CONFIRMATIONS)}
-        </span>
-      </div>
-      <div
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={percent}
-        aria-label={label}
-        className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted"
-      >
-        <div
-          className="relative h-full rounded-full transition-[width] duration-500 ease-out"
-          style={{ width: `${fillWidth}%`, backgroundImage: PROGRESS_GRADIENT }}
-        >
-          {confirmations > 0 ? (
-            <span className="absolute inset-y-0 right-0 w-1.5 rounded-full bg-accent" aria-hidden />
-          ) : null}
-        </div>
-      </div>
-    </div>
+    <>
+      <ul className="divide-y">
+        {pageTx.map((txid, i) => {
+          const index = start + i
+          const value = txValues?.[index]
+          return (
+            <li
+              key={txid}
+              className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40"
+            >
+              <RowIndex n={index} />
+              <HashCell value={txid} to="tx" fill hideCopy className="min-w-0 flex-1" />
+              {typeof value === 'number' ? (
+                <span className="shrink-0 text-xs font-semibold tabular-nums text-foreground">
+                  {formatFair(value)}
+                </span>
+              ) : null}
+            </li>
+          )
+        })}
+      </ul>
+      {totalPages > 1 ? (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPrev={() => setPage((p) => Math.max(1, p - 1))}
+          onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+          label={common('page', { current: page, total: totalPages })}
+          prevLabel={common('previous')}
+          nextLabel={common('next')}
+        />
+      ) : null}
+    </>
   )
 }
 

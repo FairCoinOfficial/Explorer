@@ -3,23 +3,20 @@ import {
   AlertTriangle,
   Blocks as BlocksIcon,
   Calendar,
-  Clock,
-  Database,
   Layers,
   Network,
-  Receipt,
-  Ruler,
   Search,
 } from 'lucide-react'
 import { useTranslations } from '@/lib/i18n'
 import { useNetwork } from '@/contexts/network-context'
-import { useRecentBlocks, type RecentBlock } from '@/hooks/use-recent-blocks'
-import { formatBytes, formatNumber } from '@/lib/format'
+import { useRecentBlocks } from '@/hooks/use-recent-blocks'
+import { formatNumber } from '@/lib/format'
 import { ListHeader } from '@/components/detail/list-header'
 import { SectionCard } from '@/components/detail/section-card'
 import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
-import { HashCell } from '@/components/detail/hash-cell'
-import { RelativeTime } from '@/components/detail/relative-time'
+import { EmptyState } from '@/components/detail/empty-state'
+import { Pagination } from '@/components/detail/pagination'
+import { BlockRow } from '@/components/block-row'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -124,12 +121,6 @@ export function BlocksContent() {
         subtitle={t('subtitle')}
         onRefresh={() => void refetch()}
         isRefreshing={isFetching}
-        badge={
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-            <Database className="size-3" />
-            {t('height', { height: formatNumber(height) })}
-          </span>
-        }
       />
 
       {/* Summary tiles — same language as the home stat strip. */}
@@ -192,114 +183,35 @@ export function BlocksContent() {
         icon={BlocksIcon}
         flush
         action={
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {t('blocksCount', { count: filteredBlocks.length })}
           </span>
         }
       >
         {filteredBlocks.length > 0 ? (
-          <>
-            {/* Column header — aligns the row columns and adds list legibility. */}
-            <div className="hidden items-center gap-3 border-b px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:flex">
-              <span className="flex-1">{common('height')}</span>
-              <span className="inline-flex w-24 items-center justify-end gap-1">
-                <Receipt className="size-3" />
-                {common('transactions')}
-              </span>
-              <span className="inline-flex w-28 items-center justify-end gap-1">
-                <Clock className="size-3" />
-                {common('time')}
-              </span>
-              <span className="inline-flex w-16 items-center justify-end gap-1">
-                <Ruler className="size-3" />
-                {common('size')}
-              </span>
-            </div>
-            <ul className="divide-y">
-              {filteredBlocks.map((block) => (
-                <BlockRow key={block.height} block={block} t={t} />
-              ))}
-            </ul>
-          </>
+          <ul className="divide-y">
+            {filteredBlocks.map((block) => (
+              <BlockRow key={block.height} block={block} />
+            ))}
+          </ul>
         ) : (
-          <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 px-4 py-8 text-center">
-            <span className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
-              <BlocksIcon className="size-5" />
-            </span>
-            <p className="text-sm text-muted-foreground">{common('noResults')}</p>
-          </div>
+          <EmptyState icon={BlocksIcon} title={common('noResults')} tone="muted" />
         )}
 
         {totalPages > 1 ? (
-          <div className="flex items-center justify-between gap-2 border-t px-4 py-3">
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {t('pageOf', { current: page, total: totalPages, count: total })}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1 || isFetching}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                {common('previous')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages || isFetching}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              >
-                {common('next')}
-              </Button>
-            </div>
-          </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+            label={t('pageOf', { current: page, total: totalPages, count: total })}
+            prevLabel={common('previous')}
+            nextLabel={common('next')}
+            disabled={isFetching}
+          />
         ) : null}
       </SectionCard>
     </div>
-  )
-}
-
-function BlockRow({
-  block,
-  t,
-}: {
-  block: RecentBlock
-  t: (key: string, params?: Record<string, string | number>) => string
-}) {
-  const txCount = block.nTx ?? block.tx.length
-
-  return (
-    <li className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <BlocksIcon className="size-4" />
-      </span>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <HashCell
-          value={String(block.height)}
-          to="block"
-          hideCopy
-          textClassName="text-sm font-semibold tabular-nums"
-        />
-        <HashCell value={block.hash} to="block" textClassName="text-xs text-muted-foreground" />
-      </div>
-
-      <span className="hidden w-24 shrink-0 justify-end text-right sm:flex">
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
-          {t('txCount', { count: txCount })}
-        </span>
-      </span>
-
-      <RelativeTime
-        timestamp={block.time}
-        className="w-28 shrink-0 text-right text-xs text-muted-foreground"
-      />
-
-      <span className="hidden w-16 shrink-0 text-right text-xs text-muted-foreground tabular-nums sm:inline">
-        {formatBytes(block.size)}
-      </span>
-    </li>
   )
 }
 
