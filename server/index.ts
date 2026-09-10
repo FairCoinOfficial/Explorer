@@ -251,7 +251,9 @@ app.get('/api/block/:hashOrHeight', async (req, res) => {
       txValues = await Promise.all(
         txids.map(async (txid) => {
           try {
-            const tx = await blockCache.getTransaction(txid, network, true)
+            const tx = await blockCache.getTransaction(txid, network, true, {
+              prevoutLookupBudget: { remaining: 0 },
+            })
             const vout = (tx as { vout?: Array<{ value?: number }> }).vout
             if (!Array.isArray(vout)) return null
             return vout.reduce((sum, o) => sum + (Number(o.value) || 0), 0)
