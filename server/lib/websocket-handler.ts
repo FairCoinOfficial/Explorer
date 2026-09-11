@@ -24,7 +24,7 @@ const wsManager = getWebSocketManager({
 
 // Networks the monitor polls. Configurable so deployments without a testnet
 // node aren't stuck logging RPC failures every poll cycle.
-const MONITOR_NETWORKS = (process.env.WEBSOCKET_NETWORKS || 'mainnet,testnet')
+const MONITOR_NETWORKS = (process.env.WEBSOCKET_NETWORKS || 'mainnet')
   .split(',')
   .map(n => n.trim())
   .filter((n): n is NetworkType => n === 'mainnet' || n === 'testnet')
