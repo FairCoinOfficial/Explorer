@@ -27,7 +27,7 @@ import githubRouter from './routes/github'
 import mcpInfoRouter from './routes/mcp-info'
 import transactionsRouter from './routes/transactions'
 import notificationsRouter from './routes/notifications'
-import { createMcpPostHandler, handleMcpMethodNotAllowed, handleMcpOptions } from './mcp/http'
+import { createMcpPostHandler, handleMcpMethodNotAllowed, handleMcpOptions, handleMcpRateLimited, isMcpToolCall } from './mcp/http'
 import { isNotificationsEnabled } from './lib/notifications/config'
 import packageJson from '../package.json' with { type: 'json' }
 
@@ -739,7 +739,19 @@ app.get('/api/bridge/reserves', async (_req, res) => {
 // which the SPA's same-origin allowlist above does not cover.
 const SERVER_VERSION = packageJson.version
 app.options('/mcp', handleMcpOptions)
-app.post('/mcp', globalLimiter, strictLimiter, createMcpPostHandler(SERVER_VERSION))
+// The node-protecting cap counts tool calls only: protocol messages (initialize,
+// tools/list, notifications) never touch the node and are bounded by the global
+// cap alike. Over the cap, the answer is a JSON-RPC error the agent can read.
+const mcpToolLimiter = rateLimit({
+  windowMs: GLOBAL_RATE_WINDOW_MS,
+  max: STRICT_RATE_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => !isMcpToolCall(req.body),
+  handler: handleMcpRateLimited,
+})
+
+app.post('/mcp', globalLimiter, mcpToolLimiter, createMcpPostHandler(SERVER_VERSION))
 app.get('/mcp', handleMcpMethodNotAllowed)
 app.delete('/mcp', handleMcpMethodNotAllowed)
 

@@ -40,6 +40,36 @@ export function handleMcpOptions(_req: Request, res: Response): void {
   res.sendStatus(204);
 }
 
+/** JSON-RPC server error code used for "rate limited". */
+const JSONRPC_RATE_LIMITED = -32000;
+
+/**
+ * Whether a JSON-RPC body (one message or a batch) calls a tool. Only tool
+ * calls reach the FairCoin node; `initialize`, `tools/list`, `ping` and
+ * notifications are protocol chatter a client sends around every session, and
+ * counting them against the node's cap spent most of an agent's budget before
+ * it asked a single question.
+ */
+export function isMcpToolCall(body: unknown): boolean {
+  const messages = Array.isArray(body) ? body : [body];
+  return messages.some((m) => typeof m === "object" && m !== null && (m as { method?: unknown }).method === "tools/call");
+}
+
+/**
+ * The answer when an MCP client is over its cap: a JSON-RPC error an agent can
+ * read and relay, instead of express-rate-limit's plain-text body, which MCP
+ * clients surface as an opaque transport failure.
+ */
+export function handleMcpRateLimited(req: Request, res: Response): void {
+  applyMcpCors(res);
+  const body = req.body as { id?: unknown } | undefined;
+  res.status(429).json({
+    jsonrpc: "2.0",
+    error: { code: JSONRPC_RATE_LIMITED, message: "Rate limited: too many tool calls from this address. Wait a few minutes and try again." },
+    id: !Array.isArray(body) && body && (typeof body.id === "string" || typeof body.id === "number") ? body.id : null,
+  });
+}
+
 /**
  * Handle a JSON-RPC request over Streamable HTTP. Creates a fresh server and a
  * stateless transport (`sessionIdGenerator: undefined`) per request, hands the
