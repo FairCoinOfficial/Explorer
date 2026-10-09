@@ -1,63 +1,118 @@
-import { RefreshCw } from 'lucide-react'
-import { NetworkStatus } from '@/components/network-status'
-import { Button } from '@/components/ui/button'
+import { SiteActions } from '@/components/site/header'
+import { useDetailPane } from '@/contexts/detail-pane-context'
+import { useExplorerNavigate as useNavigate } from '@/lib/explorer-navigation'
 import { useTranslations } from '@/lib/i18n'
-import { cn } from '@/lib/utils'
+import {
+  AppShellHeader,
+  AppShellMenuButton,
+  useAppShell,
+} from '@oxy.so/bloom/app-shell'
+import { Breadcrumb, BreadcrumbItem } from '@oxy.so/bloom/breadcrumb'
+import { Button } from '@oxy.so/bloom/button'
+import { useContainerWidth } from '@oxy.so/bloom/hooks'
+import { PageHeader } from '@oxy.so/bloom/page-header'
+import { BREAKPOINTS } from '@oxy.so/bloom/styles'
+import { Muted, Text } from '@oxy.so/bloom/typography'
+import { RefreshCw, X } from 'lucide-react'
+import { View } from 'react-native'
 
 interface DetailHeaderProps {
   title: string
   subtitle?: string
-  /** React Query refetch handler wired to the refresh button. */
+  breadcrumb?: React.ReactNode
   onRefresh?: () => void
-  /** Disable the refresh button + show the spinning indicator while fetching. */
   isRefreshing?: boolean
-  /** Optional extra controls rendered before the refresh button (e.g. a badge). */
   action?: React.ReactNode
-  className?: string
 }
 
-/**
- * Shared header for detail pages (tx/block/address): title + subtitle on the left,
- * network status, optional action, and a refresh button on the right.
- */
 export function DetailHeader({
   title,
   subtitle,
+  breadcrumb,
   onRefresh,
   isRefreshing = false,
   action,
-  className,
 }: DetailHeaderProps) {
   const common = useTranslations('common')
-
+  const panels = useTranslations('panels')
+  const { width, onLayout } = useContainerWidth()
+  const pane = useDetailPane()
+  const navigate = useNavigate()
+  const shell = useAppShell()
+  if (pane)
+    return (
+      <PageHeader
+        title={
+          pane.mobile ? (
+            <Text variant="headline-medium" role="heading" aria-level={1}>
+              {title}
+            </Text>
+          ) : (
+            title
+          )
+        }
+        subtitle={subtitle}
+        headingLevel={pane.mobile ? 1 : 2}
+        sticky={false}
+        safeArea={false}
+        leading={pane.mobile ? <AppShellMenuButton /> : undefined}
+        actions={
+          <>
+            {action}
+            {pane.mobile && <SiteActions compact />}
+            {onRefresh && (
+              <Button
+                appearance="plain"
+                onPress={onRefresh}
+                loading={isRefreshing}
+                icon={<RefreshCw size={18} />}
+                accessibilityLabel={common('refresh')}
+              />
+            )}
+            <Button
+              appearance="plain"
+              onPress={pane.close}
+              icon={<X size={18} />}
+              accessibilityLabel={panels('close')}
+            />
+          </>
+        }
+      />
+    )
   return (
-    <div
-      className={cn(
-        'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between',
-        className,
-      )}
-    >
-      <div className="min-w-0 space-y-1">
-        <h2 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">{title}</h2>
-        {subtitle ? <p className="text-sm text-muted-foreground sm:text-base">{subtitle}</p> : null}
-      </div>
-      <div className="flex shrink-0 flex-wrap items-center gap-2 self-start sm:self-auto">
-        <NetworkStatus />
-        {action}
-        {onRefresh ? (
-          <Button
-            onClick={onRefresh}
-            variant="outline"
-            size="sm"
-            disabled={isRefreshing}
-            aria-label={common('refresh')}
-            className="gap-2"
-          >
-            <RefreshCw className={cn('size-4', isRefreshing && 'animate-spin')} />
-            <span className="hidden sm:inline">{common('refresh')}</span>
-          </Button>
-        ) : null}
-      </div>
-    </div>
+    <View onLayout={onLayout} style={{ gap: 4 }}>
+      <AppShellHeader
+        title={title}
+        breadcrumb={
+          breadcrumb ?? (
+            <Breadcrumb>
+              <BreadcrumbItem href="/" onPress={() => navigate('/')}>
+                FairCoin Explorer
+              </BreadcrumbItem>
+              <BreadcrumbItem current>{title}</BreadcrumbItem>
+            </Breadcrumb>
+          )
+        }
+        showMenu={shell.drawerAvailable}
+        menuOpen={shell.drawerOpen}
+        onMenuPress={shell.toggleDrawer}
+        actions={
+          <>
+            {action}
+            {onRefresh && (
+              <Button
+                onPress={onRefresh}
+                appearance="outline"
+                loading={isRefreshing}
+                icon={<RefreshCw size={18} />}
+                accessibilityLabel={common('refresh')}
+              />
+            )}
+            <SiteActions compact={(width ?? 0) < BREAKPOINTS.md} />
+          </>
+        }
+      />
+      {subtitle && <Muted>{subtitle}</Muted>}
+    </View>
   )
 }

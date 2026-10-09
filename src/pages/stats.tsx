@@ -1,2 +1,4 @@
 import { StatsContent } from '@/components/stats-content'
-export default function StatsPage() { return <StatsContent /> }
+export default function StatsPage() {
+  return <StatsContent />
+}

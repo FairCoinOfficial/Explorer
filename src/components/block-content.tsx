@@ -1,73 +1,90 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { ConfirmationMeter } from '@/components/detail/confirmation-meter'
+import { DetailBreadcrumbs } from '@/components/detail/detail-breadcrumbs'
+import { DetailHeader } from '@/components/detail/detail-header'
+import { HashCell } from '@/components/detail/hash-cell'
+import { RelativeTime } from '@/components/detail/relative-time'
+import { RowIndex } from '@/components/detail/row-index'
+import { PageLoading } from '@/components/page-loading'
+import { useBlock } from '@/hooks/use-block'
+import { ExplorerLink } from '@/lib/explorer-navigation'
+import { formatBytes, formatFair, formatNumber } from '@/lib/format'
+import { useTranslations } from '@/lib/i18n'
+import { Button } from '@oxy.so/bloom/button'
+import { Card, CardBody, CardHeader, CardTitle } from '@oxy.so/bloom/card'
+import { Chip } from '@oxy.so/bloom/chip'
+import { Code } from '@oxy.so/bloom/code'
+import { EmptyState } from '@oxy.so/bloom/empty-state'
+import { useContainerWidth } from '@oxy.so/bloom/hooks'
+import { Item } from '@oxy.so/bloom/item'
+import { Pagination } from '@oxy.so/bloom/pagination'
+import { StatCards } from '@oxy.so/bloom/stat-cards'
+import { BREAKPOINTS } from '@oxy.so/bloom/styles'
+import { Muted, Text } from '@oxy.so/bloom/typography'
 import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Blocks,
-  CheckCircle2,
-  Database,
   Layers,
   Receipt,
   Ruler,
 } from 'lucide-react'
-import { useTranslations } from '@/lib/i18n'
-import { useBlock } from '@/hooks/use-block'
-import { formatBytes, formatFair, formatNumber } from '@/lib/format'
-import { DetailBreadcrumbs } from '@/components/detail/detail-breadcrumbs'
-import { DetailHeader } from '@/components/detail/detail-header'
-import { SectionCard } from '@/components/detail/section-card'
-import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
-import { InfoGrid, InfoRow } from '@/components/detail/info-row'
-import { HashCell } from '@/components/detail/hash-cell'
-import { RelativeTime } from '@/components/detail/relative-time'
-import { ConfirmationMeter } from '@/components/detail/confirmation-meter'
-import { RowIndex } from '@/components/detail/row-index'
-import { EmptyState } from '@/components/detail/empty-state'
-import { Pagination } from '@/components/detail/pagination'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
+import { useState } from 'react'
+import { View } from 'react-native'
 
 export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
+  const { width: measuredWidth, onLayout } = useContainerWidth()
+  const width = measuredWidth ?? 0
   const t = useTranslations('block')
   const common = useTranslations('common')
   const nav = useTranslations('nav')
-  const { data: block, isLoading, isError, error, refetch, isFetching } = useBlock(hashOrHeight)
+  const {
+    data: block,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useBlock(hashOrHeight)
 
   if (isLoading) {
-    return <BlockSkeleton />
+    return <PageLoading />
   }
 
   if (isError || !block) {
     return (
-      <div className="flex-1 space-y-4">
-        <DetailBreadcrumbs
-          items={[
-            { label: nav('blocks'), to: '/blocks' },
-            { label: t('notFound') },
-          ]}
-        />
+      <View onLayout={onLayout} style={{ gap: 16 }}>
         <DetailHeader
+          breadcrumb={
+            <DetailBreadcrumbs
+              items={[
+                { label: nav('blocks'), to: '/blocks' },
+                { label: t('notFound') },
+              ]}
+            />
+          }
           title={t('notFound')}
           subtitle={t('details')}
           onRefresh={() => void refetch()}
           isRefreshing={isFetching}
         />
-        <SectionCard>
-          <div className="flex flex-col items-center gap-3 py-8 text-center">
-            <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <AlertTriangle className="size-6" />
-            </span>
-            <p className="text-sm text-muted-foreground">
-              {error instanceof Error ? error.message : t('notFound')}
-            </p>
-            <Button variant="outline" onClick={() => void refetch()}>
-              {common('tryAgain')}
-            </Button>
-          </div>
-        </SectionCard>
-      </div>
+        <Card>
+          <CardBody>
+            <EmptyState
+              variant="compact"
+              title={common('error')}
+              description={
+                error instanceof Error ? error.message : t('notFound')
+              }
+              illustration={<AlertTriangle size={28} />}
+              action={{
+                label: common('tryAgain'),
+                onPress: () => void refetch(),
+              }}
+            />
+          </CardBody>
+        </Card>
+      </View>
     )
   }
 
@@ -75,14 +92,16 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
   const confirmations = block.confirmations
 
   return (
-    <div className="flex-1 space-y-4">
-      <DetailBreadcrumbs
-        items={[
-          { label: nav('blocks'), to: '/blocks' },
-          { label: `${t('block')} #${formatNumber(block.height)}` },
-        ]}
-      />
+    <View onLayout={onLayout} style={{ gap: 16 }}>
       <DetailHeader
+        breadcrumb={
+          <DetailBreadcrumbs
+            items={[
+              { label: nav('blocks'), to: '/blocks' },
+              { label: `${t('block')} #${formatNumber(block.height)}` },
+            ]}
+          />
+        }
         title={`${t('block')} #${formatNumber(block.height)}`}
         subtitle={t('details')}
         onRefresh={() => void refetch()}
@@ -90,93 +109,231 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
       />
 
       {/* Hero: block height + hash as the confident primary identity. */}
-      <section className="rounded-2xl border bg-muted/30 p-4 transition-colors hover:bg-muted/40 sm:p-5">
-        <header className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Blocks className="size-4" />
-            </span>
-            <h3 className="text-sm font-semibold tracking-tight">{t('blockInformation')}</h3>
-          </div>
-          <ConfirmationPill confirmations={confirmations} label={common('confirmations')} />
-        </header>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('blockInformation')}</CardTitle>
+          <ConfirmationPill
+            confirmations={confirmations}
+            label={common('confirmations')}
+          />
+        </CardHeader>
+        <CardBody>
+          <View style={{ gap: 16 }}>
+            <Text
+              variant={
+                width >= BREAKPOINTS.md ? 'display-4-bold' : 'title-1-bold'
+              }
+            >
+              #{formatNumber(block.height)}
+            </Text>
+            <Muted>{t('blockHeight')}</Muted>
+            <Item
+              density="compact"
+              title={t('blockHash')}
+              subtitle={<HashCell value={block.hash} full />}
+            />
+            <ConfirmationMeter
+              confirmations={confirmations}
+              label={common('confirmations')}
+            />
+          </View>
+        </CardBody>
+      </Card>
 
-        <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">
-            #{formatNumber(block.height)}
-          </span>
-          <span className="text-sm font-medium text-muted-foreground">{t('blockHeight')}</span>
-        </div>
-
-        <div className="mt-3">
-          <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            {t('blockHash')}
-          </span>
-          <div className="mt-1">
-            <HashCell value={block.hash} full />
-          </div>
-        </div>
-
-        <ConfirmationMeter
-          confirmations={confirmations}
-          label={common('confirmations')}
-          className="mt-4"
-        />
-      </section>
-
-      <StatTileGrid>
-        <StatTile label={t('blockHeight')} value={formatNumber(block.height)} icon={Blocks} accent />
-        <StatTile label={common('transactions')} value={formatNumber(txCount)} icon={Receipt} />
-        <StatTile
-          label={t('blockSize')}
-          value={formatBytes(block.size)}
-          icon={Ruler}
-          hint={`${formatNumber(block.size)} ${t('bytes')}`}
-        />
-        <StatTile
-          label={common('confirmations')}
-          value={formatNumber(confirmations)}
-          icon={Layers}
-        />
-      </StatTileGrid>
+      <StatCards
+        columns={width >= BREAKPOINTS.lg ? 4 : width >= 480 ? 2 : 1}
+        stats={[
+          {
+            label: t('blockHeight'),
+            value: formatNumber(block.height),
+            icon: (props) => (
+              <Blocks
+                width={props.width}
+                height={props.height}
+                color={props.fill}
+              />
+            ),
+            delta: '—',
+            deltaColor: 'neutral',
+            hint: undefined,
+          },
+          {
+            label: common('transactions'),
+            value: formatNumber(txCount),
+            icon: (props) => (
+              <Receipt
+                width={props.width}
+                height={props.height}
+                color={props.fill}
+              />
+            ),
+            delta: '—',
+            deltaColor: 'neutral',
+            hint: undefined,
+          },
+          {
+            label: t('blockSize'),
+            value: formatBytes(block.size),
+            icon: (props) => (
+              <Ruler
+                width={props.width}
+                height={props.height}
+                color={props.fill}
+              />
+            ),
+            delta: '—',
+            deltaColor: 'neutral',
+            hint: `${formatNumber(block.size)} ${t('bytes')}`,
+          },
+          {
+            label: common('confirmations'),
+            value: formatNumber(confirmations),
+            icon: (props) => (
+              <Layers
+                width={props.width}
+                height={props.height}
+                color={props.fill}
+              />
+            ),
+            delta: '—',
+            deltaColor: 'neutral',
+            hint: undefined,
+          },
+        ]}
+      />
 
       {/* Block metadata */}
-      <SectionCard title={t('blockInformation')} icon={Database}>
-        <div className="space-y-4">
-          <InfoGrid>
-            <InfoRow label={t('timestamp')} value={<RelativeTime timestamp={block.time} />} />
-            <InfoRow label={t('difficulty')} value={block.difficulty.toFixed(6)} mono />
-            <InfoRow label={t('nonce')} value={formatNumber(block.nonce)} mono />
-            <InfoRow label={t('version')} value={block.version} mono />
-            <InfoRow label={t('bits')} value={block.bits} mono />
-            <InfoRow
-              label={t('weight')}
-              value={block.weight ? formatNumber(block.weight) : '—'}
-              mono
-            />
-          </InfoGrid>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('blockInformation')}</CardTitle>
+        </CardHeader>
+        <CardBody>
+          <div className="space-y-4">
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
+              <View
+                style={{
+                  flexBasis: 220,
+                  flexGrow: 1,
+                  flexShrink: 1,
+                  minWidth: 0,
+                }}
+              >
+                <Item
+                  density="compact"
+                  title={t('timestamp')}
+                  subtitle={<RelativeTime timestamp={block.time} />}
+                />
+              </View>
+              <View
+                style={{
+                  flexBasis: 220,
+                  flexGrow: 1,
+                  flexShrink: 1,
+                  minWidth: 0,
+                }}
+              >
+                <Item
+                  density="compact"
+                  title={t('difficulty')}
+                  subtitle={<Code>{block.difficulty.toFixed(6)}</Code>}
+                />
+              </View>
+              <View
+                style={{
+                  flexBasis: 220,
+                  flexGrow: 1,
+                  flexShrink: 1,
+                  minWidth: 0,
+                }}
+              >
+                <Item
+                  density="compact"
+                  title={t('nonce')}
+                  subtitle={<Code>{formatNumber(block.nonce)}</Code>}
+                />
+              </View>
+              <View
+                style={{
+                  flexBasis: 220,
+                  flexGrow: 1,
+                  flexShrink: 1,
+                  minWidth: 0,
+                }}
+              >
+                <Item
+                  density="compact"
+                  title={t('version')}
+                  subtitle={<Code>{block.version}</Code>}
+                />
+              </View>
+              <View
+                style={{
+                  flexBasis: 220,
+                  flexGrow: 1,
+                  flexShrink: 1,
+                  minWidth: 0,
+                }}
+              >
+                <Item
+                  density="compact"
+                  title={t('bits')}
+                  subtitle={<Code>{block.bits}</Code>}
+                />
+              </View>
+              <View
+                style={{
+                  flexBasis: 220,
+                  flexGrow: 1,
+                  flexShrink: 1,
+                  minWidth: 0,
+                }}
+              >
+                <Item
+                  density="compact"
+                  title={t('weight')}
+                  subtitle={
+                    <Code>
+                      {block.weight ? formatNumber(block.weight) : '—'}
+                    </Code>
+                  }
+                />
+              </View>
+            </View>
 
-          <InfoRow label={t('merkleRoot')} value={<HashCell value={block.merkleroot} full />} />
+            <Item
+              density="compact"
+              title={t('merkleRoot')}
+              subtitle={<HashCell value={block.merkleroot} full />}
+            />
 
-          {block.previousblockhash ? (
-            <InfoRow
-              label={t('previousBlock')}
-              value={<HashCell value={block.previousblockhash} to="block" full />}
-            />
-          ) : null}
-          {block.nextblockhash ? (
-            <InfoRow
-              label={t('nextBlock')}
-              value={<HashCell value={block.nextblockhash} to="block" full />}
-            />
-          ) : null}
-        </div>
-      </SectionCard>
+            {block.previousblockhash ? (
+              <Item
+                density="compact"
+                title={t('previousBlock')}
+                subtitle={
+                  <HashCell value={block.previousblockhash} to="block" full />
+                }
+              />
+            ) : null}
+            {block.nextblockhash ? (
+              <Item
+                density="compact"
+                title={t('nextBlock')}
+                subtitle={
+                  <HashCell value={block.nextblockhash} to="block" full />
+                }
+              />
+            ) : null}
+          </div>
+        </CardBody>
+      </Card>
 
       {/* Prev / next pill navigation */}
       <div className="flex items-center justify-between gap-2">
         <NavPill
-          to={block.previousblockhash ? `/block/${block.height - 1}` : undefined}
+          to={
+            block.previousblockhash ? `/block/${block.height - 1}` : undefined
+          }
           direction="prev"
           label={t('previousBlock')}
         />
@@ -188,19 +345,20 @@ export function BlockContent({ hashOrHeight }: { hashOrHeight: string }) {
       </div>
 
       {/* Transactions */}
-      <SectionCard
-        title={t('transactionsList')}
-        icon={Receipt}
-        flush
-        action={
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {formatNumber(txCount)} {common('transactions')}
-          </span>
-        }
-      >
-        <BlockTransactions txids={block.tx} txValues={block.txValues} />
-      </SectionCard>
-    </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('transactionsList')}</CardTitle>
+          {
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {formatNumber(txCount)} {common('transactions')}
+            </span>
+          }
+        </CardHeader>
+        <CardBody style={{ padding: 0 }}>
+          <BlockTransactions txids={block.tx} txValues={block.txValues} />
+        </CardBody>
+      </Card>
+    </View>
   )
 }
 
@@ -215,18 +373,10 @@ function ConfirmationPill({
   confirmations: number
   label: string
 }) {
-  const confirmed = confirmations > 0
-
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 text-xs font-medium tabular-nums',
-        confirmed ? 'text-primary' : 'text-muted-foreground',
-      )}
-    >
-      <CheckCircle2 className="size-3.5" />
+    <Chip size="sm" tone={confirmations > 0 ? 'success' : 'neutral'}>
       {formatNumber(confirmations)} {label}
-    </span>
+    </Chip>
   )
 }
 
@@ -245,7 +395,13 @@ function BlockTransactions({
   const [page, setPage] = useState(1)
 
   if (txids.length === 0) {
-    return <EmptyState icon={Receipt} title={t('noTransactions')} />
+    return (
+      <EmptyState
+        variant="compact"
+        illustration={<Receipt size={24} />}
+        title={t('noTransactions')}
+      />
+    )
   }
 
   const totalPages = Math.max(1, Math.ceil(txids.length / TXS_PER_PAGE))
@@ -264,7 +420,13 @@ function BlockTransactions({
               className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40"
             >
               <RowIndex n={index} />
-              <HashCell value={txid} to="tx" fill hideCopy className="min-w-0 flex-1" />
+              <HashCell
+                value={txid}
+                to="tx"
+                fill
+                hideCopy
+                className="min-w-0 flex-1"
+              />
               {typeof value === 'number' ? (
                 <span className="shrink-0 text-xs font-semibold tabular-nums text-foreground">
                   {formatFair(value)}
@@ -278,10 +440,12 @@ function BlockTransactions({
         <Pagination
           page={page}
           totalPages={totalPages}
-          onPrev={() => setPage((p) => Math.max(1, p - 1))}
-          onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
-          label={common('page', { current: page, total: totalPages })}
-          prevLabel={common('previous')}
+          onChange={setPage}
+          accessibilityLabel={common('page', {
+            current: page,
+            total: totalPages,
+          })}
+          previousLabel={common('previous')}
           nextLabel={common('next')}
         />
       ) : null}
@@ -298,50 +462,22 @@ function NavPill({
   direction: 'prev' | 'next'
   label: string
 }) {
-  const content = (
-    <>
-      {direction === 'prev' ? <ArrowLeft className="size-4" /> : null}
-      {label}
-      {direction === 'next' ? <ArrowRight className="size-4" /> : null}
-    </>
-  )
-
-  const classes = cn(
-    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
-    to
-      ? 'bg-muted/40 hover:bg-muted/70'
-      : 'pointer-events-none cursor-not-allowed bg-muted/20 text-muted-foreground opacity-50',
-  )
-
-  if (!to) {
-    return <span className={classes}>{content}</span>
-  }
-
   return (
-    <Link to={to} className={classes}>
-      {content}
-    </Link>
-  )
-}
-
-function BlockSkeleton() {
-  return (
-    <div className="flex-1 space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-4 w-64" />
-        </div>
-        <Skeleton className="h-9 w-28 rounded-lg" />
-      </div>
-      <Skeleton className="h-[188px] rounded-2xl" />
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-[72px] rounded-xl" />
-        ))}
-      </div>
-      <Skeleton className="h-60 rounded-xl" />
-      <Skeleton className="h-48 rounded-xl" />
-    </div>
+    <Button
+      appearance="outline"
+      size="sm"
+      disabled={!to}
+      icon={
+        direction === 'prev' ? (
+          <ArrowLeft size={16} />
+        ) : (
+          <ArrowRight size={16} />
+        )
+      }
+      iconPosition={direction === 'prev' ? 'left' : 'right'}
+      asChild={Boolean(to)}
+    >
+      {to ? <ExplorerLink to={to}>{label}</ExplorerLink> : label}
+    </Button>
   )
 }

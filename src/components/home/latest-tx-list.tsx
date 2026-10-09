@@ -1,71 +1,83 @@
-import { Link } from 'react-router-dom'
-import { Receipt } from 'lucide-react'
-import { useTranslations } from '@/lib/i18n'
+import { RelativeTime } from '@/components/detail/relative-time'
+import { usePageParam } from '@/hooks/use-page-param'
 import { useRecentTransactions } from '@/hooks/use-recent-transactions'
-import { Skeleton } from '@/components/ui/skeleton'
-import { TransactionRow } from '@/components/transaction-row'
+import { ExplorerLink } from '@/lib/explorer-navigation'
+import { formatFair, formatNumber, shortHash } from '@/lib/format'
+import { useTranslations } from '@/lib/i18n'
+import { Button } from '@oxy.so/bloom/button'
+import { DataTable } from '@oxy.so/bloom/data-table'
+import { Box } from '@oxy.so/bloom/skeleton'
 
-interface LatestTxListProps {
-  max?: number
-}
-
-export function LatestTxList({ max = 20 }: LatestTxListProps) {
+export function LatestTxList({ max = 20 }: { max?: number }) {
+  const [page, setPage] = usePageParam('txPage')
   const t = useTranslations('home')
-  // Use the recent-transactions feed (includes the total output amount) rather
-  // than deriving bare txids from recent blocks, so each row can show a value.
+  const labels = useTranslations('common')
   const { data, isLoading, isError } = useRecentTransactions(max)
-  const transactions = data?.transactions ?? []
-
+  if (isLoading) return <Box width="100%" height={320} />
   return (
-    <div className="flex h-full flex-col rounded-2xl border bg-muted/30">
-      <header className="flex items-center justify-between gap-2 border-b px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Receipt className="size-4" />
-          </span>
-          <h3 className="text-sm font-semibold tracking-tight">{t('latestTransactions')}</h3>
-        </div>
-        <Link to="/tx" className="text-xs font-medium text-primary transition-opacity hover:opacity-80">
-          {t('viewAll')}
-        </Link>
-      </header>
-
-      <div className="flex-1 overflow-hidden">
-        {isLoading ? (
-          <ListSkeleton />
-        ) : isError ? (
-          <EmptyRow message={t('txUnavailable')} />
-        ) : transactions.length === 0 ? (
-          <EmptyRow message={t('txEmpty')} />
-        ) : (
-          <ul className="divide-y">
-            {transactions.map((tx) => (
-              <TransactionRow key={`${tx.txid}-${tx.blockHeight ?? 'mempool'}`} tx={tx} />
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function ListSkeleton() {
-  return (
-    <ul className="divide-y">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <li key={i} className="flex items-center justify-between gap-3 px-4 py-2.5">
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-4 w-16" />
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-function EmptyRow({ message }: { message: string }) {
-  return (
-    <div className="flex h-full min-h-[160px] items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
-      {message}
-    </div>
+    <DataTable
+      layout="inset"
+      title={t('latestTransactions')}
+      accessibilityLabel={t('latestTransactions')}
+      rows={data?.transactions ?? []}
+      getRowId={(row) => row.txid}
+      pageSize={5}
+      page={page}
+      onPageChange={setPage}
+      minWidth={700}
+      emptyState={t(isError ? 'txUnavailable' : 'txEmpty')}
+      toolbar={
+        <Button appearance="plain" asChild>
+          <ExplorerLink to="/tx">{t('viewAll')}</ExplorerLink>
+        </Button>
+      }
+      columns={[
+        {
+          id: 'txid',
+          header: labels('hash'),
+          accessor: (row) => row.txid,
+          cell: ({ row }) => (
+            <Button appearance="plain" size="sm" asChild>
+              <ExplorerLink to={`/tx/${row.txid}`}>
+                {shortHash(row.txid)}
+              </ExplorerLink>
+            </Button>
+          ),
+        },
+        {
+          id: 'time',
+          header: labels('time'),
+          accessor: (row) => row.time,
+          cell: ({ row }) => <RelativeTime timestamp={row.time} />,
+        },
+        {
+          id: 'amount',
+          header: 'FAIR',
+          accessor: (row) => row.amount,
+          cell: ({ row }) =>
+            typeof row.amount === 'number' ? formatFair(row.amount) : '—',
+        },
+        {
+          id: 'block',
+          header: labels('block'),
+          accessor: (row) => row.blockHeight,
+          cell: ({ row }) => (
+            <Button appearance="plain" size="sm" asChild>
+              <ExplorerLink
+                to={
+                  row.blockHeight == null
+                    ? '/mempool'
+                    : `/block/${row.blockHeight}`
+                }
+              >
+                {row.blockHeight == null
+                  ? 'Mempool'
+                  : `#${formatNumber(row.blockHeight)}`}
+              </ExplorerLink>
+            </Button>
+          ),
+        },
+      ]}
+    />
   )
 }

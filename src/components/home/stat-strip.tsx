@@ -1,24 +1,17 @@
-import { useMemo } from 'react'
-import {
-  Blocks,
-  Coins,
-  Gauge,
-  Network,
-  Layers,
-  Shield,
-  Activity,
-  type LucideIcon,
-} from 'lucide-react'
-import { useTranslations } from '@/lib/i18n'
+import { useNetwork } from '@/contexts/network-context'
 import { useNetworkStats } from '@/hooks/use-network-stats'
 import { useStatsHistory } from '@/hooks/use-stats-history'
-import { computeCirculatingSupply } from '@shared/supply'
 import { formatCompactNumber, formatNumber } from '@/lib/format'
-import { Sparkline } from '@/components/home/sparkline'
-import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
-
-const POS_PHASE_HEIGHT = 10_000
+import { useTranslations } from '@/lib/i18n'
+import { Admonition } from '@oxy.so/bloom/admonition'
+import { Sparkline } from '@oxy.so/bloom/chart-cards'
+import { useContainerWidth } from '@oxy.so/bloom/hooks'
+import { StatCards } from '@oxy.so/bloom/stat-cards'
+import { BREAKPOINTS } from '@oxy.so/bloom/styles'
+import { computeCirculatingSupply } from '@shared/supply'
+import { Blocks, Coins, Gauge, Network, type LucideIcon } from 'lucide-react'
+import { useMemo } from 'react'
+import { View } from 'react-native'
 
 /** A series needs at least two points before a sparkline reads as a trend. */
 const MIN_SPARK_POINTS = 2
@@ -29,7 +22,6 @@ interface StatTile {
   /** Resolved display value, or null while the underlying source is still loading. */
   value: string | null
   icon: LucideIcon
-  accent?: boolean
   /**
    * Optional background micro-sparkline series for tiles whose value varies over
    * time (Difficulty, Supply, Connections). `undefined`/too-short series render
@@ -48,8 +40,11 @@ interface StatStripProps {
 
 export function StatStrip({ height }: StatStripProps) {
   const t = useTranslations('home')
+  const { width: measuredWidth, onLayout } = useContainerWidth()
+  const width = measuredWidth ?? 0
+  const { currentNetwork } = useNetwork()
   const { data, isError } = useNetworkStats()
-  const { data: statsHistory } = useStatsHistory()
+  const { data: statsHistory } = useStatsHistory({ network: currentNetwork })
 
   const hasHeight = typeof height === 'number' && height > 0
   const hasStats = Boolean(data)
@@ -61,7 +56,11 @@ export function StatStrip({ height }: StatStripProps) {
   const sparks = useMemo(() => {
     const points = statsHistory ?? []
     if (points.length < MIN_SPARK_POINTS) {
-      return { difficulty: undefined, supply: undefined, connections: undefined } as const
+      return {
+        difficulty: undefined,
+        supply: undefined,
+        connections: undefined,
+      } as const
     }
     return {
       difficulty: points.map((point) => point.difficulty),
@@ -73,22 +72,21 @@ export function StatStrip({ height }: StatStripProps) {
   const tiles = useMemo<StatTile[]>(() => {
     // Prefer the authoritative stats height once available, otherwise fall
     // back to the fast height from recent blocks for early-paint tiles.
-    const effectiveHeight = data?.blockHeight ?? (hasHeight ? height : undefined)
+    const effectiveHeight =
+      data?.blockHeight ?? (hasHeight ? height : undefined)
     const supply =
-      typeof effectiveHeight === 'number' ? computeCirculatingSupply(effectiveHeight) : null
-    const phase: string | null =
-      data?.phase ??
-      (typeof effectiveHeight === 'number'
-        ? effectiveHeight > POS_PHASE_HEIGHT
-          ? 'PoS'
-          : 'PoW'
-        : null)
+      typeof effectiveHeight === 'number'
+        ? computeCirculatingSupply(effectiveHeight)
+        : null
 
     return [
       {
         key: 'height',
         label: t('statHeight'),
-        value: typeof effectiveHeight === 'number' ? formatNumber(effectiveHeight) : null,
+        value:
+          typeof effectiveHeight === 'number'
+            ? formatNumber(effectiveHeight)
+            : null,
         icon: Blocks,
       },
       {
@@ -112,75 +110,32 @@ export function StatStrip({ height }: StatStripProps) {
         icon: Network,
         spark: sparks.connections,
       },
-      {
-        key: 'mempool',
-        label: t('statMempool'),
-        value: data ? formatNumber(data.memPoolSize) : null,
-        icon: Layers,
-      },
-      {
-        key: 'masternodes',
-        label: t('statMasternodes'),
-        value: data ? formatNumber(data.masternodeCount) : null,
-        icon: Shield,
-      },
-      {
-        key: 'phase',
-        label: t('statPhase'),
-        value: phase,
-        icon: Activity,
-        accent: true,
-      },
     ]
   }, [data, hasHeight, height, sparks, t])
 
-  // Only surface the error state when there is nothing at all to show — if the
-  // fast height is known we still render the strip with the height-derived tiles.
-  if (isError && !hasStats && !hasHeight) {
-    return (
-      <div className="rounded-xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-        {t('statsUnavailable')}
-      </div>
-    )
-  }
-
+  if (isError && !hasStats && !hasHeight)
+    return <Admonition type="warning">{t('statsUnavailable')}</Admonition>
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-7">
-      {tiles.map((tile) => {
-        const Icon = tile.icon
-        const hasSpark = Boolean(tile.spark && tile.spark.length >= MIN_SPARK_POINTS)
-        return (
-          <div
-            key={tile.key}
-            className="relative flex flex-col gap-1 overflow-hidden rounded-xl bg-muted/60 px-3 py-2.5 transition-colors hover:bg-muted/80"
-          >
-            {/* Subtle background micro-sparkline for time-varying tiles only.
-                Non-interactive, low-opacity, behind the value. Renders nothing
-                until enough history has accumulated, keeping the strip clean. */}
-            {hasSpark && tile.spark ? (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 opacity-25">
-                <Sparkline data={tile.spark} />
-              </div>
-            ) : null}
-            <div className="relative flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              <Icon className="size-3.5" />
-              <span className="truncate">{tile.label}</span>
-            </div>
-            {tile.value === null ? (
-              <Skeleton className="relative h-4 w-12" />
-            ) : (
-              <span
-                className={cn(
-                  'relative truncate text-base font-semibold tabular-nums',
-                  tile.accent && 'text-primary',
-                )}
-              >
-                {tile.value}
-              </span>
-            )}
-          </div>
-        )
-      })}
-    </div>
+    <View onLayout={onLayout}>
+      <StatCards
+        columns={width >= BREAKPOINTS.lg ? 4 : width >= BREAKPOINTS.sm ? 2 : 1}
+        stats={tiles.map(({ label, value, icon: Icon, spark }) => ({
+          label,
+          value: value ?? '…',
+          icon: (props) => (
+            <Icon
+              width={props.width}
+              height={props.height}
+              color={props.fill}
+            />
+          ),
+          delta: '—',
+          deltaColor: 'neutral',
+          accessory: spark ? (
+            <Sparkline data={spark} width={80} height={28} />
+          ) : undefined,
+        }))}
+      />
+    </View>
   )
 }

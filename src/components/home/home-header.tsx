@@ -1,69 +1,47 @@
-import { useTranslations } from '@/lib/i18n'
-import { useNetworkStats } from '@/hooks/use-network-stats'
+import { DetailHeader } from '@/components/detail/detail-header'
 import { useLiveMode, type LiveMode } from '@/contexts/blockchain-context'
-import { NetworkStatus } from '@/components/network-status'
-import { formatNumber } from '@/lib/format'
-import { cn } from '@/lib/utils'
+import { useTranslations } from '@/lib/i18n'
+import { Chip } from '@oxy.so/bloom/chip'
 
 export function HomeHeader() {
   const t = useTranslations('home')
-  const { data } = useNetworkStats()
+  const nav = useTranslations('nav')
   const mode = useLiveMode()
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0 space-y-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{t('title')}</h1>
-          <LivePill
-            mode={mode}
-            phase={data?.phase}
-            height={data?.blockHeight}
-            label={
-              mode === 'live' ? t('live') : mode === 'polling' ? t('polling') : t('offline')
-            }
-          />
-        </div>
-        <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
-      </div>
-
-      <div className="flex shrink-0 items-center gap-2">
-        <NetworkStatus />
-      </div>
-    </div>
+    <DetailHeader
+      title={nav('home')}
+      subtitle={t('subtitle')}
+      action={
+        <LivePill
+          mode={mode}
+          label={
+            mode === 'live'
+              ? t('live')
+              : mode === 'polling'
+                ? t('polling')
+                : t('offline')
+          }
+        />
+      }
+    />
   )
 }
 
 interface LivePillProps {
   mode: LiveMode
-  phase: string | undefined
-  height: number | undefined
   label: string
 }
 
-function LivePill({ mode, phase, height, label }: LivePillProps) {
+function LivePill({ mode, label }: LivePillProps) {
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1.5 text-xs font-medium',
-        mode === 'live' && 'text-primary',
-        mode === 'polling' && 'text-amber-700 dark:text-amber-400',
-        mode === 'offline' && 'text-destructive',
-      )}
+    <Chip
+      appearance="subtle"
+      tone={
+        mode === 'live' ? 'success' : mode === 'polling' ? 'warning' : 'danger'
+      }
     >
-      <span
-        className={cn(
-          'size-2 rounded-full',
-          mode === 'live' && 'bg-primary',
-          mode === 'polling' && 'bg-amber-500',
-          mode === 'offline' && 'bg-destructive',
-        )}
-      />
       {label}
-      {phase ? <span className="opacity-70">· {phase}</span> : null}
-      {typeof height === 'number' ? (
-        <span className="tabular-nums opacity-70">· #{formatNumber(height)}</span>
-      ) : null}
-    </span>
+    </Chip>
   )
 }

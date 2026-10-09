@@ -1,0 +1,607 @@
+diff --git a/docs/app-shell.mdx b/docs/app-shell.mdx
+index f53c91d8..d193269c 100644
+--- a/docs/app-shell.mdx
++++ b/docs/app-shell.mdx
+@@ -692,6 +692,40 @@ content; omitting it preserves the existing 12px frame and wider-screen top gap.
+ 
+ ### Pane error recovery
+ 
++### Animated list/detail visibility
++
++`transition="slide"` opts into coordinated pane motion. Keep `showList` true
++when opening detail to shrink the list and reveal detail beside it. Set
++`showList={!selected}` and `showDetail={selected}` on compact layouts to slide
++between full-width panes. The last open layout determines the return direction.
++Existing callers default to `transition="none"` and keep their immediate layout.
++
++```tsx
++<AppShellSplitPanes
++  variant="separated"
++  transition="slide"
++  list={<Results />}
++  detail={selected ? <Details /> : undefined}
++  showList={wide || !selected}
++  showDetail={selected}
++  paneScroll={false}
++/>
++```
++
++The expansion transition moves the actual panes with full opacity; it does not make
++screenshots or float an overlay above the list. The list retains its component
++state while it remains visible. Exiting panes stay mounted only until the transition
++settles, become inert immediately, then unmount. Rapid reversals continue from the
++current live position. System reduced motion settles immediately. Pane widths remain
++resizable; the optional info column keeps its existing immediate behavior.
++
++Use `useAppShellPaneActive()` inside a pane to suspend window-level shortcuts,
++subscriptions or screen effects as soon as that pane becomes logically hidden,
++including during its retained exit. The hook returns true outside split panes.
++DOM focus/pointer input and native accessibility are already disabled by the
++pane itself. Motion owns no scroll view: `paneScroll={false}` continues to leave
++scrolling to the surrounding document or to the pane's own virtualized list.
++
+ `AppShellSplitPanes` isolates list, detail and info rendering failures independently.
+ The default localized, themed EmptyState offers retry while the other panes and
+ shell navigation keep working. Pass options per pane to customize the presentation
+diff --git a/docs/motion.mdx b/docs/motion.mdx
+index b37b56ad..d1851647 100644
+--- a/docs/motion.mdx
++++ b/docs/motion.mdx
+@@ -121,3 +121,14 @@ spatial transitions under reduced motion. Native Screen initializes keyboard
+ visibility before reserving bottom chrome, including inherited shell clearance.
+ Portaled overlays isolate screen navigation state while preserving theme and
+ locale; scrolling their content cannot collapse the navigation behind them.
++
++
++`AppShellSplitPanes transition="slide"` uses the expansion duration with a
++cubic ease-out timing animation for live pane geometry. Reanimated 3's
++**duration** spring integrates at most 64ms per frame, but compares its forced
++completion against the full elapsed wall time. Expensive layout frames can
++leave the spring far behind and then jump hundreds of pixels at the deadline.
++Timing evaluates elapsed time directly, avoiding that accumulated deficit.
++Retargeting still starts from the current pane position. Verify the last moving
++frame as well as intermediate frames in a browser; counting intermediate frames
++alone does not catch a large final snap.
+diff --git a/package.json b/package.json
+index 36c88cc4..79084911 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@oxy.so/bloom",
+-  "version": "7.7.0",
++  "version": "7.7.1-explorer-pane-motion.2",
+   "packageManager": "bun@1.3.14",
+   "description": "Bloom UI — Oxy ecosystem component library for React Native + Expo + Web",
+   "main": "lib/commonjs/index.js",
+diff --git a/src/__tests__/AppShellSplitMotion.test.tsx b/src/__tests__/AppShellSplitMotion.test.tsx
+new file mode 100644
+index 00000000..23b7393b
+--- /dev/null
++++ b/src/__tests__/AppShellSplitMotion.test.tsx
+@@ -0,0 +1,139 @@
++/** @jest-environment jsdom */
++import React from 'react';
++import { AccessibilityInfo, Platform, Text, TextInput } from 'react-native';
++import { act, fireEvent, render } from '@testing-library/react-native';
++import * as Reanimated from 'react-native-reanimated';
++import { BloomThemeProvider } from '../theme/BloomThemeProvider';
++import { AppShellSplitPanes } from '../app-shell/AppShellSplit';
++import { useAppShellPaneActive } from '../app-shell/context';
++
++const completed: (() => void)[] = [];
++beforeEach(() => {
++  completed.length = 0;
++  jest.spyOn(Reanimated, 'withTiming').mockImplementation((value, _config, callback) => {
++    completed.push(() => callback?.(true));
++    return value;
++  });
++});
++afterEach(() => jest.restoreAllMocks());
++
++function Activity({ name }: { name: string }) {
++  return <Text testID={`${name}-active`}>{String(useAppShellPaneActive())}</Text>;
++}
++function Frame({ selected = false, mobile = false, transition = 'slide' as 'slide' | 'none' }) {
++  return <BloomThemeProvider mode="light"><AppShellSplitPanes transition={transition}
++    variant="separated" testID="split" paneScroll={false}
++    showList={!mobile || !selected} showDetail={selected}
++    list={<><TextInput testID="draft" /><Activity name="list" /></>}
++    detail={selected ? <Activity name="detail" /> : undefined} />
++  </BloomThemeProvider>;
++}
++
++it('retains exiting detail, marks it inactive immediately and releases it on completion', () => {
++  const view = render(<Frame selected />);
++  view.rerender(<Frame />);
++  expect(view.getByTestId('detail-active', { includeHiddenElements: true }).props.children).toBe('false');
++  expect(view.getByTestId('split-pane-detail', { includeHiddenElements: true }).props.pointerEvents).toBe('none');
++  expect(view.getByTestId('split-pane-detail', { includeHiddenElements: true }).props['aria-hidden']).toBe(true);
++  act(() => completed[completed.length - 1]!());
++  expect(view.queryByTestId('detail-active', { includeHiddenElements: true })).toBeNull();
++});
++
++it('retains the mobile list only during its slide, while logical visibility changes immediately', () => {
++  const view = render(<Frame mobile />);
++  view.rerender(<Frame mobile selected />);
++  expect(view.getByTestId('list-active', { includeHiddenElements: true }).props.children).toBe('false');
++  expect(view.getByTestId('detail-active').props.children).toBe('true');
++  act(() => completed[completed.length - 1]!());
++  expect(view.queryByTestId('split-pane-list', { includeHiddenElements: true })).toBeNull();
++  view.rerender(<Frame mobile />);
++  expect(view.getByTestId('list-active').props.children).toBe('true');
++  expect(view.getByTestId('detail-active', { includeHiddenElements: true }).props.children).toBe('false');
++  act(() => completed[completed.length - 1]!());
++  expect(view.queryByTestId('split-pane-detail', { includeHiddenElements: true })).toBeNull();
++});
++
++it('ignores stale completion after a rapid close/reopen', () => {
++  const view = render(<Frame selected />);
++  view.rerender(<Frame />);
++  const oldClose = completed[completed.length - 1]!;
++  view.rerender(<Frame selected />);
++  act(oldClose);
++  expect(view.getByTestId('detail-active').props.children).toBe('true');
++  expect(view.getByTestId('split-pane-detail')).toBeTruthy();
++});
++
++it('preserves the desktop list instance while entering and leaving detail', () => {
++  const mounted = jest.fn();
++  function Draft() {
++    const [value, setValue] = React.useState('');
++    React.useEffect(mounted, []);
++    return <TextInput testID="draft" value={value} onChangeText={setValue} />;
++  }
++  const frame = (selected: boolean) => <BloomThemeProvider mode="light"><AppShellSplitPanes transition="slide"
++    list={<Draft />} detail={<Text>Detail</Text>} showDetail={selected} paneScroll={false} /></BloomThemeProvider>;
++  const view = render(frame(false));
++  fireEvent.changeText(view.getByTestId('draft'), 'Kept draft');
++  view.rerender(frame(true));
++  view.rerender(frame(false));
++  act(() => completed[completed.length - 1]!());
++  expect(view.getByTestId('draft').props.value).toBe('Kept draft');
++  expect(mounted).toHaveBeenCalledTimes(1);
++});
++
++it('settles reduced motion without retaining invisible panes or starting an animation', () => {
++  jest.spyOn(Reanimated, 'useReducedMotion').mockReturnValue(true);
++  const view = render(<Frame mobile />);
++  view.rerender(<Frame mobile selected />);
++  expect(view.queryByTestId('split-pane-list', { includeHiddenElements: true })).toBeNull();
++  view.rerender(<Frame mobile />);
++  expect(view.queryByTestId('split-pane-detail', { includeHiddenElements: true })).toBeNull();
++  expect(Reanimated.withTiming).not.toHaveBeenCalled();
++});
++
++it('leaves the default immediate unmount behavior intact', () => {
++  const view = render(<Frame transition="none" selected />);
++  view.rerender(<Frame transition="none" />);
++  expect(view.queryByTestId('split-pane-detail', { includeHiddenElements: true })).toBeNull();
++  expect(Reanimated.withTiming).not.toHaveBeenCalled();
++});
++
++
++it('settles a retained exit when the native reduced-motion preference changes', () => {
++  let preferenceChanged: ((enabled: boolean) => void) | undefined;
++  const remove = jest.fn();
++  const accessibility: { addEventListener(event: 'reduceMotionChanged', listener: (enabled: boolean) => void): { remove(): void } } = AccessibilityInfo;
++  jest.spyOn(accessibility, 'addEventListener').mockImplementation((_name, listener) => {
++    preferenceChanged = listener;
++    return { remove };
++  });
++  const view = render(<Frame mobile selected />);
++  view.rerender(<Frame mobile />);
++  expect(view.getByTestId('split-pane-detail', { includeHiddenElements: true })).toBeTruthy();
++  act(() => preferenceChanged!(true));
++  expect(view.queryByTestId('split-pane-detail', { includeHiddenElements: true })).toBeNull();
++  view.unmount();
++  expect(remove).toHaveBeenCalledTimes(1);
++});
++
++it('settles a retained exit when the web media preference changes', () => {
++  const originalOS = Platform.OS;
++  const originalMatchMedia = window.matchMedia;
++  let changed: (() => void) | undefined;
++  const remove = jest.fn();
++  const media = { matches: false, addEventListener: (_type: string, handler: () => void) => { changed = handler; }, removeEventListener: remove };
++  Object.defineProperty(Platform, 'OS', { configurable: true, value: 'web' });
++  window.matchMedia = jest.fn(() => media as unknown as MediaQueryList);
++  try {
++    const view = render(<Frame selected />);
++    view.rerender(<Frame />);
++    expect(view.getByTestId('split-pane-detail', { includeHiddenElements: true })).toBeTruthy();
++    act(() => { media.matches = true; changed!(); });
++    expect(view.queryByTestId('split-pane-detail', { includeHiddenElements: true })).toBeNull();
++    view.unmount();
++    expect(remove).toHaveBeenCalledTimes(1);
++  } finally {
++    Object.defineProperty(Platform, 'OS', { configurable: true, value: originalOS });
++    window.matchMedia = originalMatchMedia;
++  }
++});
+diff --git a/src/app-shell/AppShell.stories.tsx b/src/app-shell/AppShell.stories.tsx
+index 14a530a6..401930e7 100644
+--- a/src/app-shell/AppShell.stories.tsx
++++ b/src/app-shell/AppShell.stories.tsx
+@@ -4,6 +4,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
+ 
+ import { Breadcrumb, BreadcrumbItem } from '../breadcrumb';
+ import { Button } from '../button';
++import { ContentPanel } from '../content-panel';
+ import { RiAddFill, RiFilter3Fill, RiHomeLine } from '../icons/remix';
+ import { DEMO_NOTIFICATIONS } from '../notification-center/NotificationCenter.stories';
+ import {
+@@ -193,3 +194,28 @@ export const SeparatedPanes: Story = {
+       detail={<AiChatContainer><View style={{ flex: 1 }} /></AiChatContainer>} />
+   </View>,
+ };
++
++
++function AnimatedPanesExample() {
++  const [selected, setSelected] = useState(false);
++  const wide = useWindowDimensions().width >= 1024;
++  return <AppShell scroll="document" header={null} contentMaxWidth="none">
++    <AppShellSplitPanes variant="separated" transition="slide" paneScroll={false}
++      showList={wide || !selected} showDetail={selected} listWidth={380}
++      testID="animated-panes"
++      list={<ContentPanel framed chrome="none" contentStyle={{ padding: 16 }}>
++        <AppShellHeader title="Transactions" actions={<Button onPress={() => setSelected(true)}>Open transaction</Button>} />
++        <Placeholder height={1000} />
++      </ContentPanel>}
++      detail={selected ? <ContentPanel framed chrome="none" contentStyle={{ padding: 16 }}>
++        <AppShellHeader title="Transaction details" actions={<Button onPress={() => setSelected(false)}>Close</Button>} />
++        <Placeholder height={700} />
++      </ContentPanel> : undefined} />
++  </AppShell>;
++}
++
++/** Open/close and resize the viewport: document scroll, native pane motion, no extra animation wrapper. */
++export const AnimatedPanes: Story = {
++  parameters: { controls: { disable: true } },
++  render: () => <AnimatedPanesExample />,
++};
+diff --git a/src/app-shell/AppShellSplit.tsx b/src/app-shell/AppShellSplit.tsx
+index 29b45069..acd4649e 100644
+--- a/src/app-shell/AppShellSplit.tsx
++++ b/src/app-shell/AppShellSplit.tsx
+@@ -15,11 +15,9 @@
+  * set of the same three bugs.
+  */
+ import React, { memo, useCallback, useRef, useState } from 'react';
+-import { ScrollView, View } from 'react-native';
++import { View } from 'react-native';
+ 
+ import { AiChatResizeHandle } from '../ai-chat/AiChatResizeHandle';
+-import { PanelErrorBoundary } from '../error-boundary/PanelErrorBoundary';
+-import type { PanelErrorBoundaryOptions } from '../error-boundary/types';
+ import { Z_INDEX } from '../styles/z-index';
+ import { space } from '../styles/tokens';
+ import { useTheme } from '../theme/use-theme';
+@@ -28,35 +26,12 @@ import { APP_SHELL_MESSAGES } from './messages';
+ 
+ import type { AppShellSplitPanesProps } from './types';
+ import { APP_SHELL_DEFAULTS as D } from './constants';
+-
+-/** One pane: a bounded column that scrolls its own overflow. */
+-function Pane({
+-  children,
+-  scroll,
+-  errorBoundary,
+-  style,
+-  testID,
+-}: {
+-  children: React.ReactNode;
+-  scroll: boolean;
+-  errorBoundary?: false | PanelErrorBoundaryOptions;
+-  style: React.ComponentProps<typeof View>['style'];
+-  testID?: string;
+-}) {
+-  const content = scroll ? (
+-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
+-      {children}
+-    </ScrollView>
+-  ) : <View style={{ flex: 1, minHeight: 0 }}>{children}</View>;
+-  return (
+-    <View testID={testID} style={[{ minWidth: 0, alignSelf: 'stretch' }, style]}>
+-      {errorBoundary === false ? content : <PanelErrorBoundary {...errorBoundary}>{content}</PanelErrorBoundary>}
+-    </View>
+-  );
+-}
++import { SplitPane as Pane } from './SplitPane';
++import { AppShellSplitMotion } from './AppShellSplitMotion';
+ 
+ const AppShellSplitPanesComponent: React.FC<AppShellSplitPanesProps> = ({
+   variant = 'joined',
++  transition = 'none',
+   listErrorBoundary,
+   detailErrorBoundary,
+   infoErrorBoundary,
+@@ -121,6 +96,26 @@ const AppShellSplitPanesComponent: React.FC<AppShellSplitPanesProps> = ({
+   // Only the panes that are actually drawn count: alone, a pane fills the row.
+   const solo = [showList, showDetail, showInfo].filter(Boolean).length === 1;
+ 
++  if (transition === 'slide') {
++    return <View style={{ flexGrow: 1, flexShrink: 1, minWidth: 0, flexDirection: 'row' }}>
++      {(showList || showDetail) && <AppShellSplitMotion
++        list={list} detail={detail} showList={showList} showDetail={showDetail}
++        width={width} gap={divider.width} paneScroll={paneScroll}
++        listErrorBoundary={listErrorBoundary} detailErrorBoundary={detailErrorBoundary}
++        dividerStyle={divider} testID={testID}
++        resizeHandle={resizable ? <AiChatResizeHandle label={resizeLabel}
++          onResizeStart={onResizeStart} onResize={onResize} onNudge={onNudge}
++          testID={testID ? `${testID}-divider` : undefined} /> : null}
++      />}
++      {showInfo && (showList || showDetail) ? <View style={divider} testID={testID ? `${testID}-info-gap` : undefined} /> : null}
++      {showInfo ? <Pane testID={testID ? `${testID}-pane-info` : undefined}
++        errorBoundary={infoErrorBoundary} scroll={paneScroll}
++        style={solo ? { flexGrow: 1, flexShrink: 1, flexBasis: 0 } : { width: infoWidth, flexShrink: 0 }}>
++        {info}
++      </Pane> : null}
++    </View>;
++  }
++
+   return (
+     <View style={{ flexGrow: 1, flexShrink: 1, minWidth: 0, flexDirection: 'row' }}>
+       {showList ? (
+diff --git a/src/app-shell/AppShellSplitMotion.tsx b/src/app-shell/AppShellSplitMotion.tsx
+new file mode 100644
+index 00000000..bd80776f
+--- /dev/null
++++ b/src/app-shell/AppShellSplitMotion.tsx
+@@ -0,0 +1,132 @@
++import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
++import { Platform, View, type LayoutChangeEvent, type ViewStyle } from 'react-native';
++import Animated, { cancelAnimation, Easing, ReduceMotion, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
++import { useDirectionProps, useIsRtl } from '../hooks/use-is-rtl';
++import { usePrefersReducedMotion } from '../hooks/use-prefers-reduced-motion';
++import { MOTION_RECIPES } from '../motion/recipes';
++import { AppShellPaneActiveContext } from './context';
++import { SplitPane } from './SplitPane';
++import type { AppShellSplitPanesProps } from './types';
++
++type Props = Pick<AppShellSplitPanesProps, 'list' | 'detail' | 'listErrorBoundary' | 'detailErrorBoundary' | 'testID'> & {
++  showList: boolean;
++  showDetail: boolean;
++  paneScroll: boolean;
++  width: number;
++  gap: number;
++  dividerStyle: ViewStyle;
++  resizeHandle: React.ReactNode;
++};
++
++// `clip` prevents horizontal overflow without creating a nested scroll owner.
++// Native has no document scroll and uses its ordinary clipping primitive.
++const clipStyle = { overflow: Platform.OS === 'web' ? 'clip' : 'hidden' } as ViewStyle;
++
++/** One progress value owns both live pane positions; no clones, opacity or layout snapshots. */
++export function AppShellSplitMotion({ list, detail, showList, showDetail, width, gap,
++  paneScroll, listErrorBoundary, detailErrorBoundary, dividerStyle, resizeHandle, testID }: Props) {
++  const [containerWidth, setContainerWidth] = useState(0);
++  const [retained, setRetained] = useState({ list, detail, listVisible: showList, detailVisible: showDetail });
++  const previousSplit = useRef(showList);
++  const split = showDetail ? showList : previousSplit.current;
++  const progress = useSharedValue(showDetail ? 1 : 0);
++  const reducedMotion = usePrefersReducedMotion();
++  const generation = useRef(0);
++  const direction = useIsRtl() ? -1 : 1;
++  const directionProps = useDirectionProps();
++
++  useLayoutEffect(() => {
++    previousSplit.current = split;
++    setRetained(current => ({
++      list: showList ? list : current.list,
++      detail: showDetail ? detail : current.detail,
++      listVisible: showList || current.listVisible,
++      detailVisible: showDetail || current.detailVisible,
++    }));
++  }, [list, detail, showList, showDetail, split]);
++
++  const finish = useCallback((id: number, keepList: boolean, keepDetail: boolean) => {
++    if (generation.current !== id) return;
++    setRetained(current => ({
++      list: keepList ? current.list : undefined,
++      detail: keepDetail ? current.detail : undefined,
++      listVisible: keepList,
++      detailVisible: keepDetail,
++    }));
++  }, []);
++
++  useLayoutEffect(() => {
++    const id = ++generation.current;
++    const target = showDetail ? 1 : 0;
++    if (reducedMotion) {
++      progress.value = target;
++      finish(id, showList, showDetail);
++    } else {
++      // Duration springs in Reanimated 3 cap each frame's integrated time at
++      // 64ms, then force their target at the wall-clock deadline. Expensive
++      // layout frames can therefore end in a large final jump. Timing samples
++      // elapsed time directly and never accumulates that integration deficit.
++      progress.value = withTiming(target, {
++        duration: MOTION_RECIPES.expand.duration,
++        easing: Easing.out(Easing.cubic),
++        // The reactive hook above owns this policy; System is a launch snapshot.
++        reduceMotion: ReduceMotion.Never,
++      }, completed => {
++        if (completed) runOnJS(finish)(id, showList, showDetail);
++      });
++    }
++    return () => { cancelAnimation(progress); };
++  }, [showList, showDetail, progress, reducedMotion, finish]);
++
++  const measure = useCallback((event: LayoutChangeEvent) => {
++    setContainerWidth(event.nativeEvent.layout.width);
++  }, []);
++  const listStyle = useAnimatedStyle(() => ({
++    width: containerWidth > 0 ? (split ? containerWidth - (containerWidth - width) * progress.value : containerWidth) : undefined,
++    transform: [{ translateX: split ? 0 : -direction * containerWidth * progress.value }],
++  }), [containerWidth, width, split, progress, direction]);
++  const detailStyle = useAnimatedStyle(() => ({
++    width: containerWidth > 0 ? (split ? Math.max(0, containerWidth - width - gap) : containerWidth) : undefined,
++    transform: [{ translateX: split ? 0 : direction * containerWidth * (1 - progress.value) }],
++  }), [containerWidth, width, gap, split, progress, direction]);
++  const gapStyle = useAnimatedStyle(() => ({ width: gap * progress.value }), [gap, progress]);
++
++  const hasList = showList || retained.listVisible;
++  const hasDetail = showDetail || retained.detailVisible;
++  const inactive = (active: boolean) => ({
++    pointerEvents: active ? 'auto' as const : 'none' as const,
++    'aria-hidden': active ? undefined : true,
++    importantForAccessibility: active ? 'auto' as const : 'no-hide-descendants' as const,
++    accessibilityElementsHidden: !active,
++    ...(Platform.OS === 'web' && !active ? { inert: true } : null),
++  });
++  return <View {...directionProps} onLayout={measure} testID={testID ? `${testID}-motion` : undefined}
++    style={[{ flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0, flexDirection: 'row', alignItems: 'stretch' }, clipStyle]}>
++    {hasList ? <Animated.View {...inactive(showList)}
++      testID={testID ? `${testID}-pane-list` : undefined}
++      style={[{ minWidth: 0, flexShrink: 0 }, !split && !showList ? { position: 'absolute', top: 0, start: 0 } : null, listStyle]}>
++      <AppShellPaneActiveContext.Provider value={showList}>
++        <SplitPane scroll={paneScroll} errorBoundary={listErrorBoundary} style={{ flexGrow: 1 }}>
++          {showList ? list : retained.list}
++        </SplitPane>
++      </AppShellPaneActiveContext.Provider>
++    </Animated.View> : null}
++    {split && hasList && hasDetail ? <Animated.View
++      style={[dividerStyle, gapStyle]} testID={testID ? `${testID}-list-gap` : undefined}>
++      {showList && showDetail ? <View pointerEvents="box-none"
++        testID={testID ? `${testID}-resize-anchor` : undefined}
++        style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', right: '50%', width: 0 }}>
++        {resizeHandle}
++      </View> : null}
++    </Animated.View> : null}
++    {hasDetail ? <Animated.View {...inactive(showDetail)}
++      testID={testID ? `${testID}-pane-detail` : undefined}
++      style={[{ minWidth: 0, flexShrink: 0 }, !split && !showDetail ? { position: 'absolute', top: 0, start: 0 } : null, detailStyle]}>
++      <AppShellPaneActiveContext.Provider value={showDetail}>
++        <SplitPane scroll={paneScroll} errorBoundary={detailErrorBoundary} style={{ flexGrow: 1 }}>
++          {showDetail ? detail : retained.detail}
++        </SplitPane>
++      </AppShellPaneActiveContext.Provider>
++    </Animated.View> : null}
++  </View>;
++}
+diff --git a/src/app-shell/SplitPane.tsx b/src/app-shell/SplitPane.tsx
+new file mode 100644
+index 00000000..87e8ffad
+--- /dev/null
++++ b/src/app-shell/SplitPane.tsx
+@@ -0,0 +1,30 @@
++import React from 'react';
++import { ScrollView, View } from 'react-native';
++import { PanelErrorBoundary } from '../error-boundary/PanelErrorBoundary';
++import type { PanelErrorBoundaryOptions } from '../error-boundary/types';
++
++/** One pane: a bounded column that scrolls its own overflow. */
++export function SplitPane({
++  children,
++  scroll,
++  errorBoundary,
++  style,
++  testID,
++}: {
++  children: React.ReactNode;
++  scroll: boolean;
++  errorBoundary?: false | PanelErrorBoundaryOptions;
++  style: React.ComponentProps<typeof View>['style'];
++  testID?: string;
++}) {
++  const content = scroll ? (
++    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
++      {children}
++    </ScrollView>
++  ) : <View style={{ flex: 1, minHeight: 0 }}>{children}</View>;
++  return (
++    <View testID={testID} style={[{ minWidth: 0, alignSelf: 'stretch' }, style]}>
++      {errorBoundary === false ? content : <PanelErrorBoundary {...errorBoundary}>{content}</PanelErrorBoundary>}
++    </View>
++  );
++}
+diff --git a/src/app-shell/context.ts b/src/app-shell/context.ts
+index 062b1f2a..81b948e2 100644
+--- a/src/app-shell/context.ts
++++ b/src/app-shell/context.ts
+@@ -33,3 +33,10 @@ export function useAppShell(): AppShellContextValue {
+ export function useOptionalAppShell(): AppShellContextValue | null {
+   return useContext(AppShellContext);
+ }
++
++/** Logical pane visibility, including while its exit animation is retained. */
++export const AppShellPaneActiveContext = createContext(true);
++/** Suspend pane-local global shortcuts/effects as soon as a pane is hidden. */
++export function useAppShellPaneActive(): boolean {
++  return useContext(AppShellPaneActiveContext);
++}
+diff --git a/src/app-shell/index.ts b/src/app-shell/index.ts
+index 7631af46..8129b962 100644
+--- a/src/app-shell/index.ts
++++ b/src/app-shell/index.ts
+@@ -7,7 +7,7 @@ export const AppShell = createAppShell(BottomBar, Fab, ContentPanel, BloomColorS
+ export { AppShellHeader } from './AppShellHeader';
+ export { AppShellMenuButton } from './AppShellMenuButton';
+ export { APP_SHELL_DEFAULTS } from './constants';
+-export { useAppShell } from './context';
++export { useAppShell, useAppShellPaneActive } from './context';
+ export type { AppShellContextValue } from './context';
+ export { NotificationBell } from './NotificationBell';
+ export { ProOfferCard } from './ProOfferCard';
+diff --git a/src/app-shell/index.web.ts b/src/app-shell/index.web.ts
+index db1aa013..de5e8e8a 100644
+--- a/src/app-shell/index.web.ts
++++ b/src/app-shell/index.web.ts
+@@ -12,7 +12,7 @@ export const AppShell = createAppShell(BottomBar, Fab, ContentPanel, BloomColorS
+ export { AppShellHeader } from './AppShellHeader';
+ export { AppShellMenuButton } from './AppShellMenuButton';
+ export { APP_SHELL_DEFAULTS } from './constants';
+-export { useAppShell } from './context';
++export { useAppShell, useAppShellPaneActive } from './context';
+ export type { AppShellContextValue } from './context';
+ export { NotificationBell } from './NotificationBell';
+ export { ProOfferCard } from './ProOfferCard';
+diff --git a/src/app-shell/types.ts b/src/app-shell/types.ts
+index cd6400bf..467e9f54 100644
+--- a/src/app-shell/types.ts
++++ b/src/app-shell/types.ts
+@@ -394,6 +394,14 @@ export interface AppShellSplitPanesProps {
+   infoErrorBoundary?: false | PanelErrorBoundaryOptions;
+   /** Joined uses hairline dividers (default); separated leaves a 12px gutter for independent panel surfaces. */
+   variant?: 'joined' | 'separated';
++  /**
++   * Animate list/detail visibility using live layout geometry. Defaults to none.
++   * Showing both panes reveals detail beside a shrinking list; hiding the list
++   * slides between full-width panes. Exiting content remains mounted until the
++   * expansion motion settles, but is immediately inactive/inaccessible.
++   * Info visibility is unchanged. Respects the system reduced-motion setting.
++   */
++  transition?: 'none' | 'slide';
+   list?: ReactNode;
+   detail?: ReactNode;
+   info?: ReactNode;
+diff --git a/src/hooks/use-prefers-reduced-motion.ts b/src/hooks/use-prefers-reduced-motion.ts
+new file mode 100644
+index 00000000..8895522b
+--- /dev/null
++++ b/src/hooks/use-prefers-reduced-motion.ts
+@@ -0,0 +1,22 @@
++import { useEffect, useState } from 'react';
++import { AccessibilityInfo, Platform } from 'react-native';
++import { useReducedMotion } from 'react-native-reanimated';
++
++/** Reanimated supplies the launch value; OS changes must also settle live motion. */
++export function usePrefersReducedMotion(): boolean {
++  const initial = useReducedMotion();
++  const [reduced, setReduced] = useState(initial);
++  useEffect(() => {
++    if (Platform.OS === 'web') {
++      if (typeof window === 'undefined' || !window.matchMedia) return;
++      const media = window.matchMedia('(prefers-reduced-motion: reduce)');
++      const update = () => setReduced(media.matches);
++      update();
++      media.addEventListener('change', update);
++      return () => media.removeEventListener('change', update);
++    }
++    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduced);
++    return () => subscription.remove();
++  }, []);
++  return reduced;
++}

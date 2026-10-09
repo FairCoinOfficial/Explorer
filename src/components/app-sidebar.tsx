@@ -1,397 +1,156 @@
-import * as React from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { LanguageSelector } from '@/components/language-selector'
+import { FOCUS_SEARCH_EVENT } from '@/components/site/header'
+import { useNetwork } from '@/contexts/network-context'
 import {
-  Home,
-  Search,
-  Blocks,
-  Receipt,
+  isDetailPath,
+  masterLocation,
+  useExplorerNavigate as useNavigate,
+} from '@/lib/explorer-navigation'
+import { useTranslations } from '@/lib/i18n'
+import type { SidebarIcon, SidebarProps } from '@oxy.so/bloom/sidebar'
+import {
   BarChart3,
-  Shield,
-  Clock,
-  Users,
-  Network,
-  Wrench,
-  Plug,
-  Calculator,
-  Waypoints,
-  ChevronsLeft,
-  ChevronsRight,
-  ChevronRight,
-  ShieldCheck,
-  Radio,
+  Blocks,
   BookOpen,
+  Calculator,
+  Clock,
+  Home,
   LineChart,
+  Network,
+  Plug,
+  Radio,
+  Receipt,
+  Search,
+  Shield,
+  ShieldCheck,
+  Users,
+  Waypoints,
   type LucideIcon,
-} from "lucide-react"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  useSidebar,
-} from "@/components/ui/sidebar"
-import { cn } from "@/lib/utils"
-import { useNetwork } from "@/contexts/network-context"
-import { useTranslations } from "@/lib/i18n"
-import { LanguageSelector } from "@/components/language-selector"
-import { FOCUS_SEARCH_EVENT } from "@/components/site/header"
-import { toast } from 'sonner'
+} from 'lucide-react'
+import { useLocation } from 'react-router-dom'
 
-interface NavItemProps {
-  icon: LucideIcon
-  label: string
-  /** Route to navigate to. Omitted for action items that use `onSelect` instead. */
-  to?: string
-  /** Action items (e.g. Search) run this instead of navigating. */
-  onSelect?: () => void
-  collapsed?: boolean
+// Adapt the existing outline icons to Bloom's sized/color-aware icon slot.
+function icon(Icon: LucideIcon): SidebarIcon {
+  return ({ width = 20, height = 20, fill }) => (
+    <Icon width={width} height={height} color={fill} />
+  )
+}
+const icons = {
+  home: icon(Home),
+  search: icon(Search),
+  blocks: icon(Blocks),
+  transactions: icon(Receipt),
+  stats: icon(BarChart3),
+  charts: icon(LineChart),
+  masternodes: icon(Shield),
+  mempool: icon(Clock),
+  peers: icon(Users),
+  network: icon(Network),
+  bridge: icon(Waypoints),
+  feeCalculator: icon(Calculator),
+  addressValidator: icon(ShieldCheck),
+  broadcast: icon(Radio),
+  apiDocs: icon(BookOpen),
+  mcp: icon(Plug),
 }
 
-function NavItem({ icon: Icon, label, to, onSelect, collapsed }: NavItemProps) {
+export function useExplorerSidebar(): SidebarProps {
   const location = useLocation()
-  const { setOpenMobile } = useSidebar()
-  const isActive = to ? location.pathname === to || (to !== '/' && location.pathname.startsWith(to)) : false
-
-  const handleClick = () => {
-    setOpenMobile(false)
-    onSelect?.()
-  }
-
-  if (collapsed) {
-    const iconEl = (
-      <Icon
-        size={20}
-        className={cn(
-          "transition-transform group-hover/nav-icon:scale-110",
-          isActive ? "text-primary-foreground" : "text-foreground",
-        )}
-      />
-    )
-    const collapsedClassName = cn(
-      "group/nav-icon flex w-10 h-10 rounded-full items-center justify-center transition-colors",
-      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted active:bg-muted/80",
-    )
-
-    if (to) {
-      return (
-        <Link to={to} title={label} onClick={handleClick} className={collapsedClassName}>
-          {iconEl}
-        </Link>
-      )
-    }
-    return (
-      <button type="button" title={label} onClick={handleClick} className={cn(collapsedClassName, "cursor-pointer")}>
-        {iconEl}
-      </button>
-    )
-  }
-
-  const innerClassName = cn(
-    "flex flex-row items-center gap-2 overflow-hidden rounded-full text-left h-[36px] w-full px-3 transition-colors",
-    isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted active:bg-muted/80",
-  )
-  const inner = (
-    <>
-      <div className="w-6 h-6 flex items-center justify-center shrink-0">
-        <Icon size={18} className={isActive ? "text-primary-foreground" : "text-foreground"} />
-      </div>
-      <span className={cn(
-        "text-sm select-none font-semibold",
-        isActive ? "text-primary-foreground" : "text-foreground",
-      )}>
-        {label}
-      </span>
-    </>
-  )
-
-  return (
-    <div className="relative flex w-full min-w-0 flex-col px-1.5 py-0.5 shrink-0">
-      <div className="flex w-full min-w-0 flex-col gap-px">
-        <div className="group/menu-item whitespace-nowrap font-semibold mx-1 relative">
-          {to ? (
-            <Link to={to} onClick={handleClick} className={innerClassName}>
-              {inner}
-            </Link>
-          ) : (
-            <button type="button" onClick={handleClick} className={cn(innerClassName, "cursor-pointer")}>
-              {inner}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-interface ToolsSubItem {
-  icon: LucideIcon
-  label: string
-  to: string
-}
-
-interface ToolsMenuProps {
-  label: string
-  items: ToolsSubItem[]
-}
-
-/**
- * Expanded-sidebar collapsible parent for the Tools section.
- * Open state is derived: always open while on a `/tools/*` route, otherwise
- * follows the user's manual toggle. No `useEffect` — purely derived state.
- */
-function ToolsMenu({ label, items }: ToolsMenuProps) {
-  const location = useLocation()
-  const { setOpenMobile } = useSidebar()
-  const toolsActive = location.pathname.startsWith('/tools')
-  const [userOpen, setUserOpen] = React.useState(() => toolsActive)
-  const isOpen = userOpen || toolsActive
-
-  const parentClassName = cn(
-    "flex flex-row items-center gap-2 overflow-hidden rounded-full text-left h-[36px] w-full px-3 transition-colors cursor-pointer",
-    toolsActive ? "bg-primary text-primary-foreground" : "hover:bg-muted active:bg-muted/80",
-  )
-
-  return (
-    <div className="relative flex w-full min-w-0 flex-col px-1.5 py-0.5 shrink-0">
-      <div className="flex w-full min-w-0 flex-col gap-px">
-        <div className="group/menu-item whitespace-nowrap font-semibold mx-1 relative">
-          <button
-            type="button"
-            onClick={() => setUserOpen((prev) => !prev)}
-            aria-expanded={isOpen}
-            className={parentClassName}
-          >
-            <div className="w-6 h-6 flex items-center justify-center shrink-0">
-              <Wrench size={18} className={toolsActive ? "text-primary-foreground" : "text-foreground"} />
-            </div>
-            <span className={cn(
-              "text-sm select-none font-semibold",
-              toolsActive ? "text-primary-foreground" : "text-foreground",
-            )}>
-              {label}
-            </span>
-            <ChevronRight
-              size={18}
-              className={cn(
-                "ms-auto shrink-0 transition-transform",
-                isOpen ? "rotate-90" : "rotate-0",
-                toolsActive ? "text-primary-foreground" : "text-muted-foreground",
-              )}
-            />
-          </button>
-        </div>
-        {isOpen && (
-          <div className="flex w-full min-w-0 flex-col gap-px ps-4">
-            {items.map(({ icon: SubIcon, label: subLabel, to }) => {
-              const isSubActive = location.pathname === to
-              return (
-                <div key={to} className="group/menu-item whitespace-nowrap font-semibold mx-1 relative">
-                  <Link
-                    to={to}
-                    onClick={() => setOpenMobile(false)}
-                    className={cn(
-                      "flex flex-row items-center gap-2 overflow-hidden rounded-full text-left h-[34px] w-full px-3 transition-colors",
-                      isSubActive ? "bg-primary text-primary-foreground" : "hover:bg-muted active:bg-muted/80",
-                    )}
-                  >
-                    <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                      <SubIcon size={16} className={isSubActive ? "text-primary-foreground" : "text-foreground"} />
-                    </div>
-                    <span className={cn(
-                      "text-sm select-none font-medium",
-                      isSubActive ? "text-primary-foreground" : "text-foreground",
-                    )}>
-                      {subLabel}
-                    </span>
-                  </Link>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
-  const { state, isMobile, toggleSidebar } = useSidebar()
+  const { pathname } = isDetailPath(location.pathname)
+    ? masterLocation(location)
+    : location
+  const navigate = useNavigate()
   const { currentNetwork, setNetwork } = useNetwork()
-  const collapsed = state === 'collapsed' && !isMobile
   const t = useTranslations('nav')
-  const tSidebar = useTranslations('sidebar')
-
-  const focusGlobalSearch = () => window.dispatchEvent(new Event(FOCUS_SEARCH_EVENT))
-
-  const mainNav = [
-    { icon: Home, label: t('home'), to: '/' },
-    { icon: Search, label: t('search'), onSelect: focusGlobalSearch },
-    { icon: Blocks, label: t('blocks'), to: '/blocks' },
-    { icon: Receipt, label: t('transactions'), to: '/tx' },
-  ]
-
-  const networkNav = [
-    { icon: BarChart3, label: t('stats'), to: '/stats' },
-    { icon: LineChart, label: t('charts'), to: '/charts' },
-    { icon: Shield, label: t('masternodes'), to: '/masternodes' },
-    { icon: Clock, label: t('mempool'), to: '/mempool' },
-    { icon: Users, label: t('peers'), to: '/peers' },
-    { icon: Network, label: t('network'), to: '/network-status' },
-    { icon: Waypoints, label: t('bridge'), to: '/bridge' },
-  ]
-
-  const toolsSubNav: ToolsSubItem[] = [
-    { icon: Calculator, label: t('feeCalculator'), to: '/tools/fee-calculator' },
-    { icon: ShieldCheck, label: t('addressValidator'), to: '/tools/address-validator' },
-    { icon: Radio, label: t('broadcast'), to: '/tools/broadcast' },
-    { icon: BookOpen, label: t('apiDocs'), to: '/tools/api' },
-    { icon: Plug, label: t('mcp'), to: '/tools/mcp' },
-  ]
-
-  return (
-    <Sidebar {...props}>
-      {/* Header: logo + collapse toggle */}
-      <SidebarHeader className={cn(
-        "h-14 flex-row items-center px-2",
-        collapsed && "justify-center px-0"
-      )}>
-        {collapsed ? (
-          <Link to="/" className="flex items-center justify-center no-underline">
-            <img src="/images/FairCoin-Logo.jpg" alt="FairCoin" className="w-8 h-8 rounded-lg" />
-          </Link>
-        ) : (
-          <>
-            <Link to="/" className="flex items-center gap-2 p-1 mx-0.5 shrink-0 rounded-xl hover:bg-muted no-underline">
-              <img src="/images/FairCoin-Logo.jpg" alt="FairCoin" className="w-6 h-6 rounded" />
-              <span className="text-sm font-bold text-foreground">FairCoin</span>
-            </Link>
-            <div className="ms-auto shrink-0">
-              <button
-                onClick={toggleSidebar}
-                className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-muted cursor-pointer"
-                aria-label={tSidebar('collapseSidebar')}
-              >
-                <ChevronsLeft size={18} className="text-muted-foreground" />
-              </button>
-            </div>
-          </>
-        )}
-      </SidebarHeader>
-
-      {/* Network switcher */}
-      {collapsed ? (
-        <div className="shrink-0 flex justify-center py-1">
-          <button
-            onClick={() => {
-              const next = currentNetwork === 'mainnet' ? 'testnet' : 'mainnet'
-              setNetwork(next)
-              toast.success(`Switched to ${next === 'mainnet' ? 'Mainnet' : 'Testnet'}`)
-            }}
-            className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-muted cursor-pointer"
-            title={currentNetwork === 'mainnet' ? tSidebar('mainnetSwitch') : tSidebar('testnetSwitch')}
-          >
-            <span
-              className={cn(
-                "w-2.5 h-2.5 rounded-full",
-                currentNetwork === 'mainnet' ? "bg-green-500" : "bg-orange-500"
-              )}
-            />
-          </button>
-        </div>
-      ) : (
-        <div className="shrink-0 px-3 pb-1">
-          <div className="relative flex flex-col rounded-xl bg-muted/60 p-1 gap-0">
-            {/* Sliding indicator */}
-            <div
-              className="absolute left-1 right-1 h-8 rounded-lg bg-background shadow-sm transition-transform duration-200 ease-out"
-              style={{ transform: currentNetwork === 'mainnet' ? 'translateY(0)' : 'translateY(100%)' }}
-            />
-            <button
-              onClick={() => { setNetwork('mainnet'); toast.success('Switched to Mainnet') }}
-              className={cn(
-                "relative z-10 flex items-center gap-2 rounded-lg px-2 h-8 text-sm transition-colors duration-200 cursor-pointer",
-                currentNetwork === 'mainnet'
-                  ? "text-foreground font-medium"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <span className="w-2 h-2 rounded-full bg-green-500" />
-              {tSidebar('mainnet')}
-            </button>
-            <button
-              onClick={() => { setNetwork('testnet'); toast.success('Switched to Testnet') }}
-              className={cn(
-                "relative z-10 flex items-center gap-2 rounded-lg px-2 h-8 text-sm transition-colors duration-200 cursor-pointer",
-                currentNetwork === 'testnet'
-                  ? "text-foreground font-medium"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <span className="w-2 h-2 rounded-full bg-orange-500" />
-              {tSidebar('testnet')}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Nav items */}
-      <SidebarContent className="pt-2">
-        {collapsed ? (
-          <>
-            {/* Collapsed: icon columns */}
-            <div className="flex flex-col items-center gap-1 py-1 shrink-0">
-              {mainNav.map((item) => (
-                <NavItem key={item.label} {...item} collapsed />
-              ))}
-            </div>
-            <div className="w-8 mx-auto my-1" style={{ borderTop: '1px solid hsl(var(--border) / 0.3)' }} />
-            <div className="flex flex-col items-center gap-1 py-1 shrink-0">
-              {networkNav.map((item) => (
-                <NavItem key={item.label} {...item} collapsed />
-              ))}
-            </div>
-            <div className="w-8 mx-auto my-1" style={{ borderTop: '1px solid hsl(var(--border) / 0.3)' }} />
-            <div className="flex flex-col items-center gap-1 py-1 shrink-0">
-              {toolsSubNav.map((item) => (
-                <NavItem key={item.to} {...item} collapsed />
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Expanded: full nav items */}
-            <div className="shrink-0">
-              {mainNav.map((item) => (
-                <NavItem key={item.label} {...item} />
-              ))}
-            </div>
-            <div className="mx-2 my-1" style={{ borderTop: '1px solid hsl(var(--border) / 0.3)' }} />
-            <div className="shrink-0">
-              {networkNav.map((item) => (
-                <NavItem key={item.label} {...item} />
-              ))}
-            </div>
-            <div className="mx-2 my-1" style={{ borderTop: '1px solid hsl(var(--border) / 0.3)' }} />
-            <div className="shrink-0">
-              <ToolsMenu label={t('tools')} items={toolsSubNav} />
-            </div>
-          </>
-        )}
-      </SidebarContent>
-
-      {/* Footer */}
-      <SidebarFooter className={cn(collapsed && "items-center")}>
-        <LanguageSelector collapsed={collapsed} />
-        {collapsed && (
-          <button
-            onClick={toggleSidebar}
-            className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
-            aria-label={tSidebar('expandSidebar')}
-          >
-            <ChevronsRight size={18} />
-          </button>
-        )}
-      </SidebarFooter>
-    </Sidebar>
-  )
+  const ts = useTranslations('sidebar')
+  const routes = [
+    ['home', '/'],
+    ['blocks', '/blocks'],
+    ['transactions', '/tx'],
+    ['stats', '/stats'],
+    ['charts', '/charts'],
+    ['masternodes', '/masternodes'],
+    ['mempool', '/mempool'],
+    ['peers', '/peers'],
+    ['network', '/network-status'],
+    ['bridge', '/bridge'],
+  ] as const
+  const tools = [
+    ['feeCalculator', '/tools/fee-calculator'],
+    ['addressValidator', '/tools/address-validator'],
+    ['broadcast', '/tools/broadcast'],
+    ['apiDocs', '/tools/api'],
+    ['mcp', '/tools/mcp'],
+  ] as const
+  return {
+    logo: {
+      icon: (
+        <img
+          src="/images/FairCoin-Logo.jpg"
+          alt=""
+          className="size-7 rounded-lg"
+        />
+      ),
+      wordmark: 'FairCoin Explorer',
+      href: '/',
+      onPress: () => navigate('/'),
+    },
+    surface: 'card',
+    size: 'sm',
+    showSearch: false,
+    showThemeToggle: false,
+    accessibilityLabel: 'FairCoin Explorer',
+    collapseLabel: ts('collapseSidebar'),
+    expandLabel: ts('expandSidebar'),
+    items: [
+      ...routes.map(([key, href]) => ({
+        key: href,
+        href,
+        label: t(key),
+        icon: icons[key],
+      })),
+      {
+        key: 'search',
+        label: t('search'),
+        icon: icons.search,
+        onPress: () => window.dispatchEvent(new Event(FOCUS_SEARCH_EVENT)),
+      },
+    ],
+    selected: pathname.startsWith('/block/')
+      ? '/blocks'
+      : (routes.find(
+          ([, href]) => href !== '/' && pathname.startsWith(href),
+        )?.[1] ?? pathname),
+    onNavigate: (item) => {
+      if (item.href) navigate(item.href)
+    },
+    modes: [
+      { key: 'mainnet', label: ts('mainnet'), icon: icons.network },
+      { key: 'testnet', label: ts('testnet'), icon: icons.network },
+    ],
+    mode: currentNetwork,
+    onModeChange: (key) => {
+      if (key === 'mainnet' || key === 'testnet') setNetwork(key)
+    },
+    tree: {
+      label: 'Explorer',
+      folders: [
+        {
+          key: 'tools',
+          label: t('tools'),
+          defaultOpen: pathname.startsWith('/tools'),
+          items: tools.map(([key, href]) => ({
+            key: href,
+            href,
+            label: t(key),
+          })),
+        },
+      ],
+    },
+    selectedTreeItem: pathname,
+    onTreeItemPress: (item) => {
+      if (item.href) navigate(item.href)
+    },
+    footer: ({ collapsed }) => <LanguageSelector collapsed={collapsed} />,
+  }
 }

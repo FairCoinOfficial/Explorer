@@ -1,18 +1,22 @@
-import { useMemo } from 'react'
-import { PieChart } from 'lucide-react'
-import { useTranslations } from '@/lib/i18n'
+import { useNetwork } from '@/contexts/network-context'
 import { useNetworkStats } from '@/hooks/use-network-stats'
 import { useStatsHistory } from '@/hooks/use-stats-history'
-import { computeSupplyInfo, computeCirculatingSupply } from '@shared/supply'
 import { formatCompactNumber, formatNumber } from '@/lib/format'
-import { Sparkline } from '@/components/home/sparkline'
-import { Skeleton } from '@/components/ui/skeleton'
+import { useTranslations } from '@/lib/i18n'
+import { Admonition } from '@oxy.so/bloom/admonition'
+import {
+  ChartCardSurface,
+  ChartHeader,
+  ChartStatTiles,
+  Sparkline,
+} from '@oxy.so/bloom/chart-cards'
+import { Box } from '@oxy.so/bloom/skeleton'
+import { StatBar } from '@oxy.so/bloom/stat-bar'
+import { computeCirculatingSupply, computeSupplyInfo } from '@shared/supply'
+import { useMemo } from 'react'
 
 /** A series needs at least two points before a sparkline reads as a trend. */
 const MIN_SPARK_POINTS = 2
-
-/** Gradient fill for the supply progress bar: brand primary → bright accent. */
-const SUPPLY_BAR_GRADIENT = 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))'
 
 interface SubStat {
   key: string
@@ -22,8 +26,9 @@ interface SubStat {
 
 export function SupplyBar() {
   const t = useTranslations('home')
+  const { currentNetwork } = useNetwork()
   const { data, isLoading, isError } = useNetworkStats()
-  const { data: statsHistory } = useStatsHistory()
+  const { data: statsHistory } = useStatsHistory({ network: currentNetwork })
 
   const supply = useMemo(
     () => (data ? computeSupplyInfo(data.blockHeight) : null),
@@ -72,85 +77,29 @@ export function SupplyBar() {
   }, [supply, t])
 
   if (isLoading) {
-    return <Skeleton className="h-[208px] rounded-2xl" />
+    return <Box width={'100%'} height={208} />
   }
 
-  if (isError || !supply || !subStats) {
-    return (
-      <div className="rounded-2xl border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-        {t('statsUnavailable')}
-      </div>
-    )
-  }
-
-  const percent = supply.fraction * 100
-  // Keep the fill visible even at very low fractions so the bar never reads empty.
-  const fillWidth = Math.min(Math.max(percent, 1.5), 100)
-  const hasSpark = supplySpark !== null
-
+  if (isError || !supply || !subStats)
+    return <Admonition type="warning">{t('statsUnavailable')}</Admonition>
   return (
-    <section className="relative overflow-hidden rounded-2xl border bg-muted/30 p-4 transition-colors hover:bg-muted/40 sm:p-5">
-      {/* Ambient supply-growth sparkline, low opacity, behind the content. Only
-          rendered once enough history has accumulated; never a placeholder. */}
-      {hasSpark ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 top-1/3 select-none opacity-[0.18]">
-          <Sparkline data={supplySpark} fill strokeWidth={1.75} />
-        </div>
-      ) : null}
-
-      <header className="relative mb-4 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <PieChart className="size-4" />
-          </span>
-          <h3 className="text-sm font-semibold tracking-tight">{t('supplyTitle')}</h3>
-        </div>
-        <span className="text-xs font-medium tabular-nums text-primary">
-          {t('supplyMinted', { percent: percent.toFixed(2) })}
-        </span>
-      </header>
-
-      {/* Hero figure: precise circulating supply against the compact hard cap. */}
-      <div className="relative flex items-baseline gap-2">
-        <span className="text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">
-          {formatNumber(supply.circulating)}
-        </span>
-        <span className="text-sm font-medium text-muted-foreground">
-          {t('supplyOfMax', { max: formatCompactNumber(supply.max) })}
-        </span>
-      </div>
-
-      {/* Thicker gradient progress bar with a bright accent leading edge. */}
-      <div
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(percent * 10) / 10}
-        aria-label={t('supplyTitle')}
-        className="relative mt-3 h-3 w-full overflow-hidden rounded-full bg-muted"
-      >
-        <div
-          className="relative h-full rounded-full transition-[width] duration-500 ease-out"
-          style={{ width: `${fillWidth}%`, backgroundImage: SUPPLY_BAR_GRADIENT }}
-        >
-          <span className="absolute inset-y-0 right-0 w-1.5 rounded-full bg-accent" aria-hidden />
-        </div>
-      </div>
-
-      {/* Sub-stats grid: stat-strip tile look, responsive 2 → 5 columns. */}
-      <dl className="relative mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-        {subStats.map((stat) => (
-          <div
-            key={stat.key}
-            className="flex flex-col gap-1 rounded-xl bg-muted/60 px-3 py-2.5 transition-colors hover:bg-muted/80"
-          >
-            <dt className="truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              {stat.label}
-            </dt>
-            <dd className="truncate text-base font-semibold tabular-nums">{stat.value}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
+    <ChartCardSurface height="auto">
+      <ChartHeader
+        label={t('supplyTitle')}
+        value={supply.circulating}
+        format={formatNumber}
+      />
+      <StatBar
+        label={t('supplyMinted', {
+          percent: (supply.fraction * 100).toFixed(2),
+        })}
+        value={supply.circulating}
+        max={supply.max}
+        minLabel="0 FAIR"
+        maxLabel={t('supplyOfMax', { max: formatCompactNumber(supply.max) })}
+      />
+      {supplySpark && <Sparkline data={supplySpark} />}
+      <ChartStatTiles items={subStats} />
+    </ChartCardSurface>
   )
 }

@@ -1,13 +1,19 @@
-import { AlertTriangle, ArrowDownLeft, ArrowUpRight, Info, Users } from 'lucide-react'
-import { useTranslations } from '@/lib/i18n'
+import { DetailHeader } from '@/components/detail/detail-header'
+import { PageLoading } from '@/components/page-loading'
 import { usePeers } from '@/hooks/use-peers'
 import { formatNumber } from '@/lib/format'
-import { ListHeader } from '@/components/detail/list-header'
-import { SectionCard } from '@/components/detail/section-card'
-import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
-import { EmptyState } from '@/components/detail/empty-state'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { useTranslations } from '@/lib/i18n'
+import { Card, CardBody } from '@oxy.so/bloom/card'
+import { EmptyState } from '@oxy.so/bloom/empty-state'
+import { StatCards } from '@oxy.so/bloom/stat-cards'
+import {
+  AlertTriangle,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Info,
+  Users,
+} from 'lucide-react'
+import { View } from 'react-native'
 
 /**
  * Peers page — aggregate counts only.
@@ -21,99 +27,113 @@ export default function PeersPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = usePeers()
 
   if (isLoading) {
-    return <PeersSkeleton />
+    return <PageLoading />
   }
 
   if (isError || !data) {
     return (
-      <div className="flex-1 space-y-4">
-        <ListHeader
+      <View style={{ gap: 16 }}>
+        <DetailHeader
           title={t('title')}
           subtitle={t('subtitle')}
           onRefresh={() => void refetch()}
           isRefreshing={isFetching}
         />
-        <SectionCard>
-          <div className="flex flex-col items-center gap-3 py-8 text-center">
-            <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <AlertTriangle className="size-6" />
-            </span>
-            <p className="text-sm text-muted-foreground">
-              {error instanceof Error ? error.message : t('error')}
-            </p>
-            <Button variant="outline" onClick={() => void refetch()}>
-              {common('tryAgain')}
-            </Button>
-          </div>
-        </SectionCard>
-      </div>
+        <Card>
+          <CardBody>
+            <EmptyState
+              variant="compact"
+              title={common('error')}
+              description={error instanceof Error ? error.message : t('error')}
+              illustration={<AlertTriangle size={28} />}
+              action={{
+                label: common('tryAgain'),
+                onPress: () => void refetch(),
+              }}
+            />
+          </CardBody>
+        </Card>
+      </View>
     )
   }
 
   return (
-    <div className="flex-1 space-y-4">
-      <ListHeader
+    <View style={{ gap: 16 }}>
+      <DetailHeader
         title={t('title')}
         subtitle={t('subtitle')}
         onRefresh={() => void refetch()}
         isRefreshing={isFetching}
       />
 
-      <StatTileGrid className="grid-cols-2 sm:grid-cols-3">
-        <StatTile
-          icon={Users}
-          label={t('totalPeers')}
-          value={formatNumber(data.total)}
-          hint={t('connectedNodes')}
-          accent
-        />
-        <StatTile
-          icon={ArrowDownLeft}
-          label={t('inbound')}
-          value={formatNumber(data.inbound)}
-          hint={t('peersConnectingToUs')}
-        />
-        <StatTile
-          icon={ArrowUpRight}
-          label={t('outbound')}
-          value={formatNumber(data.outbound)}
-          hint={t('peersWeConnectTo')}
-        />
-      </StatTileGrid>
+      <StatCards
+        stats={[
+          {
+            label: t('totalPeers'),
+            value: formatNumber(data.total),
+            icon: (props) => (
+              <Users
+                width={props.width}
+                height={props.height}
+                color={props.fill}
+              />
+            ),
+            delta: '—',
+            deltaColor: 'neutral',
+            hint: t('connectedNodes'),
+          },
+          {
+            label: t('inbound'),
+            value: formatNumber(data.inbound),
+            icon: (props) => (
+              <ArrowDownLeft
+                width={props.width}
+                height={props.height}
+                color={props.fill}
+              />
+            ),
+            delta: '—',
+            deltaColor: 'neutral',
+            hint: t('peersConnectingToUs'),
+          },
+          {
+            label: t('outbound'),
+            value: formatNumber(data.outbound),
+            icon: (props) => (
+              <ArrowUpRight
+                width={props.width}
+                height={props.height}
+                color={props.fill}
+              />
+            ),
+            delta: '—',
+            deltaColor: 'neutral',
+            hint: t('peersWeConnectTo'),
+          },
+        ]}
+      />
 
       {data.total === 0 ? (
-        <SectionCard>
-          <EmptyState icon={Users} title={t('noPeers')} tone="muted" />
-        </SectionCard>
+        <Card>
+          <CardBody>
+            <EmptyState
+              variant="compact"
+              illustration={<Users size={24} />}
+              title={t('noPeers')}
+            />
+          </CardBody>
+        </Card>
       ) : null}
 
-      <div className="flex items-start gap-2 rounded-xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-        <Info className="mt-0.5 size-4 shrink-0 text-primary" />
-        <div className="space-y-1">
-          <p className="font-medium text-foreground">{t('privacyTitle')}</p>
-          <p>{t('privacyNote')}</p>
+      <Card clipContent>
+        <div className="flex items-start gap-2 px-4 py-3 text-sm text-muted-foreground">
+          <Info className="mt-0.5 size-4 shrink-0 text-primary" />
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">{t('privacyTitle')}</p>
+            <p>{t('privacyNote')}</p>
+          </div>
         </div>
-      </div>
-    </div>
-  )
-}
-
-function PeersSkeleton() {
-  return (
-    <div className="flex-1 space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-44" />
-          <Skeleton className="h-4 w-72" />
-        </div>
-        <Skeleton className="h-9 w-28 rounded-lg" />
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 rounded-xl" />
-        ))}
-      </div>
-      <Skeleton className="h-16 w-full rounded-xl" />
-    </div>
+      </Card>
+    </View>
   )
 }

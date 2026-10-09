@@ -1,8 +1,7 @@
-import { AlertTriangle } from 'lucide-react'
 import { useNodeHealth } from '@/hooks/use-node-health'
-import { decideHealthBanner } from '@/lib/node-health-banner'
 import { useTranslations } from '@/lib/i18n'
-import { cn } from '@/lib/utils'
+import { decideHealthBanner } from '@/lib/node-health-banner'
+import { Admonition } from '@oxy.so/bloom/admonition'
 
 /**
  * Tells the visitor when the chain data on screen may not be current.
@@ -22,21 +21,13 @@ export function NodeHealthBanner() {
   }
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      className={cn(
-        'flex items-center gap-2 border-b px-3 py-2 text-sm sm:px-4 md:px-6 lg:px-8',
-        decision.tone === 'danger'
-          ? 'border-destructive/30 bg-destructive/10 text-destructive'
-          : 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400',
-      )}
-    >
-      <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
-      <span>
+    <div role="status" aria-live="polite" className="mb-4">
+      <Admonition type={decision.tone === 'danger' ? 'error' : 'warning'}>
         {t(decision.messageKey)}
-        {decision.lagBlocks > 0 ? ` ${t('lagSuffix').replace('{blocks}', String(decision.lagBlocks))}` : ''}
-      </span>
+        {decision.lagBlocks > 0
+          ? ` ${t('lagSuffix').replace('{blocks}', String(decision.lagBlocks))}`
+          : ''}
+      </Admonition>
     </div>
   )
 }

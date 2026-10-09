@@ -1,31 +1,34 @@
-import { useMemo } from 'react'
+import { DetailHeader } from '@/components/detail/detail-header'
+import { PageLoading } from '@/components/page-loading'
+import { useNetwork } from '@/contexts/network-context'
+import { useNodeStatus } from '@/hooks/use-node-status'
+import { useStatsHistory } from '@/hooks/use-stats-history'
+import { formatCompactNumber, formatNumber } from '@/lib/format'
+import { useTranslations } from '@/lib/i18n'
+import { Card, CardBody, CardHeader, CardTitle } from '@oxy.so/bloom/card'
+import { Sparkline } from '@oxy.so/bloom/chart-cards'
+import { Chip } from '@oxy.so/bloom/chip'
+import { Code } from '@oxy.so/bloom/code'
+import { EmptyState } from '@oxy.so/bloom/empty-state'
+import { Item } from '@oxy.so/bloom/item'
+import { StatCard } from '@oxy.so/bloom/stat-cards'
 import {
-  Activity,
   AlertTriangle,
   CheckCircle2,
   Database,
   Gauge,
   Link2,
-  Network,
   XCircle,
   Zap,
   type LucideIcon,
 } from 'lucide-react'
-import { useTranslations } from '@/lib/i18n'
-import { useNodeStatus } from '@/hooks/use-node-status'
-import { useStatsHistory } from '@/hooks/use-stats-history'
-import { useNetwork } from '@/contexts/network-context'
-import { formatCompactNumber, formatNumber } from '@/lib/format'
-import { DetailHeader } from '@/components/detail/detail-header'
-import { SectionCard } from '@/components/detail/section-card'
-import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
-import { InfoGrid, InfoRow } from '@/components/detail/info-row'
-import { Sparkline } from '@/components/home/sparkline'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
+import { useMemo } from 'react'
+import { View } from 'react-native'
 
-type Translate = (key: string, params?: Record<string, string | number>) => string
+type Translate = (
+  key: string,
+  params?: Record<string, string | number>,
+) => string
 
 /** A series needs at least two points before a sparkline reads as a trend. */
 const MIN_SPARK_POINTS = 2
@@ -43,7 +46,14 @@ export function NetworkStatusContent() {
   const t = useTranslations('network')
   const common = useTranslations('common')
   const { currentNetwork } = useNetwork()
-  const { data: status, isLoading, isError, error, refetch, isFetching } = useNodeStatus()
+  const {
+    data: status,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useNodeStatus()
   const { data: statsHistory } = useStatsHistory({ network: currentNetwork })
 
   // Mainnet-only background series for the time-varying tiles (Connections, Difficulty).
@@ -60,60 +70,60 @@ export function NetworkStatusContent() {
   }, [statsHistory])
 
   if (isLoading) {
-    return <NetworkStatusSkeleton />
+    return <PageLoading />
   }
 
   const online = !isError && Boolean(status)
 
   return (
-    <div className="flex-1 space-y-4">
+    <View style={{ gap: 16 }}>
       <DetailHeader
         title={t('title')}
         subtitle={t('subtitle')}
         onRefresh={() => void refetch()}
         isRefreshing={isFetching}
         action={
-          <span
-            className={cn(
-              'inline-flex items-center gap-1.5 text-xs font-medium',
-              online ? 'text-primary' : 'text-destructive',
-            )}
-          >
-            <span
-              className={cn(
-                'size-1.5 rounded-full',
-                online ? 'animate-pulse bg-primary' : 'bg-destructive',
-              )}
-              aria-hidden
-            />
+          <Chip size="sm" tone={online ? 'success' : 'danger'}>
             {online ? t('online') : t('offline')}
-          </span>
+          </Chip>
         }
       />
 
       {isError || !status ? (
-        <SectionCard>
-          <div className="flex flex-col items-center gap-3 py-8 text-center">
-            <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <AlertTriangle className="size-6" />
-            </span>
-            <p className="text-sm text-muted-foreground">
-              {error instanceof Error ? error.message : t('offline')}
-            </p>
-            <Button variant="outline" onClick={() => void refetch()}>
-              {common('tryAgain')}
-            </Button>
-          </div>
-        </SectionCard>
+        <Card>
+          <CardBody>
+            <EmptyState
+              variant="compact"
+              title={common('error')}
+              description={
+                error instanceof Error ? error.message : t('offline')
+              }
+              illustration={<AlertTriangle size={28} />}
+              action={{
+                label: common('tryAgain'),
+                onPress: () => void refetch(),
+              }}
+            />
+          </CardBody>
+        </Card>
       ) : (
         <>
-          <StatTileGrid>
-            <StatTile
-              icon={Database}
-              label={t('blockHeight')}
-              value={formatNumber(status.blockHeight)}
-              hint={t('currentBlockHeight')}
-              accent
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              stat={{
+                label: t('blockHeight'),
+                value: formatNumber(status.blockHeight),
+                icon: (props) => (
+                  <Database
+                    width={props.width}
+                    height={props.height}
+                    color={props.fill}
+                  />
+                ),
+                delta: '—',
+                deltaColor: 'neutral',
+                hint: t('currentBlockHeight'),
+              }}
             />
             <MetricTile
               icon={Link2}
@@ -125,43 +135,107 @@ export function NetworkStatusContent() {
             <MetricTile
               icon={Gauge}
               label={t('difficulty')}
-              value={status.difficulty > 0 ? formatCompactNumber(status.difficulty) : '0'}
+              value={
+                status.difficulty > 0
+                  ? formatCompactNumber(status.difficulty)
+                  : '0'
+              }
               hint={t('networkDifficulty')}
               spark={sparks.difficulty}
             />
-            <StatTile
-              icon={Zap}
-              label={t('hashrate')}
-              value={formatHashrate(status.hashrate, t('hashrateIdle'))}
-              hint={t('networkHashrate')}
+            <StatCard
+              stat={{
+                label: t('hashrate'),
+                value: formatHashrate(status.hashrate, t('hashrateIdle')),
+                icon: (props) => (
+                  <Zap
+                    width={props.width}
+                    height={props.height}
+                    color={props.fill}
+                  />
+                ),
+                delta: '—',
+                deltaColor: 'neutral',
+                hint: t('networkHashrate'),
+              }}
             />
-          </StatTileGrid>
+          </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
             {/* Node information */}
-            <SectionCard title={t('nodeInformation')} icon={Network}>
-              <InfoGrid columns={2}>
-                <InfoRow label={t('version')} value={status.subversion || t('unknown')} mono />
-                <InfoRow label={t('networkLabel')} value={currentNetwork} />
-                <InfoRow label={t('protocolVersion')} value={formatNumber(status.protocolVersion)} mono />
-                <InfoRow label={t('chain')} value={status.chain} />
-                <InfoRow label={t('mempool')} value={t('transactionsCount', { count: status.pooledTx })} />
-                <InfoRow label={t('relayFee')} value={`${status.relayFee} FAIR`} mono />
-              </InfoGrid>
-            </SectionCard>
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('nodeInformation')}</CardTitle>
+              </CardHeader>
+              <CardBody>
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                  <Item
+                    density="compact"
+                    title={t('version')}
+                    subtitle={<Code>{status.subversion || t('unknown')}</Code>}
+                  />
+                  <Item
+                    density="compact"
+                    title={t('networkLabel')}
+                    subtitle={currentNetwork}
+                  />
+                  <Item
+                    density="compact"
+                    title={t('protocolVersion')}
+                    subtitle={
+                      <Code>{formatNumber(status.protocolVersion)}</Code>
+                    }
+                  />
+                  <Item
+                    density="compact"
+                    title={t('chain')}
+                    subtitle={status.chain}
+                  />
+                  <Item
+                    density="compact"
+                    title={t('mempool')}
+                    subtitle={t('transactionsCount', {
+                      count: status.pooledTx,
+                    })}
+                  />
+                  <Item
+                    density="compact"
+                    title={t('relayFee')}
+                    subtitle={<Code>{`${status.relayFee} FAIR`}</Code>}
+                  />
+                </div>
+              </CardBody>
+            </Card>
 
             {/* Status indicators */}
-            <SectionCard title={t('statusIndicators')} icon={Activity}>
-              <div className="space-y-2.5">
-                <StatusIndicator ok={online} label={t('nodeConnection')} t={t} />
-                <StatusIndicator ok={status.connections > 0} label={t('peerConnections')} t={t} />
-                <StatusIndicator ok={status.blockHeight > 0} label={t('blockchainSync')} t={t} />
-              </div>
-            </SectionCard>
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('statusIndicators')}</CardTitle>
+              </CardHeader>
+              <CardBody>
+                <div className="space-y-2.5">
+                  <StatusIndicator
+                    ok={online}
+                    label={t('nodeConnection')}
+                    t={t}
+                  />
+                  <StatusIndicator
+                    ok={status.connections > 0}
+                    label={t('peerConnections')}
+                    t={t}
+                  />
+                  <StatusIndicator
+                    ok={status.blockHeight > 0}
+                    label={t('blockchainSync')}
+                    t={t}
+                  />
+                </div>
+              </CardBody>
+            </Card>
           </div>
         </>
       )}
-    </div>
+    </View>
   )
 }
 
@@ -174,75 +248,53 @@ interface MetricTileProps {
   spark?: number[]
 }
 
-/**
- * A {@link StatTile}-styled metric tile with a subtle, non-interactive background
- * sparkline for values that change over time (Connections, Difficulty). Falls back
- * to a clean tile until enough history has accumulated.
- */
-function MetricTile({ icon: Icon, label, value, hint, spark }: MetricTileProps) {
-  const hasSpark = Boolean(spark && spark.length >= MIN_SPARK_POINTS)
-
+function MetricTile({
+  icon: Icon,
+  label,
+  value,
+  hint,
+  spark,
+}: MetricTileProps) {
   return (
-    <div className="relative flex flex-col gap-1 overflow-hidden rounded-xl bg-muted/60 px-3 py-2.5 transition-colors hover:bg-muted/80">
-      {hasSpark && spark ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 opacity-25">
-          <Sparkline data={spark} />
-        </div>
-      ) : null}
-      <div className="relative flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-        <Icon className="size-3.5 shrink-0" />
-        <span className="truncate">{label}</span>
-      </div>
-      <span className="relative truncate text-base font-semibold tabular-nums">{value}</span>
-      {hint ? (
-        <span className="relative truncate text-[11px] text-muted-foreground tabular-nums">{hint}</span>
-      ) : null}
-    </div>
+    <StatCard
+      stat={{
+        label,
+        value,
+        hint,
+        icon: (props) => (
+          <Icon width={props.width} height={props.height} color={props.fill} />
+        ),
+        delta: '—',
+        deltaColor: 'neutral',
+        accessory:
+          spark && spark.length >= MIN_SPARK_POINTS ? (
+            <Sparkline data={spark} width={80} height={28} />
+          ) : undefined,
+      }}
+    />
   )
 }
 
-function StatusIndicator({ ok, label, t }: { ok: boolean; label: string; t: Translate }) {
+function StatusIndicator({
+  ok,
+  label,
+  t,
+}: {
+  ok: boolean
+  label: string
+  t: Translate
+}) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl bg-muted/40 px-3 py-2.5">
-      <span className="flex items-center gap-2 text-sm">
-        {ok ? (
-          <CheckCircle2 className="size-4 text-primary" />
-        ) : (
-          <XCircle className="size-4 text-destructive" />
-        )}
-        {label}
-      </span>
-      <span
-        className={cn(
-          'text-xs font-medium',
-          ok ? 'text-primary' : 'text-destructive',
-        )}
-      >
-        {ok ? t('connected') : t('disconnected')}
-      </span>
-    </div>
-  )
-}
-
-function NetworkStatusSkeleton() {
-  return (
-    <div className="flex-1 space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-44" />
-          <Skeleton className="h-4 w-72" />
-        </div>
-        <Skeleton className="h-9 w-28 rounded-lg" />
-      </div>
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 rounded-xl" />
-        ))}
-      </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Skeleton className="h-44 w-full rounded-xl" />
-        <Skeleton className="h-44 w-full rounded-xl" />
-      </div>
-    </div>
+    <Card>
+      <Item
+        title={label}
+        leading={ok ? <CheckCircle2 size={20} /> : <XCircle size={20} />}
+        trailing={
+          <Chip size="sm" tone={ok ? 'success' : 'danger'}>
+            {ok ? t('connected') : t('disconnected')}
+          </Chip>
+        }
+      />
+    </Card>
   )
 }
