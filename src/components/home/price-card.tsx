@@ -1,154 +1,82 @@
-import { useMemo, useState } from 'react'
-import { TrendingUp, TrendingDown, LineChart, ArrowUpRight } from 'lucide-react'
-import { useTranslations, useLocale } from '@/lib/i18n'
-import { useCoinPrice, usePriceHistory, type PriceHistoryPoint } from '@/hooks/use-coin-price'
+import { useCoinPrice, usePriceHistory } from '@/hooks/use-coin-price'
+import { preparePrices } from '@/lib/chart-data'
 import { formatUsd } from '@/lib/format'
+import { useLocale, useTranslations } from '@/lib/i18n'
 import { WFAIR_CONFIG } from '@/lib/wfair'
-import { ModuleCard } from '@/components/home/module-card'
-import { Sparkline } from '@/components/home/sparkline'
-import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
-
-/** Real series needs at least two points before it reads as a chart. */
-const MIN_REAL_POINTS = 2
-
-/**
- * A near-flat, low-amplitude baseline used only when there isn't enough real
- * history yet. It is deliberately ambient (decorative gradient + a gentle resting
- * line), NOT a fabricated price movement — it gives the card the "metric card with
- * sparkline" silhouette without implying a rally. As soon as ≥{@link MIN_REAL_POINTS}
- * real samples accumulate, the chart switches to live data automatically.
- */
-const PLACEHOLDER_SPARK: readonly number[] = [0.5, 0.5, 0.52, 0.51, 0.52, 0.5, 0.51, 0.5]
+import { Button } from '@oxy.so/bloom/button'
+import {
+  Card,
+  CardBody,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@oxy.so/bloom/card'
+import { ChartHeader, LineChartCard } from '@oxy.so/bloom/chart-cards'
+import { EmptyState } from '@oxy.so/bloom/empty-state'
+import { Box } from '@oxy.so/bloom/skeleton'
 
 export function PriceCard() {
   const t = useTranslations('home')
+  const charts = useTranslations('charts')
   const locale = useLocale()
   const price = useCoinPrice()
   const history = usePriceHistory('7d')
-
-  // Hovered point index into the *real* series, or null when not hovering.
-  // Pointer-driven local state (no effect): the Sparkline reports the index, and
-  // the hero price/time derive from it below.
-  const [hoverIndex, setHoverIndex] = useState<number | null>(null)
-
-  const realSpark = useMemo<PriceHistoryPoint[]>(() => history.data ?? [], [history.data])
-  const hasRealSpark = realSpark.length >= MIN_REAL_POINTS
-
-  const sparkValues = useMemo<readonly number[]>(
-    () => (hasRealSpark ? realSpark.map((point) => point.price_usd) : PLACEHOLDER_SPARK),
-    [hasRealSpark, realSpark],
-  )
-
-  const timeFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(locale, {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    [locale],
-  )
-
-  const change = price.data?.change24h ?? null
-  const isUp = change !== null && change >= 0
-  const latestUsd = price.data?.price ?? null
-
-  // The hovered point only resolves on the real series; the placeholder is inert.
-  const hoveredPoint =
-    hasRealSpark && hoverIndex !== null && hoverIndex >= 0 && hoverIndex < realSpark.length
-      ? realSpark[hoverIndex]
-      : null
-
-  // Hero shows the hovered value while hovering, otherwise the live price.
-  // Stays `number | null` here; the render branch below only runs when a live
-  // price exists, narrowing it to a concrete number at the call site.
-  const displayUsd = hoveredPoint?.price_usd ?? latestUsd
-  const hoveredTime = hoveredPoint ? timeFormatter.format(new Date(hoveredPoint.timestamp)) : null
-
-  const action =
-    change !== null ? (
-      <span
-        className={cn(
-          'inline-flex items-center gap-0.5 text-xs font-medium tabular-nums',
-          isUp ? 'text-primary' : 'text-destructive',
-        )}
-      >
-        {isUp ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-        {isUp ? '+' : ''}
-        {change.toFixed(2)}%
-      </span>
-    ) : undefined
-
+  const rows = preparePrices(history.data ?? [])
+  if (price.isLoading) return <Box width={'100%'} height={320} />
+  if (rows.length >= 2)
+    return (
+      <LineChartCard
+        title={t('priceTitle')}
+        data={rows.map((row) => ({
+          label: new Date(row.time).toLocaleDateString(locale, {
+            month: 'short',
+            day: 'numeric',
+          }),
+          value: row.price_usd,
+        }))}
+        headline={price.data?.price ?? rows.at(-1)?.price_usd}
+        format={formatUsd}
+        formatAxisValue={(value) =>
+          value.toLocaleString(locale, { maximumFractionDigits: 2 })
+        }
+        getPointTitle={(point) => point.label}
+        accessibilityLabel={t('priceTitle')}
+      />
+    )
   return (
-    <ModuleCard
-      title={t('priceTitle')}
-      icon={LineChart}
-      action={action}
-      href={WFAIR_CONFIG.poolUrl}
-      external
-      footerLabel={t('priceViewMarket')}
-    >
-      {price.isLoading ? (
-        <div className="space-y-3">
-          <Skeleton className="h-10 w-32" />
-          <Skeleton className="h-12 w-full" />
-        </div>
-      ) : latestUsd === null ? (
-        <div className="flex flex-1 flex-col justify-center">
-          <p className="text-lg font-semibold tracking-tight">{t('priceNoMarket')}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{t('priceAwaitingLiquidity')}</p>
-          <a
-            href={WFAIR_CONFIG.buyUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-flex w-fit items-center gap-1 text-xs font-medium text-primary transition-opacity hover:opacity-80"
-          >
-            {t('priceGetFair')}
-            <ArrowUpRight className="size-3" />
-          </a>
-          <p className="mt-2 text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-            {t('priceSource')}
-          </p>
-        </div>
-      ) : (
-        <div className="relative flex flex-1 flex-col">
-          {/* Full-bleed interactive area sparkline, behind the text. The negative
-              insets cancel ModuleCard's `p-4` so the gradient/line reach the card
-              edges (left/right + bottom); the rounded corners are clipped by
-              ModuleCard's `overflow-hidden`. Pointer events live on its own
-              overlay, so it can sit under the hero price and still track the
-              cursor. */}
-          <div
-            className={cn(
-              'absolute -inset-x-4 -bottom-4 top-1/3 select-none',
-              hasRealSpark ? 'opacity-70' : 'opacity-40',
-            )}
-          >
-            <Sparkline
-              data={sparkValues}
-              interactive={hasRealSpark}
-              activeIndex={hoverIndex}
-              onHoverIndex={hasRealSpark ? setHoverIndex : undefined}
-            />
-          </div>
-
-          {/* Hero price (foreground). Reflects the hovered point while hovering. */}
-          <div className="pointer-events-none relative flex items-baseline gap-1.5">
-            <span className="text-5xl font-bold tracking-tight tabular-nums">
-              {formatUsd(displayUsd ?? latestUsd)}
-            </span>
-            <span className="text-xs font-medium text-muted-foreground">
-              {hoveredTime ?? t('priceUnit')}
-            </span>
-          </div>
-
-          <p className="pointer-events-none relative mt-auto pt-4 text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-            {t('priceSource')}
-          </p>
-        </div>
-      )}
-    </ModuleCard>
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('priceTitle')}</CardTitle>
+        <CardDescription>{t('priceSource')}</CardDescription>
+      </CardHeader>
+      <CardBody>
+        {price.data?.price != null && (
+          <ChartHeader
+            label={t('priceUnit')}
+            value={price.data.price}
+            format={formatUsd}
+          />
+        )}
+        <EmptyState
+          variant="compact"
+          title={
+            price.data?.price == null
+              ? t('priceNoMarket')
+              : charts('noPriceHistory')
+          }
+          description={t('priceAwaitingLiquidity')}
+          footer={
+            <Button
+              appearance="plain"
+              size="sm"
+              href={WFAIR_CONFIG.buyUrl}
+              target="_blank"
+            >
+              {t('priceGetFair')}
+            </Button>
+          }
+        />
+      </CardBody>
+    </Card>
   )
 }

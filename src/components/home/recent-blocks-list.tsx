@@ -1,9 +1,12 @@
-import { Link } from 'react-router-dom'
-import { Blocks } from 'lucide-react'
-import { useTranslations } from '@/lib/i18n'
+import { RelativeTime } from '@/components/detail/relative-time'
+import { usePageParam } from '@/hooks/use-page-param'
 import type { RecentBlock } from '@/hooks/use-recent-blocks'
-import { Skeleton } from '@/components/ui/skeleton'
-import { BlockRow } from '@/components/block-row'
+import { ExplorerLink } from '@/lib/explorer-navigation'
+import { formatBytes, formatNumber } from '@/lib/format'
+import { useTranslations } from '@/lib/i18n'
+import { Button } from '@oxy.so/bloom/button'
+import { DataTable } from '@oxy.so/bloom/data-table'
+import { Box } from '@oxy.so/bloom/skeleton'
 
 interface RecentBlocksListProps {
   blocks: RecentBlock[] | undefined
@@ -11,62 +14,64 @@ interface RecentBlocksListProps {
   isError: boolean
 }
 
-export function RecentBlocksList({ blocks, isLoading, isError }: RecentBlocksListProps) {
+export function RecentBlocksList({
+  blocks,
+  isLoading,
+  isError,
+}: RecentBlocksListProps) {
+  const [page, setPage] = usePageParam('blocksPage')
   const t = useTranslations('home')
-
+  const labels = useTranslations('common')
+  if (isLoading) return <Box width="100%" height={320} />
   return (
-    <div className="flex h-full flex-col rounded-2xl border bg-muted/30">
-      <header className="flex items-center justify-between gap-2 border-b px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Blocks className="size-4" />
-          </span>
-          <h3 className="text-sm font-semibold tracking-tight">{t('recentBlocks')}</h3>
-        </div>
-        <Link to="/blocks" className="text-xs font-medium text-primary transition-opacity hover:opacity-80">
-          {t('viewAll')}
-        </Link>
-      </header>
-
-      <div className="flex-1 overflow-hidden">
-        {isLoading ? (
-          <ListSkeleton />
-        ) : isError ? (
-          <EmptyRow message={t('blocksUnavailable')} />
-        ) : !blocks || blocks.length === 0 ? (
-          <EmptyRow message={t('blocksEmpty')} />
-        ) : (
-          <ul className="divide-y">
-            {blocks.map((block) => (
-              <BlockRow key={block.height} block={block} />
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function ListSkeleton() {
-  return (
-    <ul className="divide-y">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <li key={i} className="flex items-center justify-between gap-3 px-4 py-2.5">
-          <div className="flex flex-col gap-1">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-3 w-32" />
-          </div>
-          <Skeleton className="h-4 w-12" />
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-function EmptyRow({ message }: { message: string }) {
-  return (
-    <div className="flex h-full min-h-[160px] items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
-      {message}
-    </div>
+    <DataTable
+      layout="inset"
+      title={t('recentBlocks')}
+      accessibilityLabel={t('recentBlocks')}
+      rows={blocks ?? []}
+      getRowId={(row) => row.hash}
+      pageSize={5}
+      page={page}
+      onPageChange={setPage}
+      minWidth={600}
+      emptyState={t(isError ? 'blocksUnavailable' : 'blocksEmpty')}
+      toolbar={
+        <Button appearance="plain" asChild>
+          <ExplorerLink to="/blocks">{t('viewAll')}</ExplorerLink>
+        </Button>
+      }
+      columns={[
+        {
+          id: 'height',
+          header: labels('height'),
+          accessor: (row) => row.height,
+          cell: ({ row }) => (
+            <Button appearance="plain" size="sm" asChild>
+              <ExplorerLink to={`/block/${row.height}`}>
+                #{formatNumber(row.height)}
+              </ExplorerLink>
+            </Button>
+          ),
+        },
+        {
+          id: 'time',
+          header: labels('time'),
+          accessor: (row) => row.time,
+          cell: ({ row }) => <RelativeTime timestamp={row.time} />,
+        },
+        {
+          id: 'tx',
+          header: labels('transactions'),
+          accessor: (row) => row.nTx,
+          cell: ({ row }) => formatNumber(row.nTx),
+        },
+        {
+          id: 'size',
+          header: labels('size'),
+          accessor: (row) => row.size,
+          cell: ({ row }) => formatBytes(row.size),
+        },
+      ]}
+    />
   )
 }

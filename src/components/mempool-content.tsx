@@ -1,25 +1,24 @@
-import { useMemo } from 'react'
+import { DetailHeader } from '@/components/detail/detail-header'
+import { HashCell } from '@/components/detail/hash-cell'
+import { RelativeTime } from '@/components/detail/relative-time'
+import { PageLoading } from '@/components/page-loading'
+import { useMempool, type MempoolTransaction } from '@/hooks/use-mempool'
+import { formatBytes, formatNumber } from '@/lib/format'
+import { useTranslations } from '@/lib/i18n'
+import { Card, CardBody, CardHeader, CardTitle } from '@oxy.so/bloom/card'
+import { EmptyState } from '@oxy.so/bloom/empty-state'
+import { Meter } from '@oxy.so/bloom/stat-bar'
+import { StatCards } from '@oxy.so/bloom/stat-cards'
 import {
   AlertTriangle,
   BarChart3,
-  Clock,
-  Coins,
   Database,
   Hash,
   Inbox,
   Layers,
 } from 'lucide-react'
-import { useTranslations } from '@/lib/i18n'
-import { useMempool, type MempoolTransaction } from '@/hooks/use-mempool'
-import { formatBytes, formatNumber } from '@/lib/format'
-import { DetailHeader } from '@/components/detail/detail-header'
-import { SectionCard } from '@/components/detail/section-card'
-import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
-import { HashCell } from '@/components/detail/hash-cell'
-import { RelativeTime } from '@/components/detail/relative-time'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
+import { useMemo } from 'react'
+import { View } from 'react-native'
 
 const MAX_VISIBLE_TX = 25
 const SATOSHIS_PER_FAIR = 100_000_000
@@ -39,11 +38,19 @@ function buildFeeHistogram(transactions: MempoolTransaction[]): FeeBucket[] {
     { key: '1-5', label: '1–5', count: 0, min: 1, max: 5 },
     { key: '5-10', label: '5–10', count: 0, min: 5, max: 10 },
     { key: '10-50', label: '10–50', count: 0, min: 10, max: 50 },
-    { key: '50+', label: '50+', count: 0, min: 50, max: Number.POSITIVE_INFINITY },
+    {
+      key: '50+',
+      label: '50+',
+      count: 0,
+      min: 50,
+      max: Number.POSITIVE_INFINITY,
+    },
   ]
   for (const tx of transactions) {
     const rate = Number.isFinite(tx.feeRate) ? tx.feeRate : 0
-    const bucket = buckets.find((b) => rate >= b.min && rate < b.max) ?? buckets[buckets.length - 1]
+    const bucket =
+      buckets.find((b) => rate >= b.min && rate < b.max) ??
+      buckets[buckets.length - 1]
     bucket.count += 1
   }
   return buckets
@@ -63,36 +70,41 @@ export default function MempoolContent() {
       .sort((a, b) => a - b)
     if (rates.length === 0) return 0
     const mid = Math.floor(rates.length / 2)
-    return rates.length % 2 === 0 ? (rates[mid - 1] + rates[mid]) / 2 : rates[mid]
+    return rates.length % 2 === 0
+      ? (rates[mid - 1] + rates[mid]) / 2
+      : rates[mid]
   }, [mempoolTxs])
 
   if (isLoading) {
-    return <MempoolSkeleton />
+    return <PageLoading />
   }
 
   if (isError || !data) {
     return (
-      <div className="flex-1 space-y-4">
+      <View style={{ gap: 16 }}>
         <DetailHeader
           title={t('title')}
           subtitle={t('description')}
           onRefresh={() => void refetch()}
           isRefreshing={isFetching}
         />
-        <SectionCard>
-          <div className="flex flex-col items-center gap-3 py-8 text-center">
-            <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <AlertTriangle className="size-6" />
-            </span>
-            <p className="text-sm text-muted-foreground">
-              {error instanceof Error ? error.message : t('errorLoading')}
-            </p>
-            <Button variant="outline" onClick={() => void refetch()}>
-              {common('tryAgain')}
-            </Button>
-          </div>
-        </SectionCard>
-      </div>
+        <Card>
+          <CardBody>
+            <EmptyState
+              variant="compact"
+              title={common('error')}
+              description={
+                error instanceof Error ? error.message : t('errorLoading')
+              }
+              illustration={<AlertTriangle size={28} />}
+              action={{
+                label: common('tryAgain'),
+                onPress: () => void refetch(),
+              }}
+            />
+          </CardBody>
+        </Card>
+      </View>
     )
   }
 
@@ -101,13 +113,17 @@ export default function MempoolContent() {
   const maxBucketCount = Math.max(1, ...feeBuckets.map((b) => b.count))
   const nowSeconds = Date.now() / 1000
   const ages = data.transactions
-    .map((tx) => (Number.isFinite(tx.time) && tx.time > 0 ? nowSeconds - tx.time : 0))
+    .map((tx) =>
+      Number.isFinite(tx.time) && tx.time > 0 ? nowSeconds - tx.time : 0,
+    )
     .filter((age) => age >= 0)
   const avgAgeSeconds =
-    ages.length > 0 ? Math.round(ages.reduce((sum, age) => sum + age, 0) / ages.length) : 0
+    ages.length > 0
+      ? Math.round(ages.reduce((sum, age) => sum + age, 0) / ages.length)
+      : 0
 
   return (
-    <div className="flex-1 space-y-4">
+    <View style={{ gap: 16 }}>
       <DetailHeader
         title={t('title')}
         subtitle={t('description')}
@@ -116,104 +132,152 @@ export default function MempoolContent() {
       />
 
       {/* Stats */}
-      <StatTileGrid>
-        <StatTile
-          icon={Hash}
-          label={t('pendingTransactions')}
-          value={formatNumber(data.size)}
-          hint={t('unconfirmedTransactions')}
-          accent
-        />
-        <StatTile
-          icon={Database}
-          label={t('memoryUsage')}
-          value={formatBytes(data.bytes)}
-          hint={t('bytesValue', { bytes: formatNumber(data.bytes) })}
-        />
-        <StatTile
-          icon={Layers}
-          label={t('avgTxSize')}
-          value={formatBytes(avgTxSize)}
-          hint={t('bytesPerTransaction')}
-        />
-        <StatTile
-          icon={BarChart3}
-          label={t('medianFeeRate')}
-          value={t('feeRateValue', { rate: medianFeeRate.toFixed(1) })}
-          hint={t('avgAge', { seconds: formatNumber(avgAgeSeconds) })}
-        />
-      </StatTileGrid>
+      <StatCards
+        stats={[
+          {
+            label: t('pendingTransactions'),
+            value: formatNumber(data.size),
+            icon: (props) => (
+              <Hash
+                width={props.width}
+                height={props.height}
+                color={props.fill}
+              />
+            ),
+            delta: '—',
+            deltaColor: 'neutral',
+            hint: t('unconfirmedTransactions'),
+          },
+          {
+            label: t('memoryUsage'),
+            value: formatBytes(data.bytes),
+            icon: (props) => (
+              <Database
+                width={props.width}
+                height={props.height}
+                color={props.fill}
+              />
+            ),
+            delta: '—',
+            deltaColor: 'neutral',
+            hint: t('bytesValue', { bytes: formatNumber(data.bytes) }),
+          },
+          {
+            label: t('avgTxSize'),
+            value: formatBytes(avgTxSize),
+            icon: (props) => (
+              <Layers
+                width={props.width}
+                height={props.height}
+                color={props.fill}
+              />
+            ),
+            delta: '—',
+            deltaColor: 'neutral',
+            hint: t('bytesPerTransaction'),
+          },
+          {
+            label: t('medianFeeRate'),
+            value: t('feeRateValue', { rate: medianFeeRate.toFixed(1) }),
+            icon: (props) => (
+              <BarChart3
+                width={props.width}
+                height={props.height}
+                color={props.fill}
+              />
+            ),
+            delta: '—',
+            deltaColor: 'neutral',
+            hint: t('avgAge', { seconds: formatNumber(avgAgeSeconds) }),
+          },
+        ]}
+      />
 
-      <SectionCard title={t('feeHistogram')} icon={BarChart3}>
-        {data.transactions.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">{t('emptyDescription')}</p>
-        ) : (
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">{t('feeHistogramHint')}</p>
-            <ul className="space-y-2">
-              {feeBuckets.map((bucket) => (
-                <li key={bucket.key} className="flex items-center gap-3 text-sm">
-                  <span className="w-14 shrink-0 tabular-nums text-muted-foreground">
-                    {bucket.label}
-                  </span>
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className={cn('h-full rounded-full bg-primary transition-all')}
-                      style={{ width: `${(bucket.count / maxBucketCount) * 100}%` }}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('feeHistogram')}</CardTitle>
+        </CardHeader>
+        <CardBody>
+          {data.transactions.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              {t('emptyDescription')}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                {t('feeHistogramHint')}
+              </p>
+              <ul className="space-y-2">
+                {feeBuckets.map((bucket) => (
+                  <li
+                    key={bucket.key}
+                    className="flex items-center gap-3 text-sm"
+                  >
+                    <span className="w-14 shrink-0 tabular-nums text-muted-foreground">
+                      {bucket.label}
+                    </span>
+                    <Meter
+                      value={bucket.count}
+                      max={maxBucketCount}
+                      accessibilityLabel={bucket.label}
+                      style={{ flex: 1 }}
                     />
-                  </div>
-                  <span className="w-8 shrink-0 text-right tabular-nums font-medium">
-                    {bucket.count}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </SectionCard>
+                    <span className="w-8 shrink-0 text-right tabular-nums font-medium">
+                      {bucket.count}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </CardBody>
+      </Card>
 
       {/* Pending transactions */}
-      <SectionCard
-        title={t('recentTransactions')}
-        icon={Clock}
-        flush
-        action={
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {t('pendingCount', { count: data.transactions.length })}
-          </span>
-        }
-      >
-        {transactions.length > 0 ? (
-          <ul className="divide-y">
-            {transactions.map((tx) => (
-              <MempoolRow key={tx.txid} tx={tx} t={t} />
-            ))}
-          </ul>
-        ) : (
-          <div className="flex flex-col items-center gap-3 px-4 py-14 text-center">
-            <span className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary ring-8 ring-primary/5">
-              <Inbox className="size-6" />
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('recentTransactions')}</CardTitle>
+          {
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {t('pendingCount', { count: data.transactions.length })}
             </span>
-            <div className="space-y-0.5">
-              <p className="text-sm font-semibold">{t('empty')}</p>
-              <p className="text-sm text-muted-foreground">{t('emptyDescription')}</p>
-            </div>
-          </div>
-        )}
-      </SectionCard>
+          }
+        </CardHeader>
+        <CardBody style={{ padding: 0 }}>
+          {transactions.length > 0 ? (
+            <ul className="divide-y">
+              {transactions.map((tx) => (
+                <MempoolRow key={tx.txid} tx={tx} t={t} />
+              ))}
+            </ul>
+          ) : (
+            <EmptyState
+              variant="compact"
+              title={t('empty')}
+              description={t('emptyDescription')}
+              illustration={<Inbox size={28} />}
+            />
+          )}
+        </CardBody>
+      </Card>
 
       {/* Tips */}
-      <SectionCard title={t('mempoolTips')} icon={Coins}>
-        <ul className="space-y-2 text-sm text-muted-foreground">
-          {TIP_KEYS.map((key) => (
-            <li key={key} className="flex gap-2">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
-              <span>{t(key)}</span>
-            </li>
-          ))}
-        </ul>
-      </SectionCard>
-    </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('mempoolTips')}</CardTitle>
+        </CardHeader>
+        <CardBody>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            {TIP_KEYS.map((key) => (
+              <li key={key} className="flex gap-2">
+                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
+                <span>{t(key)}</span>
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
+    </View>
   )
 }
 
@@ -229,7 +293,13 @@ function MempoolRow({
   return (
     <li className="group flex items-center gap-4 px-4 py-2.5 transition-colors hover:bg-muted/40">
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <HashCell value={tx.txid} to="tx" fill hideCopy textClassName="font-medium" />
+        <HashCell
+          value={tx.txid}
+          to="tx"
+          fill
+          hideCopy
+          textClassName="font-medium"
+        />
         <span className="text-xs text-muted-foreground tabular-nums">
           <RelativeTime timestamp={tx.time} />
         </span>
@@ -247,37 +317,5 @@ function MempoolRow({
         </span>
       </div>
     </li>
-  )
-}
-
-function MempoolSkeleton() {
-  return (
-    <div className="flex-1 space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-40" />
-          <Skeleton className="h-4 w-72" />
-        </div>
-        <Skeleton className="h-9 w-28 rounded-lg" />
-      </div>
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 rounded-xl" />
-        ))}
-      </div>
-      <div className="rounded-xl border bg-muted/40">
-        <ul className="divide-y">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <li key={i} className="flex items-center justify-between gap-3 px-4 py-2.5">
-              <div className="space-y-1">
-                <Skeleton className="h-4 w-48" />
-                <Skeleton className="h-3 w-24" />
-              </div>
-              <Skeleton className="h-4 w-16" />
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
   )
 }

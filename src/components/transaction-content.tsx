@@ -1,24 +1,11 @@
-import { Link, useNavigate } from 'react-router-dom'
-import {
-  AlertTriangle,
-  ArrowDownLeft,
-  ArrowUpRight,
-  CheckCircle,
-  Clock,
-  Coins,
-  CornerDownRight,
-  Database,
-  FileText,
-  Hammer,
-  Home,
-  Inbox,
-  Info,
-  Receipt,
-  Send,
-  Sprout,
-  Undo2,
-} from 'lucide-react'
-import { useTranslations } from '@/lib/i18n'
+import { ConfirmationMeter } from '@/components/detail/confirmation-meter'
+import { DetailBreadcrumbs } from '@/components/detail/detail-breadcrumbs'
+import { DetailHeader } from '@/components/detail/detail-header'
+import { HashCell } from '@/components/detail/hash-cell'
+import { RelativeTime } from '@/components/detail/relative-time'
+import { RowIndex } from '@/components/detail/row-index'
+import { PageLoading } from '@/components/page-loading'
+import { useMempool } from '@/hooks/use-mempool'
 import {
   analyzeTransaction,
   isCoinbaseInput,
@@ -27,26 +14,46 @@ import {
   type TransactionAnalysis,
   type TransactionInput,
 } from '@/hooks/use-transaction'
-import { useMempool } from '@/hooks/use-mempool'
+import {
+  ExplorerLink,
+  useExplorerNavigate as useNavigate,
+} from '@/lib/explorer-navigation'
 import { formatFair, formatNumber } from '@/lib/format'
-import { DetailBreadcrumbs } from '@/components/detail/detail-breadcrumbs'
-import { DetailHeader } from '@/components/detail/detail-header'
-import { SectionCard } from '@/components/detail/section-card'
-import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
-import { InfoGrid, InfoRow } from '@/components/detail/info-row'
-import { HashCell } from '@/components/detail/hash-cell'
-import { RelativeTime } from '@/components/detail/relative-time'
-import { ConfirmationMeter } from '@/components/detail/confirmation-meter'
-import { RowIndex } from '@/components/detail/row-index'
-import { CopyButton } from '@/components/copy-button'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
+import { useTranslations } from '@/lib/i18n'
+import { Admonition } from '@oxy.so/bloom/admonition'
+import { Button } from '@oxy.so/bloom/button'
+import { Card, CardBody, CardHeader, CardTitle } from '@oxy.so/bloom/card'
+import { Chip } from '@oxy.so/bloom/chip'
+import { Code, CodeBlock } from '@oxy.so/bloom/code'
+import { EmptyState } from '@oxy.so/bloom/empty-state'
+import { useContainerWidth } from '@oxy.so/bloom/hooks'
+import { Item } from '@oxy.so/bloom/item'
+import { StatCards } from '@oxy.so/bloom/stat-cards'
+import { BREAKPOINTS } from '@oxy.so/bloom/styles'
+import { Muted, Text } from '@oxy.so/bloom/typography'
+import {
+  AlertTriangle,
+  ArrowDownLeft,
+  ArrowUpRight,
+  CornerDownRight,
+  Database,
+  Hammer,
+  Home,
+  Info,
+  Receipt,
+  Send,
+  Sprout,
+  Undo2,
+} from 'lucide-react'
+import { View } from 'react-native'
 
-const ZERO_HASH = '0000000000000000000000000000000000000000000000000000000000000000'
+const ZERO_HASH =
+  '0000000000000000000000000000000000000000000000000000000000000000'
 
-type Translate = (key: string, params?: Record<string, string | number>) => string
+type Translate = (
+  key: string,
+  params?: Record<string, string | number>,
+) => string
 
 /** The headline figure + framing the hero shows for a given transaction kind. */
 interface HeroDescriptor {
@@ -72,7 +79,10 @@ interface HeroDescriptor {
  *                resolved we cannot run change detection, so we surface the total
  *                with a caveat instead of a possibly-wrong "Sent".
  */
-function describeHero(analysis: TransactionAnalysis, t: Translate): HeroDescriptor {
+function describeHero(
+  analysis: TransactionAnalysis,
+  t: Translate,
+): HeroDescriptor {
   switch (analysis.kind) {
     case 'coinbase':
       return {
@@ -114,7 +124,9 @@ function describeHero(analysis: TransactionAnalysis, t: Translate): HeroDescript
           primaryValue: analysis.totalOutput,
           primaryLabel: t('totalMoved'),
           tileLabel: t('totalMoved'),
-          note: analysis.inputsResolved ? t('changeAmbiguousNote') : t('changeUnknownNote'),
+          note: analysis.inputsResolved
+            ? t('changeAmbiguousNote')
+            : t('changeUnknownNote'),
         }
       }
       return {
@@ -130,16 +142,6 @@ function describeHero(analysis: TransactionAnalysis, t: Translate): HeroDescript
   }
 }
 
-/** A label/value pair in the hero's secondary breakdown row. */
-function SummaryStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline gap-1.5">
-      <dt className="font-medium uppercase tracking-wide">{label}</dt>
-      <dd className="font-semibold tabular-nums text-foreground">{value}</dd>
-    </div>
-  )
-}
-
 type TxStatus = 'confirmed' | 'mempool' | 'unconfirmed'
 
 function resolveTxStatus(
@@ -147,7 +149,8 @@ function resolveTxStatus(
   mempoolTxs: { txid: string }[] | undefined,
 ): TxStatus {
   if ((transaction.confirmations ?? 0) > 0) return 'confirmed'
-  if (mempoolTxs?.some((entry) => entry.txid === transaction.txid)) return 'mempool'
+  if (mempoolTxs?.some((entry) => entry.txid === transaction.txid))
+    return 'mempool'
   return 'unconfirmed'
 }
 
@@ -160,83 +163,98 @@ function TxStatusBadge({
   t: Translate
   confirmedLabel: string
 }) {
-  if (status === 'confirmed') {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
-        <CheckCircle className="size-3.5" />
-        {confirmedLabel}
-      </span>
-    )
-  }
-  if (status === 'mempool') {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400">
-        <Inbox className="size-3.5" />
-        {t('inMempool')}
-      </span>
-    )
-  }
   return (
-    <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
-      <Clock className="size-3.5" />
-      {t('unconfirmed')}
-    </span>
+    <Chip
+      size="sm"
+      tone={
+        status === 'confirmed'
+          ? 'success'
+          : status === 'mempool'
+            ? 'warning'
+            : 'danger'
+      }
+    >
+      {status === 'confirmed'
+        ? confirmedLabel
+        : status === 'mempool'
+          ? t('inMempool')
+          : t('unconfirmed')}
+    </Chip>
   )
 }
 
 export function TransactionContent({ txid }: { txid: string }) {
+  const { width: measuredWidth, onLayout } = useContainerWidth()
+  const width = measuredWidth ?? 0
   const t = useTranslations('tx')
   const common = useTranslations('common')
   const nav = useTranslations('nav')
   const navigate = useNavigate()
-  const { data: transaction, isLoading, isError, error, refetch, isFetching } = useTransaction(txid)
+  const {
+    data: transaction,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useTransaction(txid)
   const { data: mempool } = useMempool()
 
   if (isLoading) {
-    return <TransactionSkeleton />
+    return <PageLoading />
   }
 
   if (isError || !transaction) {
     return (
-      <div className="flex-1 space-y-4">
-        <DetailBreadcrumbs
-          items={[
-            { label: nav('transactions'), to: '/tx' },
-            { label: t('notFound') },
-          ]}
-        />
+      <View onLayout={onLayout} style={{ gap: 16 }}>
         <DetailHeader
+          breadcrumb={
+            <DetailBreadcrumbs
+              items={[
+                { label: nav('transactions'), to: '/tx' },
+                { label: t('notFound') },
+              ]}
+            />
+          }
           title={t('notFound')}
           subtitle={t('invalidId')}
           onRefresh={() => void refetch()}
           isRefreshing={isFetching}
         />
-        <SectionCard>
-          <div className="flex flex-col items-center gap-4 py-8 text-center">
-            <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <AlertTriangle className="size-6" />
-            </span>
-            <div className="space-y-1">
-              <p className="text-base font-semibold">{t('errorLoading')}</p>
-              <p className="text-sm text-muted-foreground">
-                {error instanceof Error ? error.message : t('transactionNotFound')}
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button variant="outline" onClick={() => navigate(`/block/${txid}`)}>
-                <Database className="mr-2 size-4" />
-                {t('viewAsBlock')}
-              </Button>
-              <Button variant="outline" asChild>
-                <Link to="/">
-                  <Home className="mr-2 size-4" />
-                  {common('backToHome')}
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </SectionCard>
-      </div>
+        <Card>
+          <CardBody>
+            <EmptyState
+              variant="compact"
+              title={t('errorLoading')}
+              description={
+                error instanceof Error
+                  ? error.message
+                  : t('transactionNotFound')
+              }
+              illustration={<AlertTriangle size={28} />}
+              footer={
+                <View
+                  style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}
+                >
+                  <Button
+                    appearance="outline"
+                    onPress={() => navigate(`/block/${txid}`)}
+                  >
+                    <Database className="mr-2 size-4" />
+                    {t('viewAsBlock')}
+                  </Button>
+                  <Button appearance="outline" asChild>
+                    <ExplorerLink to="/">
+                      <Home className="mr-2 size-4" />
+                      {common('backToHome')}
+                    </ExplorerLink>
+                  </Button>
+                </View>
+              }
+            />
+          </CardBody>
+        </Card>
+      </View>
     )
   }
 
@@ -248,17 +266,20 @@ export function TransactionContent({ txid }: { txid: string }) {
     .filter((entry) => entry.role === 'change')
     .reduce((sum, entry) => sum + entry.output.value, 0)
   const showTotalMovedStat = hero.primaryValue !== analysis.totalOutput
-  const hasSecondaryStats = showTotalMovedStat || changeTotal > 0 || analysis.fee !== null
+  const hasSecondaryStats =
+    showTotalMovedStat || changeTotal > 0 || analysis.fee !== null
 
   return (
-    <div className="flex-1 space-y-4">
-      <DetailBreadcrumbs
-        items={[
-          { label: nav('transactions'), to: '/tx' },
-          { label: common('transaction') },
-        ]}
-      />
+    <View onLayout={onLayout} style={{ gap: 16 }}>
       <DetailHeader
+        breadcrumb={
+          <DetailBreadcrumbs
+            items={[
+              { label: nav('transactions'), to: '/tx' },
+              { label: common('transaction') },
+            ]}
+          />
+        }
         title={t('title')}
         subtitle={t('subtitle')}
         onRefresh={() => void refetch()}
@@ -268,309 +289,374 @@ export function TransactionContent({ txid }: { txid: string }) {
       {/* Hero: the amount that actually left the sender (or the reward, for
           generation txs), with total-moved + fee broken out as secondary lines so
           change returned to the sender is never mistaken for the amount sent. */}
-      <section className="rounded-2xl border bg-muted/30 p-4 transition-colors hover:bg-muted/40 sm:p-5">
-        <header className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <hero.icon className="size-4" />
-            </span>
-            <h3 className="text-sm font-semibold tracking-tight">{hero.title}</h3>
-          </div>
-          <TxStatusBadge status={status} t={t} confirmedLabel={common('confirmed')} />
-        </header>
-
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <span className="text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">
-            {formatNumber(hero.primaryValue, 8)}
-          </span>
-          <span className="text-sm font-medium text-muted-foreground">FAIR · {hero.primaryLabel}</span>
-        </div>
-
-        {/* Secondary breakdown. "Total moved" is shown only when the headline isn't
-            already the total (i.e. when the headline is "Sent"), so the same number
-            never appears twice. Change-returned and fee are shown when meaningful. */}
-        {hasSecondaryStats ? (
-          <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
-            {showTotalMovedStat ? (
-              <SummaryStat label={t('totalMoved')} value={formatFair(analysis.totalOutput)} />
-            ) : null}
-            {changeTotal > 0 ? (
-              <SummaryStat label={t('changeReturned')} value={formatFair(changeTotal)} />
-            ) : null}
-            {analysis.fee !== null ? (
-              <SummaryStat label={common('fee')} value={formatFair(analysis.fee)} />
-            ) : null}
-          </dl>
-        ) : null}
-
-        {hero.note ? (
-          <p className="mt-3 flex items-start gap-1.5 rounded-lg bg-muted/60 px-2.5 py-2 text-xs text-muted-foreground">
-            <Info className="mt-0.5 size-3.5 shrink-0" />
-            <span>{hero.note}</span>
-          </p>
-        ) : null}
-
-        <div className="mt-3">
-          <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            {t('transactionId')}
-          </span>
-          <div className="mt-1">
-            <HashCell value={transaction.txid} full />
-          </div>
-        </div>
-
-        <ConfirmationMeter
-          confirmations={confirmations}
-          label={common('confirmations')}
-          className="mt-4"
-        />
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>{hero.title}</CardTitle>
+          <TxStatusBadge
+            status={status}
+            t={t}
+            confirmedLabel={common('confirmed')}
+          />
+        </CardHeader>
+        <CardBody>
+          <View style={{ gap: 16 }}>
+            <Text
+              variant={
+                width >= BREAKPOINTS.md ? 'display-4-bold' : 'title-1-bold'
+              }
+            >
+              {formatNumber(hero.primaryValue, 8)} FAIR
+            </Text>
+            <Muted>{hero.primaryLabel}</Muted>
+            {hasSecondaryStats && (
+              <View style={{ gap: 8 }}>
+                {showTotalMovedStat && (
+                  <Item
+                    density="compact"
+                    title={t('totalMoved')}
+                    trailing={<Text>{formatFair(analysis.totalOutput)}</Text>}
+                  />
+                )}
+                {changeTotal > 0 && (
+                  <Item
+                    density="compact"
+                    title={t('changeReturned')}
+                    trailing={<Text>{formatFair(changeTotal)}</Text>}
+                  />
+                )}
+                {analysis.fee !== null && (
+                  <Item
+                    density="compact"
+                    title={common('fee')}
+                    trailing={<Text>{formatFair(analysis.fee)}</Text>}
+                  />
+                )}
+              </View>
+            )}
+            {hero.note && <Admonition type="info">{hero.note}</Admonition>}
+            <Item
+              density="compact"
+              title={t('transactionId')}
+              subtitle={<HashCell value={transaction.txid} full />}
+            />
+            <ConfirmationMeter
+              confirmations={confirmations}
+              label={common('confirmations')}
+            />
+          </View>
+        </CardBody>
+      </Card>
 
       {/* Summary tiles */}
-      <StatTileGrid>
-        <StatTile
-          label={hero.tileLabel}
-          value={formatFair(hero.primaryValue)}
-          icon={hero.icon}
-          accent
-          hint={hero.tileHint}
-        />
-        <StatTile
-          label={t('totalInput')}
-          value={analysis.totalInput !== null ? formatFair(analysis.totalInput) : '—'}
-          icon={ArrowDownLeft}
-          hint={t('inputsCount', { count: transaction.vin.length })}
-        />
-        <StatTile
-          label={common('fee')}
-          value={analysis.fee !== null ? formatFair(analysis.fee) : '—'}
-          icon={Receipt}
-          hint={analysis.fee === null ? t('feeNotApplicable') : t('networkFeePaid')}
-        />
-        <StatTile
-          label={t('totalOutput')}
-          value={formatFair(analysis.totalOutput)}
-          icon={ArrowUpRight}
-          hint={t('outputsCount', { count: transaction.vout.length })}
-        />
-      </StatTileGrid>
+      <StatCards
+        columns={width >= BREAKPOINTS.lg ? 4 : width >= 480 ? 2 : 1}
+        stats={[
+          {
+            label: hero.tileLabel,
+            value: formatFair(hero.primaryValue),
+            icon: (props) => (
+              <hero.icon
+                width={props.width}
+                height={props.height}
+                color={props.fill}
+              />
+            ),
+            delta: '—',
+            deltaColor: 'neutral',
+            hint: hero.tileHint,
+          },
+          {
+            label: t('totalInput'),
+            value:
+              analysis.totalInput !== null
+                ? formatFair(analysis.totalInput)
+                : '—',
+            icon: (props) => (
+              <ArrowDownLeft
+                width={props.width}
+                height={props.height}
+                color={props.fill}
+              />
+            ),
+            delta: '—',
+            deltaColor: 'neutral',
+            hint: t('inputsCount', { count: transaction.vin.length }),
+          },
+          {
+            label: common('fee'),
+            value: analysis.fee !== null ? formatFair(analysis.fee) : '—',
+            icon: (props) => (
+              <Receipt
+                width={props.width}
+                height={props.height}
+                color={props.fill}
+              />
+            ),
+            delta: '—',
+            deltaColor: 'neutral',
+            hint:
+              analysis.fee === null
+                ? t('feeNotApplicable')
+                : t('networkFeePaid'),
+          },
+          {
+            label: t('totalOutput'),
+            value: formatFair(analysis.totalOutput),
+            icon: (props) => (
+              <ArrowUpRight
+                width={props.width}
+                height={props.height}
+                color={props.fill}
+              />
+            ),
+            delta: '—',
+            deltaColor: 'neutral',
+            hint: t('outputsCount', { count: transaction.vout.length }),
+          },
+        ]}
+      />
 
       {/* Metadata */}
-      <SectionCard title={t('transactionInformation')} icon={Coins}>
-        <div className="space-y-4">
-          <InfoGrid>
-            <InfoRow
-              label={t('blockTime')}
-              value={
-                transaction.blocktime ? (
-                  <RelativeTime timestamp={transaction.blocktime} />
-                ) : (
-                  t('pending')
-                )
-              }
-            />
-            <InfoRow label={t('version')} value={transaction.version} mono />
-            <InfoRow label={t('lockTime')} value={formatNumber(transaction.locktime)} mono />
-          </InfoGrid>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('transactionInformation')}</CardTitle>
+        </CardHeader>
+        <CardBody>
+          <div className="space-y-4">
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
+              <View
+                style={{
+                  flexBasis: 220,
+                  flexGrow: 1,
+                  flexShrink: 1,
+                  minWidth: 0,
+                }}
+              >
+                <Item
+                  density="compact"
+                  title={t('blockTime')}
+                  subtitle={
+                    transaction.blocktime ? (
+                      <RelativeTime timestamp={transaction.blocktime} />
+                    ) : (
+                      t('pending')
+                    )
+                  }
+                />
+              </View>
+              <View
+                style={{
+                  flexBasis: 220,
+                  flexGrow: 1,
+                  flexShrink: 1,
+                  minWidth: 0,
+                }}
+              >
+                <Item
+                  density="compact"
+                  title={t('version')}
+                  subtitle={<Code>{transaction.version}</Code>}
+                />
+              </View>
+              <View
+                style={{
+                  flexBasis: 220,
+                  flexGrow: 1,
+                  flexShrink: 1,
+                  minWidth: 0,
+                }}
+              >
+                <Item
+                  density="compact"
+                  title={t('lockTime')}
+                  subtitle={<Code>{formatNumber(transaction.locktime)}</Code>}
+                />
+              </View>
+            </View>
 
-          {transaction.blockhash ? (
-            <InfoRow
-              label={t('blockHash')}
-              value={<HashCell value={transaction.blockhash} to="block" full />}
-            />
-          ) : null}
-        </div>
-      </SectionCard>
+            {transaction.blockhash ? (
+              <Item
+                density="compact"
+                title={t('blockHash')}
+                subtitle={
+                  <HashCell value={transaction.blockhash} to="block" full />
+                }
+              />
+            ) : null}
+          </div>
+        </CardBody>
+      </Card>
 
       {/* Inputs — compact divided rows: source address leads, the spent outpoint
           sits under it as a subordinate reference, value is right-aligned. */}
-      <SectionCard
-        title={t('transactionInputs')}
-        icon={ArrowDownLeft}
-        flush
-        action={
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {t('inputsCount', { count: transaction.vin.length })}
-          </span>
-        }
-      >
-        <ul className="divide-y">
-          {transaction.vin.map((input, index) => (
-            <li key={index} className="transition-colors hover:bg-muted/40">
-              <InputRow input={input} index={index} />
-            </li>
-          ))}
-        </ul>
-      </SectionCard>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('transactionInputs')}</CardTitle>
+          {
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {t('inputsCount', { count: transaction.vin.length })}
+            </span>
+          }
+        </CardHeader>
+        <CardBody style={{ padding: 0 }}>
+          <ul className="divide-y">
+            {transaction.vin.map((input, index) => (
+              <li key={index}>
+                <InputRow input={input} index={index} />
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
 
       {/* Outputs — same compact rows; change/reward outputs are de-emphasized (muted
           value + badge) so the real recipient output(s) stand out. */}
-      <SectionCard
-        title={t('transactionOutputs')}
-        icon={ArrowUpRight}
-        flush
-        action={
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {t('outputsCount', { count: transaction.vout.length })}
-          </span>
-        }
-      >
-        <ul className="divide-y">
-          {analysis.outputs.map((entry) => (
-            <li key={entry.output.n} className="transition-colors hover:bg-muted/40">
-              <OutputRow entry={entry} t={t} />
-            </li>
-          ))}
-        </ul>
-      </SectionCard>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('transactionOutputs')}</CardTitle>
+          {
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {t('outputsCount', { count: transaction.vout.length })}
+            </span>
+          }
+        </CardHeader>
+        <CardBody style={{ padding: 0 }}>
+          <ul className="divide-y">
+            {analysis.outputs.map((entry) => (
+              <li key={entry.output.n}>
+                <OutputRow entry={entry} t={t} />
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
 
       {/* Raw hex */}
-      <SectionCard title={t('rawTransactionData')} icon={FileText}>
-        <div className="flex items-center justify-between gap-2 pb-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t('hex')}
-          </span>
-          <CopyButton text={transaction.hex} className="size-7 shrink-0" />
-        </div>
-        <code className="block max-h-64 overflow-auto rounded-lg bg-muted/60 p-3 font-mono text-xs break-all whitespace-pre-wrap custom-scrollbar">
-          {transaction.hex}
-        </code>
-      </SectionCard>
-    </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('rawTransactionData')}</CardTitle>
+        </CardHeader>
+        <CardBody>
+          <CodeBlock
+            code={transaction.hex}
+            filename={t('hex')}
+            lineNumbers={false}
+            wrap
+            labels={{ copy: common('copy') }}
+          />
+        </CardBody>
+      </Card>
+    </View>
   )
 }
 
-function InputRow({ input, index }: { input: TransactionInput; index: number }) {
+function InputRow({
+  input,
+  index,
+}: {
+  input: TransactionInput
+  index: number
+}) {
   const t = useTranslations('tx')
-
   if (isCoinbaseInput(input)) {
     return (
-      <div className="flex items-center gap-3 px-4 py-3">
-        <RowIndex n={index} />
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="text-sm font-medium">{t('coinbaseTransaction')}</span>
-          <span className="text-xs text-muted-foreground">{t('coinbaseDescription')}</span>
-        </div>
-      </div>
+      <Item
+        leading={<RowIndex n={index} />}
+        title={t('coinbaseTransaction')}
+        subtitle={t('coinbaseDescription')}
+      />
     )
   }
-
   const prevTxid = input.txid
   const isNullPrev = !prevTxid || prevTxid === ZERO_HASH
   const prevAddress = input.prevout?.addresses?.[0]
-
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <RowIndex n={index} />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        {prevAddress ? (
-          <HashCell value={prevAddress} to="address" lead={16} tail={8} textClassName="font-medium" />
+    <Item
+      leading={<RowIndex n={index} />}
+      title={
+        prevAddress ? (
+          <HashCell value={prevAddress} to="address" lead={16} tail={8} />
+        ) : isNullPrev ? (
+          t('coinbaseTransaction')
         ) : (
-          <span className="text-sm text-muted-foreground">
-            {isNullPrev ? t('coinbaseTransaction') : t('fromAddress')}
-          </span>
-        )}
-        {!isNullPrev ? (
-          <span className="inline-flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
-            <CornerDownRight className="size-3 shrink-0" />
-            <HashCell
-              value={prevTxid}
-              to="tx"
-              lead={8}
-              tail={6}
-              hideCopy
-              textClassName="text-xs text-muted-foreground hover:text-foreground"
-            />
-            <span className="shrink-0 tabular-nums">#{input.vout}</span>
-          </span>
-        ) : null}
-      </div>
-      {input.prevout ? (
-        <span className="shrink-0 text-sm font-semibold tabular-nums">
-          {formatFair(input.prevout.value)}
-        </span>
-      ) : null}
-    </div>
+          t('fromAddress')
+        )
+      }
+      subtitle={
+        !isNullPrev ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <CornerDownRight size={12} />
+            <HashCell value={prevTxid} to="tx" lead={8} tail={6} hideCopy />
+            <Muted>#{input.vout}</Muted>
+          </View>
+        ) : undefined
+      }
+      trailing={
+        input.prevout ? (
+          <Text variant="body-bold">{formatFair(input.prevout.value)}</Text>
+        ) : undefined
+      }
+    />
   )
 }
 
 /** Per-role badge styling + label key for a classified output. */
 const OUTPUT_ROLE_META: Record<
   ClassifiedOutput['role'],
-  { labelKey: string; variant: React.ComponentProps<typeof Badge>['variant']; icon: typeof Undo2 } | null
+  {
+    labelKey: string
+    appearance: React.ComponentProps<typeof Chip>['appearance']
+    icon: typeof Undo2
+  } | null
 > = {
   recipient: null,
-  change: { labelKey: 'changeBadge', variant: 'outline', icon: Undo2 },
-  reward: { labelKey: 'rewardBadge', variant: 'secondary', icon: Sprout },
-  marker: { labelKey: 'markerBadge', variant: 'outline', icon: Info },
+  change: { labelKey: 'changeBadge', appearance: 'outline', icon: Undo2 },
+  reward: { labelKey: 'rewardBadge', appearance: 'subtle', icon: Sprout },
+  marker: { labelKey: 'markerBadge', appearance: 'outline', icon: Info },
 }
 
 function OutputRow({ entry, t }: { entry: ClassifiedOutput; t: Translate }) {
   const { output, role } = entry
   const address = output.scriptPubKey.addresses?.[0]
   const meta = OUTPUT_ROLE_META[role]
-  const deEmphasized = role !== 'recipient'
   const Icon = meta?.icon
-
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <RowIndex n={output.n} />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        {address ? (
-          <HashCell
-            value={address}
-            to="address"
-            lead={16}
-            tail={8}
-            textClassName={cn('font-medium', deEmphasized && 'text-muted-foreground')}
-          />
+    <Item
+      leading={<RowIndex n={output.n} />}
+      title={
+        address ? (
+          <HashCell value={address} to="address" lead={16} tail={8} />
         ) : (
-          <span className={cn('text-sm', deEmphasized ? 'text-muted-foreground' : 'font-medium')}>
-            {output.scriptPubKey.type}
-          </span>
-        )}
-        {address || meta ? (
-          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            {address ? <span className="font-mono">{output.scriptPubKey.type}</span> : null}
+          output.scriptPubKey.type
+        )
+      }
+      subtitle={
+        address || meta ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            {address ? <Code>{output.scriptPubKey.type}</Code> : null}
             {meta ? (
-              <Badge variant={meta.variant} className="gap-1">
-                {Icon ? <Icon /> : null}
+              <Chip appearance={meta.appearance}>
+                {Icon ? <Icon size={14} /> : null}
                 {t(meta.labelKey)}
-              </Badge>
+              </Chip>
             ) : null}
-          </span>
-        ) : null}
-      </div>
-      <span
-        className={cn(
-          'shrink-0 text-sm font-semibold tabular-nums',
-          deEmphasized ? 'text-muted-foreground' : 'text-primary',
-        )}
-      >
-        {formatFair(output.value)}
-      </span>
-    </div>
-  )
-}
-
-function TransactionSkeleton() {
-  return (
-    <div className="flex-1 space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-56" />
-          <Skeleton className="h-4 w-72" />
-        </div>
-        <Skeleton className="h-9 w-28 rounded-lg" />
-      </div>
-      <Skeleton className="h-[188px] rounded-2xl" />
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-[72px] rounded-xl" />
-        ))}
-      </div>
-      <Skeleton className="h-40 rounded-xl" />
-      <Skeleton className="h-40 rounded-xl" />
-    </div>
+          </View>
+        ) : undefined
+      }
+      trailing={
+        role === 'recipient' ? (
+          <Text variant="body-bold">{formatFair(output.value)}</Text>
+        ) : (
+          <Muted>{formatFair(output.value)}</Muted>
+        )
+      }
+    />
   )
 }

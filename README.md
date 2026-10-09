@@ -8,15 +8,67 @@ WebSocket (`WS /api/ws`) pushes **change notifications** (new blocks, mempool up
 
 ## Stack
 
-- **Frontend**: Vite, React 18, TypeScript, TanStack Query, Tailwind CSS 4, shadcn/Radix UI, react-router
+- **Frontend**: Vite, React 19, TypeScript, TanStack Query, Tailwind CSS 4, Bloom UI (7.7.0 + local pane-motion candidate), react-router
 - **Backend**: Express 5 (Bun runtime), WebSocket (`ws`), MongoDB cache, `@fairco.in/rpc-client`
 - **i18n**: 8 languages (en, es, fr, de, ru, zh, ja, ko)
+
+## UI
+
+The dashboard follows Bloom's Marketing and Finance Storybook templates:
+`AppShell` with `scroll="document"`, `AppShellHeader`, independent cards,
+`StatCards`, and inset `DataTable` panels with native sorting and pagination.
+A single `BloomProvider` owns theme, locale, scroll restoration and Bloom’s
+shared services. The native `ErrorBoundary` wraps the app. The provider keeps
+the `faircoin` recipe in light and dark mode, with one persisted theme key and
+matching first-paint colors. Components
+are imported directly from Bloom; the old local UI adapter layer is removed.
+
+Every screen lives in a Bloom `ContentPanel` from its first render. The workspace
+uses `contentMaxWidth="none"`; on desktop, the main panel fills the available
+width until a block or transaction opens beside it. `AppShellSplitPanes` owns the
+separated surfaces and resizing, with `paneScroll={false}` so the document owns
+vertical scrolling. Mobile shows one pane at a time.
+
+`transition="slide"` lets Bloom animate the actual pane positions and retain an
+outgoing pane until it exits. Desktop opens space beside the main panel; mobile
+slides between screens. Reduced-motion preferences settle the layout immediately.
+`useAppShellPaneActive()` suspends global search shortcuts in outgoing panes.
+
+The pane-transition API is a local Bloom candidate, not a published release.
+`package.json` and `bun.lock` pin its package under `vendor/`, so installation
+works without the sibling Bloom checkout. `vendor/bloom-pane-motion.patch`
+contains the library source changes against published Bloom 7.7.0 (commit
+`4cab8be8`). Replace the local dependency with a registry version once that API
+is released upstream.
+
+Detail links preserve the originating screen, including Home, charts and address
+details. Bloom's `ScrollRestorationProvider` and `useScrollRestoration` restore
+document scroll. Filters and pagination live in the URL, and direct detail URLs
+use the corresponding list as their origin.
+
+`/charts` uses explicit stretching rows like the Storybook dashboards, stacking
+cards according to their available panel width, including while a detail is open. It includes all 21 Bloom chart-card families, grouped
+by network, distribution, observed activity and market, with a paginated source table.
+The annual `MostActiveDaysCard` opens in a Bloom `Dialog`: its built-in calendar
+scroll stays outside the dashboard document flow. Dashboard panels have no
+vertical scroll containers or viewport-height constraints.
+Network history is sampled on mainnet; testnet shows an explicit empty state.
+WFAIR market history is independent of that network switch. No demo series are
+shipped. Activity totals refer to distinct tip blocks observed by the sampler,
+not every block or transaction in the chain.
+
+The Vite React Native Web setup and **unlayered Tailwind utilities** are required:
+React Native Web injects an unlayered View reset; layered utilities would lose
+its grid/flex overrides and move panel content out of view. The production
+CommonJS configuration also converts Reanimated's optional RNW DOM-compiler
+imports, as documented in Bloom's motion guide; otherwise web enter animations
+can leave the compiled app invisible.
 
 ## Quick start
 
 ```bash
 # 1) Install deps
-npm i
+bun install --frozen-lockfile
 
 # 2) Configure environment
 cp .env.example .env
@@ -30,6 +82,11 @@ npm run dev
 ```
 
 Open http://localhost:5180
+
+To use real production data while developing the UI, put
+`VITE_API_TARGET=https://explorer.fairco.in` in `.env.local` and restart Vite.
+The dev proxy forwards HTTP and WebSocket requests to production; the local
+API server is unnecessary in this mode. Remove the override to use `:8080` again.
 
 For production, build the SPA and let the API server serve it:
 

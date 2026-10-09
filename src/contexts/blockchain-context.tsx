@@ -1,9 +1,9 @@
-import { createContext, useContext, type ReactNode } from 'react'
-import type { ConnectionState, WebSocketEvent } from '@shared/websocket-types'
-import { useNetwork } from './network-context'
 import { useBlockchainWebSocket } from '@/hooks/use-blockchain-websocket'
 import { useRealtimeSync } from '@/hooks/use-realtime-sync'
 import { useStats } from '@/hooks/use-stats'
+import type { ConnectionState, WebSocketEvent } from '@shared/websocket-types'
+import { createContext, useContext, type ReactNode } from 'react'
+import { useNetwork } from './network-context'
 
 interface BlockchainContextValue {
   isConnected: boolean
@@ -11,7 +11,9 @@ interface BlockchainContextValue {
   lastMessage: WebSocketEvent | null
 }
 
-const BlockchainContext = createContext<BlockchainContextValue | undefined>(undefined)
+const BlockchainContext = createContext<BlockchainContextValue | undefined>(
+  undefined,
+)
 
 interface BlockchainProviderProps {
   children: ReactNode
@@ -34,7 +36,9 @@ export function BlockchainProvider({ children }: BlockchainProviderProps) {
   useRealtimeSync(lastMessage)
 
   return (
-    <BlockchainContext.Provider value={{ isConnected, connectionState, lastMessage }}>
+    <BlockchainContext.Provider
+      value={{ isConnected, connectionState, lastMessage }}
+    >
       {children}
     </BlockchainContext.Provider>
   )

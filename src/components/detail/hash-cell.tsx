@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom'
 import { CopyButton } from '@/components/copy-button'
+import { ExplorerLink as Link } from '@/lib/explorer-navigation'
 import { shortHash } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
@@ -61,7 +61,11 @@ export function HashCell({
   )
 
   const text = to ? (
-    <Link to={`${ROUTE_PREFIX[to]}${value}`} className={cn('min-w-0', textClasses)} title={value}>
+    <Link
+      to={`${ROUTE_PREFIX[to]}${value}`}
+      className={cn('min-w-0', textClasses)}
+      title={value}
+    >
       {display}
     </Link>
   ) : (

@@ -1,13 +1,14 @@
-import { useRecentBlocks } from '@/hooks/use-recent-blocks'
+import { GithubCard } from '@/components/home/github-card'
 import { HomeHeader } from '@/components/home/home-header'
+import { LatestTxList } from '@/components/home/latest-tx-list'
+import { NetworkCard } from '@/components/home/network-card'
+import { PriceCard } from '@/components/home/price-card'
+import { RecentBlocksList } from '@/components/home/recent-blocks-list'
 import { StatStrip } from '@/components/home/stat-strip'
 import { SupplyBar } from '@/components/home/supply-bar'
-import { PriceCard } from '@/components/home/price-card'
-import { GithubCard } from '@/components/home/github-card'
 import { WfairCard } from '@/components/home/wfair-card'
-import { NetworkCard } from '@/components/home/network-card'
-import { RecentBlocksList } from '@/components/home/recent-blocks-list'
-import { LatestTxList } from '@/components/home/latest-tx-list'
+import { useRecentBlocks } from '@/hooks/use-recent-blocks'
+import { View } from 'react-native'
 
 const BLOCKS_LIMIT = 20
 const TX_FEED_LIMIT = 20
@@ -18,24 +19,47 @@ export default function HomePage() {
   const height = data?.height
 
   return (
-    <div className="flex-1 space-y-4">
+    <View style={{ gap: 16 }}>
       <HomeHeader />
 
       <StatStrip height={height} />
 
-      <SupplyBar />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
+        <View
+          style={{ flexGrow: 1, flexShrink: 1, flexBasis: 400, minWidth: 0 }}
+        >
+          <SupplyBar />
+        </View>
+        <View
+          style={{ flexGrow: 1, flexShrink: 1, flexBasis: 400, minWidth: 0 }}
+        >
+          <PriceCard />
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
+        <View
+          style={{ flexGrow: 1, flexShrink: 1, flexBasis: 280, minWidth: 0 }}
+        >
+          <GithubCard />
+        </View>
+        <View
+          style={{ flexGrow: 1, flexShrink: 1, flexBasis: 280, minWidth: 0 }}
+        >
+          <WfairCard />
+        </View>
+        <View
+          style={{ flexGrow: 1, flexShrink: 1, flexBasis: 280, minWidth: 0 }}
+        >
+          <NetworkCard />
+        </View>
+      </View>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <PriceCard />
-        <GithubCard />
-        <WfairCard />
-        <NetworkCard />
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <RecentBlocksList blocks={blocks} isLoading={isLoading} isError={isError} />
-        <LatestTxList max={TX_FEED_LIMIT} />
-      </div>
-    </div>
+      <RecentBlocksList
+        blocks={blocks}
+        isLoading={isLoading}
+        isError={isError}
+      />
+      <LatestTxList max={TX_FEED_LIMIT} />
+    </View>
   )
 }

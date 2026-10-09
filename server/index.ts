@@ -144,14 +144,14 @@ const strictLimiter = rateLimit({
 //    src/lib/base-client.ts) used for WFAIR chain data. `'self'` already covers
 //    same-origin /api requests and the same-origin `/api/ws` WebSocket; the
 //    bridge reserves call is same-origin (proxied) so that host is omitted.
-//  - script-src: index.html ships two small static inline scripts (theme/FOUC
-//    init + stale-service-worker cleanup). Allow them by their sha256 hashes so
+//  - script-src: index.html contains the first-paint theme script and JSON-LD.
+//    Allow their exact contents by SHA-256 so
 //    script-src stays strict with NO 'unsafe-inline'. Update these hashes if the
 //    inline <script> blocks in index.html ever change.
 const BASE_RPC_ORIGINS = ['https://mainnet.base.org', 'https://base.llamarpc.com']
 const INLINE_SCRIPT_HASHES = [
-  "'sha256-FjIFuDzKeMu5Q5hBXRiAasoY+iWnGizSt08R6+PPtKE='",
-  "'sha256-Y3tjE3tP/HuXab807guUsN6AXkpNv5KDg4H2vDEiQE4='",
+  "'sha256-CJ6sDNRuUXYT4YmZHNwBSDuhrpEEJ/lUv+wxF0WeWhE='",
+  "'sha256-7pzp9IRR8JPliOZhSQ0YUo4FX7CDDeT0WQaJswxTBoA='",
 ]
 
 app.use(

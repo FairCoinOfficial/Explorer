@@ -1,21 +1,25 @@
-import { useMemo, useState } from 'react'
-import { Calculator, Coins, Gauge, Receipt, Wallet } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { DetailHeader } from '@/components/detail/detail-header'
 import { useNetwork } from '@/contexts/network-context'
 import { useTranslations } from '@/lib/i18n'
-import { DetailHeader } from '@/components/detail/detail-header'
-import { SectionCard } from '@/components/detail/section-card'
-import { InfoGrid, InfoRow } from '@/components/detail/info-row'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
+import { Card, CardBody, CardHeader, CardTitle } from '@oxy.so/bloom/card'
+import { Chip } from '@oxy.so/bloom/chip'
+import { ChartHeader } from '@oxy.so/bloom/chart-cards'
+import { EmptyState } from '@oxy.so/bloom/empty-state'
+import { Field } from '@oxy.so/bloom/field'
+import { Item } from '@oxy.so/bloom/item'
+import { Text } from '@oxy.so/bloom/typography'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@oxy.so/bloom/select'
+import { TextFieldInput as Input } from '@oxy.so/bloom/text-field'
+import type { LucideIcon } from 'lucide-react'
+import { Calculator, Coins, Wallet } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { View } from 'react-native'
 
 type Priority = 'low' | 'standard' | 'high' | 'priority'
 
@@ -29,16 +33,12 @@ const FEE_RATES: Record<Priority, number> = {
 
 const PRIORITY_ORDER: Priority[] = ['low', 'standard', 'high', 'priority']
 
-// Semantic Badge variant per priority — token-driven, no hardcoded colours.
-const PRIORITY_VARIANT: Record<Priority, 'secondary' | 'default' | 'outline' | 'destructive'> = {
-  low: 'secondary',
-  standard: 'default',
-  high: 'outline',
-  priority: 'destructive',
-}
-
-/** Brand gradient reused from the supply panel: primary → bright accent. */
-const HERO_GRADIENT = 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))'
+const PRIORITY_TONE = {
+  low: 'neutral',
+  standard: 'accent',
+  high: 'warning',
+  priority: 'danger',
+} as const
 
 /**
  * Estimate transaction size in KB from the spend amount. Base tx ~250 bytes plus
@@ -87,164 +87,175 @@ export function FeeCalculatorContent() {
   }
 
   return (
-    <div className="flex-1 space-y-4">
-      <DetailHeader
-        title={t('title')}
-        subtitle={t('subtitle')}
-      />
+    <View style={{ gap: 16 }}>
+      <DetailHeader title={t('title')} subtitle={t('subtitle')} />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
         {/* Inputs */}
-        <SectionCard title={t('transactionDetails')} icon={Coins}>
-          <div className="space-y-5">
-            <div className="space-y-2">
-              <label htmlFor="amount" className="block text-sm font-medium">
-                {t('amount')} (FAIR)
-              </label>
-              <Input
-                id="amount"
-                type="number"
-                inputMode="decimal"
-                placeholder={t('amountPlaceholder')}
-                value={amount}
-                onChange={(event) => setAmount(event.target.value)}
-                min="0"
-                step="0.00000001"
-                className="h-11 font-mono text-base tabular-nums"
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('transactionDetails')}</CardTitle>
+          </CardHeader>
+          <CardBody>
+            <div className="space-y-5">
+              <Field label={`${t('amount')} (FAIR)`} nativeID="amount">
+                <Input
+                  label={t('amount')}
+                  nativeID="amount"
+                  inputMode="decimal"
+                  placeholder={t('amountPlaceholder')}
+                  value={amount}
+                  onValueChange={setAmount}
+                />
+              </Field>
+
+              <Field
+                label={t('feePriority')}
+                description={priorityDescriptions[priority]}
+              >
+                <Select
+                  value={priority}
+                  onValueChange={(value) => setPriority(value as Priority)}
+                >
+                  <SelectTrigger label={t('feePriority')}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent
+                    label={t('feePriority')}
+                    items={PRIORITY_ORDER.map((key) => ({
+                      value: key,
+                      label: priorityLabels[key],
+                    }))}
+                    renderItem={(item) => (
+                      <SelectItem value={item.value} label={item.label}>
+                        {item.label}
+                      </SelectItem>
+                    )}
+                  />
+                </Select>
+              </Field>
+
+              <Item
+                title={t('feeRate')}
+                subtitle={`${FEE_RATES[priority]} FAIR/KB`}
               />
             </div>
-
-            <div className="space-y-2">
-              <label htmlFor="priority" className="block text-sm font-medium">
-                {t('feePriority')}
-              </label>
-              <Select value={priority} onValueChange={(value) => setPriority(value as Priority)}>
-                <SelectTrigger id="priority" className="h-11 w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORITY_ORDER.map((key) => (
-                    <SelectItem key={key} value={key}>
-                      {priorityLabels[key]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-muted-foreground">{priorityDescriptions[priority]}</p>
-            </div>
-
-            <div className="space-y-2">
-              <span className="block text-sm font-medium">{t('feeRate')}</span>
-              <div className="grid grid-cols-2 gap-2">
-                {PRIORITY_ORDER.map((key) => {
-                  const active = key === priority
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => setPriority(key)}
-                      aria-pressed={active}
-                      className={cn(
-                        'flex flex-col gap-1.5 rounded-xl border px-3 py-2.5 text-left transition-colors',
-                        active
-                          ? 'border-primary/40 bg-primary/10'
-                          : 'border-transparent bg-muted/60 hover:bg-muted/80',
-                      )}
-                    >
-                      <Badge variant={active ? PRIORITY_VARIANT[key] : 'ghost'} className="self-start">
-                        {priorityLabels[key]}
-                      </Badge>
-                      <span
-                        className={cn(
-                          'text-sm font-semibold tabular-nums',
-                          active ? 'text-primary' : 'text-foreground',
-                        )}
-                      >
-                        {FEE_RATES[key]} FAIR/KB
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        </SectionCard>
+          </CardBody>
+        </Card>
 
         {/* Estimate hero */}
-        <SectionCard title={t('feeEstimate')} icon={Receipt}>
-          {hasAmount ? (
-            <div className="space-y-4">
-              {/* Hero fee figure: brand gradient panel, supply-bar treatment. */}
-              <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
-                <div
-                  className="pointer-events-none absolute inset-x-0 top-0 h-1 rounded-t-2xl"
-                  style={{ backgroundImage: HERO_GRADIENT }}
-                  aria-hidden
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('feeEstimate')}</CardTitle>
+          </CardHeader>
+          <CardBody>
+            {hasAmount ? (
+              <div className="space-y-4">
+                <ChartHeader
+                  label={t('estimatedFee')}
+                  value={estimatedFee}
+                  format={(value) => `${value.toFixed(8)} FAIR`}
                 />
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                    <Gauge className="size-3.5" />
-                    {t('estimatedFee')}
-                  </span>
-                  <Badge variant={PRIORITY_VARIANT[priority]}>{priorityLabels[priority]}</Badge>
-                </div>
-                <div className="mt-1.5 flex items-baseline gap-2">
-                  <span className="text-3xl font-bold tracking-tight tabular-nums text-primary sm:text-4xl">
-                    {estimatedFee.toFixed(8)}
-                  </span>
-                  <span className="text-sm font-medium text-muted-foreground">FAIR</span>
-                </div>
-              </div>
+                <Chip tone={PRIORITY_TONE[priority]}>
+                  {priorityLabels[priority]}
+                </Chip>
 
-              {/* Amount + total breakdown as sub-stat tiles. */}
-              <dl className="grid grid-cols-2 gap-2">
-                <BreakdownTile icon={Wallet} label={t('amount')} value={amountValue.toFixed(8)} />
-                <BreakdownTile icon={Coins} label={t('totalCost')} value={totalCost.toFixed(8)} accent />
-              </dl>
+                {/* Amount + total breakdown as sub-stat tiles. */}
+                <View style={{ gap: 8 }}>
+                  <BreakdownTile
+                    icon={Wallet}
+                    label={t('amount')}
+                    value={amountValue.toFixed(8)}
+                  />
+                  <BreakdownTile
+                    icon={Coins}
+                    label={t('totalCost')}
+                    value={totalCost.toFixed(8)}
+                  />
+                </View>
 
-              <ul className="space-y-1.5 rounded-xl bg-muted/50 p-3 text-xs text-muted-foreground">
-                <li className="flex gap-1.5">
-                  <span className="text-primary">•</span>
-                  {t('estimatedSize', { bytes: sizeBytes })}
-                </li>
-                <li className="flex gap-1.5">
-                  <span className="text-primary">•</span>
-                  {t('feeCalculationBased', { priority: priorityLabels[priority] })}
-                </li>
-                <li className="flex gap-1.5">
-                  <span className="text-primary">•</span>
-                  {t('actualFeesDisclaimer')}
-                </li>
-              </ul>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-3 py-10 text-center">
-              <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <Calculator className="size-7" />
-              </span>
-              <div className="space-y-1">
-                <p className="text-sm font-semibold">{t('enterAmountTitle')}</p>
-                <p className="text-sm text-muted-foreground">{t('enterAmountDescription')}</p>
+                <Card clipContent>
+                  <ul className="space-y-1.5 p-3 text-xs text-muted-foreground">
+                    <li className="flex gap-1.5">
+                      <span className="text-primary">•</span>
+                      {t('estimatedSize', { bytes: sizeBytes })}
+                    </li>
+                    <li className="flex gap-1.5">
+                      <span className="text-primary">•</span>
+                      {t('feeCalculationBased', {
+                        priority: priorityLabels[priority],
+                      })}
+                    </li>
+                    <li className="flex gap-1.5">
+                      <span className="text-primary">•</span>
+                      {t('actualFeesDisclaimer')}
+                    </li>
+                  </ul>
+                </Card>
               </div>
-            </div>
-          )}
-        </SectionCard>
+            ) : (
+              <EmptyState
+                variant="compact"
+                title={t('enterAmountTitle')}
+                description={t('enterAmountDescription')}
+                illustration={<Calculator size={28} />}
+              />
+            )}
+          </CardBody>
+        </Card>
       </div>
 
       {/* Fee information */}
-      <SectionCard title={t('feeInformation')} icon={Receipt}>
-        <InfoGrid columns={2}>
-          <InfoRow label={t('standardTransactions')} value={t('standardMinimum')} />
-          <InfoRow label={t('instantXLabel')} value={t('nearInstantConfirmation')} />
-          <InfoRow label={t('privateSendLabel')} value={t('enhancedPrivacy')} />
-          <InfoRow label={t('multiSigSupport')} value={t('available')} />
-          <InfoRow label={t('blockTime')} value={t('blockTimeValue')} />
-          <InfoRow label={t('currentNetwork')} value={currentNetwork} />
-          <InfoRow label={t('confirmationTime')} value={t('variesByPriority')} />
-          <InfoRow label={t('recommendedConfirmations')} value={t('sixConfirmations')} />
-        </InfoGrid>
-      </SectionCard>
-    </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('feeInformation')}</CardTitle>
+        </CardHeader>
+        <CardBody>
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <Item
+              density="compact"
+              title={t('standardTransactions')}
+              subtitle={t('standardMinimum')}
+            />
+            <Item
+              density="compact"
+              title={t('instantXLabel')}
+              subtitle={t('nearInstantConfirmation')}
+            />
+            <Item
+              density="compact"
+              title={t('privateSendLabel')}
+              subtitle={t('enhancedPrivacy')}
+            />
+            <Item
+              density="compact"
+              title={t('multiSigSupport')}
+              subtitle={t('available')}
+            />
+            <Item
+              density="compact"
+              title={t('blockTime')}
+              subtitle={t('blockTimeValue')}
+            />
+            <Item
+              density="compact"
+              title={t('currentNetwork')}
+              subtitle={currentNetwork}
+            />
+            <Item
+              density="compact"
+              title={t('confirmationTime')}
+              subtitle={t('variesByPriority')}
+            />
+            <Item
+              density="compact"
+              title={t('recommendedConfirmations')}
+              subtitle={t('sixConfirmations')}
+            />
+          </div>
+        </CardBody>
+      </Card>
+    </View>
   )
 }
 
@@ -253,25 +264,16 @@ function BreakdownTile({
   icon: Icon,
   label,
   value,
-  accent = false,
 }: {
   icon: LucideIcon
   label: string
   value: string
-  accent?: boolean
 }) {
   return (
-    <div className="flex flex-col gap-1 rounded-xl bg-muted/60 px-3 py-2.5 transition-colors hover:bg-muted/80">
-      <dt className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-        <Icon className="size-3.5 shrink-0" />
-        <span className="truncate">{label}</span>
-      </dt>
-      <dd className="flex items-baseline gap-1">
-        <span className={cn('truncate text-base font-semibold tabular-nums', accent && 'text-primary')}>
-          {value}
-        </span>
-        <span className="text-[11px] font-medium text-muted-foreground">FAIR</span>
-      </dd>
-    </div>
+    <Item
+      title={label}
+      leading={<Icon size={20} />}
+      trailing={<Text>{value} FAIR</Text>}
+    />
   )
 }

@@ -1,4 +1,27 @@
-import { formatUnits } from 'viem'
+import { DetailHeader } from '@/components/detail/detail-header'
+import { HashCell } from '@/components/detail/hash-cell'
+import { RelativeTime } from '@/components/detail/relative-time'
+import {
+  useWfairLiveData,
+  useWfairTokenMetadata,
+} from '@/hooks/use-wfair-chain-data'
+import {
+  useWfairReserves,
+  type ReservesSnapshot,
+} from '@/hooks/use-wfair-reserves'
+import { formatCompactNumber } from '@/lib/format'
+import { useTranslations } from '@/lib/i18n'
+import { cn } from '@/lib/utils'
+import { WFAIR_CONFIG } from '@/lib/wfair'
+import { Button } from '@oxy.so/bloom/button'
+import { Card, CardBody, CardHeader, CardTitle } from '@oxy.so/bloom/card'
+import { Chip } from '@oxy.so/bloom/chip'
+import { Code } from '@oxy.so/bloom/code'
+import { EmptyState } from '@oxy.so/bloom/empty-state'
+import { Item } from '@oxy.so/bloom/item'
+import { Box } from '@oxy.so/bloom/skeleton'
+import { Meter } from '@oxy.so/bloom/stat-bar'
+import { StatCard } from '@oxy.so/bloom/stat-cards'
 import {
   ArrowDownToLine,
   ArrowUpRight,
@@ -9,34 +32,16 @@ import {
   Flame,
   Gauge,
   Github,
-  Info,
-  Link2,
   Pause,
   Play,
-  ScrollText,
   ShieldAlert,
   ShieldCheck,
   ShieldQuestion,
   Vault,
   Waypoints,
 } from 'lucide-react'
-import { useTranslations } from '@/lib/i18n'
-import {
-  useWfairLiveData,
-  useWfairTokenMetadata,
-} from '@/hooks/use-wfair-chain-data'
-import { useWfairReserves, type ReservesSnapshot } from '@/hooks/use-wfair-reserves'
-import { WFAIR_CONFIG } from '@/lib/wfair'
-import { formatCompactNumber } from '@/lib/format'
-import { DetailHeader } from '@/components/detail/detail-header'
-import { SectionCard } from '@/components/detail/section-card'
-import { StatTile, StatTileGrid } from '@/components/detail/stat-tile'
-import { InfoGrid, InfoRow } from '@/components/detail/info-row'
-import { HashCell } from '@/components/detail/hash-cell'
-import { RelativeTime } from '@/components/detail/relative-time'
-import { ProgressBar } from '@/components/detail/progress-bar'
-import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
+import { View } from 'react-native'
+import { formatUnits } from 'viem'
 
 const FAIR_DECIMALS = 8
 const WFAIR_DECIMALS = 18
@@ -55,7 +60,9 @@ function formatTokenAmount(value: bigint, decimals: number): string {
   const [whole, fraction = ''] = raw.split('.')
   const wholeFormatted = Number(whole).toLocaleString('en-US')
   const fractionTrimmed = fraction.replace(/0+$/, '').slice(0, 6)
-  return fractionTrimmed ? `${wholeFormatted}.${fractionTrimmed}` : wholeFormatted
+  return fractionTrimmed
+    ? `${wholeFormatted}.${fractionTrimmed}`
+    : wholeFormatted
 }
 
 /** Compact token amount for tiles (e.g. 1.2M FAIR). */
@@ -81,7 +88,8 @@ function collateralFraction(snapshot: ReservesSnapshot): number | null {
   if (supplyWei <= 0n) return null
   const scale = 10n ** 18n
   // custody (8dp) and supply (18dp) normalized to a shared 1e18 fixed point.
-  const numerator = custodySats * 10n ** BigInt(WFAIR_DECIMALS - FAIR_DECIMALS) * scale
+  const numerator =
+    custodySats * 10n ** BigInt(WFAIR_DECIMALS - FAIR_DECIMALS) * scale
   const ratioFixed = numerator / supplyWei
   return Number(ratioFixed) / Number(scale)
 }
@@ -102,9 +110,9 @@ export function BridgeContent() {
   const reserves = useWfairReserves()
 
   const reservesOk = reserves.data?.status === 'ok' ? reserves.data.data : null
-  const reservesUnavailable = reserves.data?.status === 'unavailable'
 
-  const isRefreshing = live.isFetching || reserves.isFetching || metadata.isFetching
+  const isRefreshing =
+    live.isFetching || reserves.isFetching || metadata.isFetching
   const refresh = () => {
     void live.refetch()
     void reserves.refetch()
@@ -114,21 +122,26 @@ export function BridgeContent() {
   const peg: PegState = reservesOk
     ? reservesOk.pegHealthy
       ? { tone: 'healthy', label: home('wfairPegHealthy'), icon: ShieldCheck }
-      : { tone: 'unhealthy', label: home('wfairPegUnhealthy'), icon: ShieldAlert }
+      : {
+          tone: 'unhealthy',
+          label: home('wfairPegUnhealthy'),
+          icon: ShieldAlert,
+        }
     : { tone: 'pending', label: home('wfairPegPending'), icon: ShieldQuestion }
 
   const pegBadge = (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 text-xs font-medium',
-        peg.tone === 'healthy' && 'text-primary',
-        peg.tone === 'unhealthy' && 'text-destructive',
-        peg.tone === 'pending' && 'text-muted-foreground',
-      )}
+    <Chip
+      size="sm"
+      tone={
+        peg.tone === 'healthy'
+          ? 'success'
+          : peg.tone === 'unhealthy'
+            ? 'danger'
+            : 'neutral'
+      }
     >
-      <peg.icon className="size-3.5" />
       {peg.label}
-    </span>
+    </Chip>
   )
 
   const supplyDisplay = live.data
@@ -137,10 +150,12 @@ export function BridgeContent() {
 
   const fraction = reservesOk ? collateralFraction(reservesOk) : null
   const collateralPercent =
-    fraction === null ? null : `${(fraction * 100).toLocaleString('en-US', { maximumFractionDigits: 2 })}%`
+    fraction === null
+      ? null
+      : `${(fraction * 100).toLocaleString('en-US', { maximumFractionDigits: 2 })}%`
 
   return (
-    <div className="flex-1 space-y-4">
+    <View style={{ gap: 16 }}>
       <DetailHeader
         title={t('title')}
         subtitle={t('subtitle')}
@@ -150,221 +165,342 @@ export function BridgeContent() {
       />
 
       {/* Peg health */}
-      <SectionCard title={t('pegHealth')} icon={Gauge}>
-        <div className="space-y-4">
-          {reserves.isLoading ? (
-            <StatTileGrid>
-              {Array.from({ length: 4 }).map((_, index) => (
-                <Skeleton key={index} className="h-[4.5rem] rounded-xl" />
-              ))}
-            </StatTileGrid>
-          ) : reservesOk ? (
-            <StatTileGrid>
-              <StatTile
-                label={home('wfairCustody')}
-                value={`${formatTokenCompact(BigInt(reservesOk.fairCustodySats), FAIR_DECIMALS)} FAIR`}
-                hint={`${formatTokenAmount(BigInt(reservesOk.fairCustodySats), FAIR_DECIMALS)} FAIR`}
-                icon={Vault}
-              />
-              <StatTile
-                label={home('wfairSupply')}
-                value={`${formatTokenCompact(BigInt(reservesOk.wfairSupplyWei), WFAIR_DECIMALS)} WFAIR`}
-                hint={`${formatTokenAmount(BigInt(reservesOk.wfairSupplyWei), WFAIR_DECIMALS)} WFAIR`}
-                icon={Boxes}
-              />
-              <DeltaTile snapshot={reservesOk} label={home('wfairDelta')} hint={t('deltaHint')} />
-              <StatTile
-                label={t('collateralization')}
-                value={collateralPercent ?? '—'}
-                hint={t('collateralHint')}
-                icon={Gauge}
-                accent={peg.tone === 'healthy'}
-              />
-            </StatTileGrid>
-          ) : (
-            <ReservesUnavailable t={t} />
-          )}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('pegHealth')}</CardTitle>
+        </CardHeader>
+        <CardBody>
+          <div className="space-y-4">
+            {reserves.isLoading ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <Box key={index} width={'100%'} height={16} />
+                ))}
+              </div>
+            ) : reservesOk ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <StatCard
+                  stat={{
+                    label: home('wfairCustody'),
+                    value: `${formatTokenCompact(BigInt(reservesOk.fairCustodySats), FAIR_DECIMALS)} FAIR`,
+                    icon: (props) => (
+                      <Vault
+                        width={props.width}
+                        height={props.height}
+                        color={props.fill}
+                      />
+                    ),
+                    delta: '—',
+                    deltaColor: 'neutral',
+                    hint: `${formatTokenAmount(BigInt(reservesOk.fairCustodySats), FAIR_DECIMALS)} FAIR`,
+                  }}
+                />
+                <StatCard
+                  stat={{
+                    label: home('wfairSupply'),
+                    value: `${formatTokenCompact(BigInt(reservesOk.wfairSupplyWei), WFAIR_DECIMALS)} WFAIR`,
+                    icon: (props) => (
+                      <Boxes
+                        width={props.width}
+                        height={props.height}
+                        color={props.fill}
+                      />
+                    ),
+                    delta: '—',
+                    deltaColor: 'neutral',
+                    hint: `${formatTokenAmount(BigInt(reservesOk.wfairSupplyWei), WFAIR_DECIMALS)} WFAIR`,
+                  }}
+                />
+                <DeltaTile
+                  snapshot={reservesOk}
+                  label={home('wfairDelta')}
+                  hint={t('deltaHint')}
+                />
+                <StatCard
+                  stat={{
+                    label: t('collateralization'),
+                    value: collateralPercent ?? '—',
+                    icon: (props) => (
+                      <Gauge
+                        width={props.width}
+                        height={props.height}
+                        color={props.fill}
+                      />
+                    ),
+                    delta: '—',
+                    deltaColor: 'neutral',
+                    hint: t('collateralHint'),
+                  }}
+                />
+              </div>
+            ) : (
+              <ReservesUnavailable t={t} />
+            )}
 
-          {reservesOk ? (
-            <div className="space-y-2 rounded-xl bg-muted/50 p-3">
-              <div className="flex items-center justify-between gap-2 text-xs">
-                <span className="font-medium uppercase tracking-wide text-muted-foreground">
-                  {t('collateralization')}
-                </span>
-                <span
-                  className={cn(
-                    'font-semibold tabular-nums',
-                    peg.tone === 'unhealthy' ? 'text-destructive' : 'text-primary',
-                  )}
-                >
-                  {collateralPercent ?? '—'}
-                </span>
-              </div>
-              <ProgressBar
-                value={fraction ?? 0}
-                label={t('collateralization')}
-                className={cn(peg.tone === 'unhealthy' && '[&>div]:bg-destructive')}
-              />
-              <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5">
-                  <peg.icon
-                    className={cn(
-                      'size-3.5',
-                      peg.tone === 'healthy' && 'text-primary',
-                      peg.tone === 'unhealthy' && 'text-destructive',
-                    )}
+            {reservesOk ? (
+              <Card clipContent>
+                <div className="space-y-2 p-3">
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="font-medium uppercase tracking-wide text-muted-foreground">
+                      {t('collateralization')}
+                    </span>
+                    <span
+                      className={cn(
+                        'font-semibold tabular-nums',
+                        peg.tone === 'unhealthy'
+                          ? 'text-destructive'
+                          : 'text-primary',
+                      )}
+                    >
+                      {collateralPercent ?? '—'}
+                    </span>
+                  </div>
+                  <Meter
+                    value={fraction ?? 0}
+                    max={1}
+                    accessibilityLabel={t('collateralization')}
                   />
-                  {peg.tone === 'unhealthy' ? t('pegUnhealthyHint') : t('pegHealthyHint')}
-                </span>
-                <span className="tabular-nums">
-                  {t('snapshotLabel')} <RelativeTime timestamp={Date.parse(reservesOk.at) / 1000} />
-                </span>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </SectionCard>
+                  <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
+                      <peg.icon
+                        className={cn(
+                          'size-3.5',
+                          peg.tone === 'healthy' && 'text-primary',
+                          peg.tone === 'unhealthy' && 'text-destructive',
+                        )}
+                      />
+                      {peg.tone === 'unhealthy'
+                        ? t('pegUnhealthyHint')
+                        : t('pegHealthyHint')}
+                    </span>
+                    <span className="tabular-nums">
+                      {t('snapshotLabel')}{' '}
+                      <RelativeTime
+                        timestamp={Date.parse(reservesOk.at) / 1000}
+                      />
+                    </span>
+                  </div>
+                </div>
+              </Card>
+            ) : null}
+          </div>
+        </CardBody>
+      </Card>
 
       {/* Token contract */}
-      <SectionCard title={t('contractDetails')} icon={ScrollText}>
-        <div className="space-y-4">
-          <InfoRow
-            label={t('contractAddress')}
-            value={
-              <div className="flex flex-wrap items-center gap-2 rounded-lg bg-muted/60 px-3 py-2">
-                <HashCell value={WFAIR_CONFIG.address} full lead={10} tail={8} />
-                <a
-                  href={WFAIR_CONFIG.basescanUrl}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline"
-                >
-                  {t('viewOnBasescan')}
-                  <ExternalLink className="size-3" />
-                </a>
-              </div>
-            }
-          />
-          <InfoGrid>
-            <InfoRow
-              label={t('tokenName')}
-              value={metadata.isLoading ? '—' : (metadata.data?.name ?? 'Wrapped FairCoin')}
-            />
-            <InfoRow
-              label={t('tokenSymbol')}
-              value={metadata.isLoading ? '—' : (metadata.data?.symbol ?? 'WFAIR')}
-            />
-            <InfoRow
-              label={t('tokenDecimals')}
-              value={metadata.isLoading ? '—' : (metadata.data?.decimals ?? WFAIR_DECIMALS)}
-              mono
-            />
-            <InfoRow label={common('network')} value={`${WFAIR_CONFIG.chainName} · ${WFAIR_CONFIG.chainId}`} />
-            <InfoRow
-              label={t('totalSupply')}
-              value={live.isLoading ? '—' : supplyDisplay}
-            />
-            <InfoRow label={t('deployed')} value={WFAIR_CONFIG.deployedAt} mono />
-          </InfoGrid>
-          <StatTileGrid className="lg:grid-cols-2">
-            <ToneTile
-              label={t('transferStatus')}
-              value={
-                live.data === undefined
-                  ? '—'
-                  : live.data.paused
-                    ? t('paused')
-                    : t('active')
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('contractDetails')}</CardTitle>
+        </CardHeader>
+        <CardBody>
+          <div className="space-y-4">
+            <Item
+              density="compact"
+              title={t('contractAddress')}
+              subtitle={
+                <Card clipContent>
+                  <div className="flex flex-wrap items-center gap-2 px-3 py-2">
+                    <HashCell
+                      value={WFAIR_CONFIG.address}
+                      full
+                      lead={10}
+                      tail={8}
+                    />
+                    <a
+                      href={WFAIR_CONFIG.basescanUrl}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline"
+                    >
+                      {t('viewOnBasescan')}
+                      <ExternalLink className="size-3" />
+                    </a>
+                  </div>
+                </Card>
               }
-              hint={
-                live.data === undefined
-                  ? t('readingState')
-                  : live.data.paused
-                    ? t('transfersDisabled')
-                    : t('transfersEnabled')
-              }
-              icon={live.data?.paused ? Pause : Play}
-              tone={live.data === undefined ? 'neutral' : live.data.paused ? 'negative' : 'positive'}
             />
-            <StatTile
-              label={t('standard')}
-              value="ERC-20"
-              hint={`${WFAIR_CONFIG.chainName} · ${WFAIR_CONFIG.chainId}`}
-              icon={Waypoints}
-            />
-          </StatTileGrid>
-        </div>
-      </SectionCard>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              <Item
+                density="compact"
+                title={t('tokenName')}
+                subtitle={
+                  metadata.isLoading
+                    ? '—'
+                    : (metadata.data?.name ?? 'Wrapped FairCoin')
+                }
+              />
+              <Item
+                density="compact"
+                title={t('tokenSymbol')}
+                subtitle={
+                  metadata.isLoading ? '—' : (metadata.data?.symbol ?? 'WFAIR')
+                }
+              />
+              <Item
+                density="compact"
+                title={t('tokenDecimals')}
+                subtitle={
+                  <Code>
+                    {metadata.isLoading
+                      ? '—'
+                      : (metadata.data?.decimals ?? WFAIR_DECIMALS)}
+                  </Code>
+                }
+              />
+              <Item
+                density="compact"
+                title={common('network')}
+                subtitle={`${WFAIR_CONFIG.chainName} · ${WFAIR_CONFIG.chainId}`}
+              />
+              <Item
+                density="compact"
+                title={t('totalSupply')}
+                subtitle={live.isLoading ? '—' : supplyDisplay}
+              />
+              <Item
+                density="compact"
+                title={t('deployed')}
+                subtitle={<Code>{WFAIR_CONFIG.deployedAt}</Code>}
+              />
+            </div>
+            <div className={`grid gap-4 lg:grid-cols-2`}>
+              <ToneTile
+                label={t('transferStatus')}
+                value={
+                  live.data === undefined
+                    ? '—'
+                    : live.data.paused
+                      ? t('paused')
+                      : t('active')
+                }
+                hint={
+                  live.data === undefined
+                    ? t('readingState')
+                    : live.data.paused
+                      ? t('transfersDisabled')
+                      : t('transfersEnabled')
+                }
+                icon={live.data?.paused ? Pause : Play}
+                tone={
+                  live.data === undefined
+                    ? 'neutral'
+                    : live.data.paused
+                      ? 'negative'
+                      : 'positive'
+                }
+              />
+              <StatCard
+                stat={{
+                  label: t('standard'),
+                  value: 'ERC-20',
+                  icon: (props) => (
+                    <Waypoints
+                      width={props.width}
+                      height={props.height}
+                      color={props.fill}
+                    />
+                  ),
+                  delta: '—',
+                  deltaColor: 'neutral',
+                  hint: `${WFAIR_CONFIG.chainName} · ${WFAIR_CONFIG.chainId}`,
+                }}
+              />
+            </div>
+          </div>
+        </CardBody>
+      </Card>
 
       {/* How it works */}
-      <SectionCard title={t('howItWorks')} icon={Info}>
-        <ol className="space-y-2">
-          {[
-            { icon: ArrowDownToLine, title: t('step1Title'), body: t('step1Body') },
-            { icon: Coins, title: t('step2Title'), body: t('step2Body') },
-            { icon: Flame, title: t('step3Title'), body: t('step3Body') },
-          ].map((step, index) => (
-            <li key={index} className="flex items-start gap-3 rounded-xl bg-muted/50 p-3">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <step.icon className="size-4" />
-              </span>
-              <div className="min-w-0 space-y-0.5">
-                <p className="text-sm font-medium">
-                  <span className="mr-1.5 text-muted-foreground tabular-nums">{index + 1}.</span>
-                  {step.title}
-                </p>
-                <p className="text-sm text-muted-foreground">{step.body}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </SectionCard>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('howItWorks')}</CardTitle>
+        </CardHeader>
+        <CardBody>
+          <ol className="space-y-2">
+            {[
+              {
+                icon: ArrowDownToLine,
+                title: t('step1Title'),
+                body: t('step1Body'),
+              },
+              { icon: Coins, title: t('step2Title'), body: t('step2Body') },
+              { icon: Flame, title: t('step3Title'), body: t('step3Body') },
+            ].map((step, index) => (
+              <li key={index}>
+                <Card clipContent>
+                  <div className="flex items-start gap-3 p-3">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <step.icon className="size-4" />
+                    </span>
+                    <div className="min-w-0 space-y-0.5">
+                      <p className="text-sm font-medium">
+                        <span className="mr-1.5 text-muted-foreground tabular-nums">
+                          {index + 1}.
+                        </span>
+                        {step.title}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {step.body}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </li>
+            ))}
+          </ol>
+        </CardBody>
+      </Card>
 
       {/* Resources */}
-      <SectionCard title={t('resources')} icon={Link2}>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <ResourceLink
-            href={BRIDGE_LINKS.buy}
-            icon={ArrowUpRight}
-            title={t('buyTitle')}
-            description={t('buyDesc')}
-          />
-          <ResourceLink
-            href={BRIDGE_LINKS.unwrap}
-            icon={ArrowDownToLine}
-            title={t('unwrapTitle')}
-            description={t('unwrapDesc')}
-          />
-          <ResourceLink
-            href={WFAIR_CONFIG.basescanUrl}
-            icon={ExternalLink}
-            title={t('basescanTitle')}
-            description={t('basescanDesc')}
-          />
-          <ResourceLink
-            href={WFAIR_CONFIG.tokenListUrl}
-            icon={FileJson}
-            title={t('tokenListTitle')}
-            description={t('tokenListDesc')}
-          />
-          <ResourceLink
-            href={WFAIR_CONFIG.landingUrl}
-            icon={Waypoints}
-            title={t('landingTitle')}
-            description={t('landingDesc')}
-          />
-          <ResourceLink
-            href={WFAIR_CONFIG.repoUrl}
-            icon={Github}
-            title={t('repoTitle')}
-            description={t('repoDesc')}
-          />
-        </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          {t('footnote', { chainId: WFAIR_CONFIG.chainId })}
-        </p>
-      </SectionCard>
-    </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('resources')}</CardTitle>
+        </CardHeader>
+        <CardBody>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <ResourceLink
+              href={BRIDGE_LINKS.buy}
+              icon={ArrowUpRight}
+              title={t('buyTitle')}
+              description={t('buyDesc')}
+            />
+            <ResourceLink
+              href={BRIDGE_LINKS.unwrap}
+              icon={ArrowDownToLine}
+              title={t('unwrapTitle')}
+              description={t('unwrapDesc')}
+            />
+            <ResourceLink
+              href={WFAIR_CONFIG.basescanUrl}
+              icon={ExternalLink}
+              title={t('basescanTitle')}
+              description={t('basescanDesc')}
+            />
+            <ResourceLink
+              href={WFAIR_CONFIG.tokenListUrl}
+              icon={FileJson}
+              title={t('tokenListTitle')}
+              description={t('tokenListDesc')}
+            />
+            <ResourceLink
+              href={WFAIR_CONFIG.landingUrl}
+              icon={Waypoints}
+              title={t('landingTitle')}
+              description={t('landingDesc')}
+            />
+            <ResourceLink
+              href={WFAIR_CONFIG.repoUrl}
+              icon={Github}
+              title={t('repoTitle')}
+              description={t('repoDesc')}
+            />
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            {t('footnote', { chainId: WFAIR_CONFIG.chainId })}
+          </p>
+        </CardBody>
+      </Card>
+    </View>
   )
 }
 
@@ -375,24 +511,20 @@ interface ResourceLinkProps {
   description: string
 }
 
-function ResourceLink({ href, icon: Icon, title, description }: ResourceLinkProps) {
+function ResourceLink({
+  href,
+  icon: Icon,
+  title,
+  description,
+}: ResourceLinkProps) {
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer noopener"
-      className="group flex items-center justify-between gap-3 rounded-xl bg-muted/50 p-3 transition-colors hover:bg-muted"
-    >
-      <span className="flex min-w-0 items-center gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Icon className="size-4" />
-        </span>
-        <span className="min-w-0">
-          <span className="block truncate text-sm font-medium">{title}</span>
-          <span className="block truncate text-xs text-muted-foreground">{description}</span>
-        </span>
-      </span>
-      <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
+    <a href={href} target="_blank" rel="noreferrer noopener">
+      <Item
+        title={title}
+        subtitle={description}
+        leading={<Icon size={20} />}
+        trailing={<ArrowUpRight size={16} />}
+      />
     </a>
   )
 }
@@ -409,29 +541,34 @@ interface ToneTileProps {
 }
 
 /**
- * Tone-aware sibling of {@link StatTile} that additionally supports a destructive
- * value (e.g. paused transfers, negative peg delta), matching the home WFAIR card.
+ * Bloom metric with a semantic status for
+ * paused transfers and negative peg delta.
  */
-function ToneTile({ label, value, icon: Icon, hint, tone = 'neutral' }: ToneTileProps) {
+function ToneTile({
+  label,
+  value,
+  icon: Icon,
+  hint,
+  tone = 'neutral',
+}: ToneTileProps) {
   return (
-    <div className="flex flex-col gap-1 rounded-xl bg-muted/60 px-3 py-2.5 transition-colors hover:bg-muted/80">
-      <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-        <Icon className="size-3.5 shrink-0" />
-        <span className="truncate">{label}</span>
-      </div>
-      <span
-        className={cn(
-          'truncate text-base font-semibold tabular-nums',
-          tone === 'positive' && 'text-primary',
-          tone === 'negative' && 'text-destructive',
-        )}
-      >
-        {value}
-      </span>
-      {hint ? (
-        <span className="truncate text-[11px] text-muted-foreground tabular-nums">{hint}</span>
-      ) : null}
-    </div>
+    <StatCard
+      stat={{
+        label,
+        value,
+        hint,
+        icon: (props) => (
+          <Icon width={props.width} height={props.height} color={props.fill} />
+        ),
+        delta: '—',
+        deltaColor:
+          tone === 'negative'
+            ? 'rose'
+            : tone === 'positive'
+              ? 'lime'
+              : 'neutral',
+      }}
+    />
   )
 }
 
@@ -462,23 +599,22 @@ function ReservesUnavailable({
   t: (key: string, params?: Record<string, string | number>) => string
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed bg-muted/30 p-6 text-center">
-      <span className="flex size-11 items-center justify-center rounded-full bg-muted text-muted-foreground">
-        <ShieldQuestion className="size-5" />
-      </span>
-      <div className="space-y-1">
-        <p className="text-sm font-medium">{t('reservesUnavailableTitle')}</p>
-        <p className="text-sm text-muted-foreground">{t('reservesUnavailableBody')}</p>
-      </div>
-      <a
-        href={WFAIR_CONFIG.repoUrl}
-        target="_blank"
-        rel="noreferrer noopener"
-        className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-      >
-        <Github className="size-3.5" />
-        {t('repoTitle')}
-      </a>
-    </div>
+    <EmptyState
+      variant="compact"
+      title={t('reservesUnavailableTitle')}
+      description={t('reservesUnavailableBody')}
+      illustration={<ShieldQuestion size={28} />}
+      footer={
+        <Button
+          appearance="plain"
+          href={WFAIR_CONFIG.repoUrl}
+          target="_blank"
+          rel="noreferrer"
+          icon={<Github size={16} />}
+        >
+          {t('repoTitle')}
+        </Button>
+      }
+    />
   )
 }

@@ -1,7 +1,24 @@
-import { formatDistanceToNow, type Locale as DateFnsLocale } from 'date-fns'
-import { enUS, es, fr, de, ru, zhCN, ja, ko, ca, hi, ar, bn, pt, id, tr, vi } from 'date-fns/locale'
 import { useLocale, type Locale } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
+import { formatDistanceToNow, type Locale as DateFnsLocale } from 'date-fns'
+import {
+  ar,
+  bn,
+  ca,
+  de,
+  enUS,
+  es,
+  fr,
+  hi,
+  id,
+  ja,
+  ko,
+  pt,
+  ru,
+  tr,
+  vi,
+  zhCN,
+} from 'date-fns/locale'
 
 interface RelativeTimeProps {
   /** Unix timestamp in seconds (as returned by the node RPC). */
@@ -37,14 +54,24 @@ export function RelativeTime({ timestamp, className }: RelativeTimeProps) {
   const locale = useLocale()
 
   if (!Number.isFinite(timestamp) || timestamp <= 0) {
-    return <span className={cn('tabular-nums text-muted-foreground', className)}>—</span>
+    return (
+      <span className={cn('tabular-nums text-muted-foreground', className)}>
+        —
+      </span>
+    )
   }
 
   const date = new Date(timestamp * 1000)
 
   return (
-    <span className={cn('tabular-nums', className)} title={date.toLocaleString(locale)}>
-      {formatDistanceToNow(date, { addSuffix: true, locale: DATE_FNS_LOCALES[locale] })}
+    <span
+      className={cn('tabular-nums', className)}
+      title={date.toLocaleString(locale)}
+    >
+      {formatDistanceToNow(date, {
+        addSuffix: true,
+        locale: DATE_FNS_LOCALES[locale],
+      })}
     </span>
   )
 }

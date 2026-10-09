@@ -16,7 +16,10 @@
     "paths": {
       "@/*": ["./src/*"],
       "@shared/*": ["./shared/*"]
-    }
+    },
+    "customConditions": ["browser"],
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "shared/**/*.ts", "vite-env.d.ts"],
   "exclude": ["node_modules", "dist", "server"]

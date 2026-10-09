@@ -1,18 +1,9 @@
+import { isDetailPath, masterLocation } from '@/lib/explorer-navigation'
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { QueryClientProvider } from '@tanstack/react-query'
-import { NetworkProvider } from './contexts/network-context'
-import { BlockchainProvider } from './contexts/blockchain-context'
-import { ErrorBoundary } from './components/error-boundary'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import { Layout } from './components/layout'
 import { PageLoading } from './components/page-loading'
-import { queryClient } from './lib/query-client'
 
-// Pages are code-split: each becomes its own chunk that loads on demand, so the
-// initial bundle no longer ships every route (e.g. /bridge, /masternodes, /stats
-// stay out of the home payload). The Layout (app chrome) is imported eagerly
-// above so the shell paints instantly while a page chunk streams in behind the
-// <Suspense> fallback below.
 const HomePage = lazy(() => import('./pages/home'))
 const BlocksPage = lazy(() => import('./pages/blocks'))
 const BlockPage = lazy(() => import('./pages/block'))
@@ -34,172 +25,45 @@ const BridgePage = lazy(() => import('./pages/bridge'))
 const NotFoundPage = lazy(() => import('./pages/not-found'))
 
 export default function App() {
+  const location = useLocation()
+  const detail = isDetailPath(location.pathname)
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <NetworkProvider>
-            <BlockchainProvider>
-              <Routes>
-                <Route element={<Layout />}>
-                  <Route
-                    index
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <HomePage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="blocks"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <BlocksPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="block/:hashOrHeight"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <BlockPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="tx"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <TxIndexPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="tx/:txid"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <TxPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="address/:address"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <AddressPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="mempool"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <MempoolPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="masternodes"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <MasternodesPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="network-status"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <NetworkStatusPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="stats"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <StatsPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="charts"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <ChartsPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="peers"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <PeersPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="tools/fee-calculator"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <FeeCalculatorPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="tools/address-validator"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <AddressValidatorPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="tools/broadcast"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <BroadcastPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="tools/api"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <ApiDocsPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="tools/mcp"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <McpPage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="bridge"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <BridgePage />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="*"
-                    element={
-                      <Suspense fallback={<PageLoading />}>
-                        <NotFoundPage />
-                      </Suspense>
-                    }
-                  />
-                </Route>
-              </Routes>
-            </BlockchainProvider>
-          </NetworkProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <Layout
+      detail={
+        detail ? (
+          <Suspense fallback={<PageLoading />}>
+            <Routes location={location}>
+              <Route path="block/:hashOrHeight" element={<BlockPage />} />
+              <Route path="tx/:txid" element={<TxPage />} />
+            </Routes>
+          </Suspense>
+        ) : undefined
+      }
+    >
+      <Suspense fallback={<PageLoading />}>
+        <Routes location={detail ? masterLocation(location) : location}>
+          <Route index element={<HomePage />} />
+          <Route path="blocks" element={<BlocksPage />} />
+          <Route path="tx" element={<TxIndexPage />} />
+          <Route path="address/:address" element={<AddressPage />} />
+          <Route path="mempool" element={<MempoolPage />} />
+          <Route path="masternodes" element={<MasternodesPage />} />
+          <Route path="network-status" element={<NetworkStatusPage />} />
+          <Route path="stats" element={<StatsPage />} />
+          <Route path="charts" element={<ChartsPage />} />
+          <Route path="peers" element={<PeersPage />} />
+          <Route path="tools/fee-calculator" element={<FeeCalculatorPage />} />
+          <Route
+            path="tools/address-validator"
+            element={<AddressValidatorPage />}
+          />
+          <Route path="tools/broadcast" element={<BroadcastPage />} />
+          <Route path="tools/api" element={<ApiDocsPage />} />
+          <Route path="tools/mcp" element={<McpPage />} />
+          <Route path="bridge" element={<BridgePage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+    </Layout>
   )
 }
