@@ -74,6 +74,39 @@ function mempoolTransactionFromEntry(txid: string, entry: MempoolEntryRpc | null
   }
 }
 
+/**
+ * Most blocks we announce individually in one poll. A real burst after a short
+ * stall is a handful of blocks; anything larger is a catch-up and gets a single
+ * `block-count` event instead of one `new-block` per historical block.
+ */
+export const MAX_BLOCKS_ANNOUNCED_PER_POLL = 10
+
+/**
+ * Which heights to announce as `new-block`, given what we last saw.
+ *
+ * 2026-11-16 incident: when the startup read of the tip failed (node busy), the
+ * monitor kept its initial height of 0. The next successful poll saw 241k "new"
+ * blocks and walked them one by one from height 1 — and every `new-block` event
+ * made each open browser refetch /api/stats and /api/peers. One visitor with the
+ * home page open became ~60 req/s for hours, which starved the single CPU and the
+ * node. A height we never established is a baseline to adopt, never a backlog.
+ */
+export function planBlockAnnouncements(
+  knownHeight: number | null,
+  currentHeight: number,
+  max: number = MAX_BLOCKS_ANNOUNCED_PER_POLL,
+): number[] {
+  if (knownHeight === null || currentHeight <= knownHeight) {
+    return []
+  }
+  const first = Math.max(knownHeight + 1, currentHeight - max + 1)
+  const heights: number[] = []
+  for (let height = first; height <= currentHeight; height++) {
+    heights.push(height)
+  }
+  return heights
+}
+
 export class BlockchainMonitor {
   private wsManager: WebSocketManager
   private networkStates: Map<NetworkType, NetworkState>
@@ -93,6 +126,11 @@ export class BlockchainMonitor {
   private notificationDispatcher: PushDispatcher | null = null
   /** Mempool txids already notified as first-seen (per network), so a lingering tx notifies once. */
   private notifiedMempoolTxids = new Map<NetworkType, Set<string>>()
+  /** Networks whose tip height we have actually read. Until then `blockHeight` is meaningless. */
+  private establishedHeight = new Set<NetworkType>()
+  /** setInterval does not wait: a slow poll must not start a second one on top of it. */
+  private pollInFlight = false
+  private statsPollInFlight = false
 
   constructor(wsManager: WebSocketManager, config?: Partial<BlockchainMonitorConfig>) {
     this.wsManager = wsManager
@@ -199,6 +237,7 @@ export class BlockchainMonitor {
       const state = this.networkStates.get(network)
       if (state) {
         state.blockHeight = blockCount
+        this.establishedHeight.add(network)
         state.blockHash = block.hash
         state.mempoolSize = mempoolInfo.size ?? 0
         state.mempoolBytes = mempoolInfo.bytes ?? 0
@@ -212,8 +251,16 @@ export class BlockchainMonitor {
   }
 
   private async pollAllNetworks(): Promise<void> {
-    for (const network of this.config.networks) {
-      await this.pollNetwork(network)
+    if (this.pollInFlight) {
+      return
+    }
+    this.pollInFlight = true
+    try {
+      for (const network of this.config.networks) {
+        await this.pollNetwork(network)
+      }
+    } finally {
+      this.pollInFlight = false
     }
   }
 
@@ -227,12 +274,24 @@ export class BlockchainMonitor {
       // Live RPC for change detection — do not use the HTTP response cache here.
       const newBlockCount = await rpcWithNetwork<number>('getblockcount', [], network)
 
-      if (newBlockCount > state.blockHeight) {
+      if (!this.establishedHeight.has(network)) {
+        // Startup read failed earlier: adopt the tip as a baseline. Nothing is
+        // "new" — announcing history would flood every connected client.
+        state.blockHeight = newBlockCount
+        this.establishedHeight.add(network)
+        logger.info(`[BlockchainMonitor] ${network}: tip baseline established at ${newBlockCount}`)
+      } else if (newBlockCount > state.blockHeight) {
         logger.debug(
           `[BlockchainMonitor] ${network}: New blocks detected (${state.blockHeight} -> ${newBlockCount})`,
         )
 
-        for (let height = state.blockHeight + 1; height <= newBlockCount; height++) {
+        const heights = planBlockAnnouncements(state.blockHeight, newBlockCount)
+        if (heights.length < newBlockCount - state.blockHeight) {
+          logger.info(
+            `[BlockchainMonitor] ${network}: ${newBlockCount - state.blockHeight} blocks behind; announcing only the last ${heights.length}`,
+          )
+        }
+        for (const height of heights) {
           await this.handleNewBlock(network, height)
         }
 
@@ -500,8 +559,16 @@ export class BlockchainMonitor {
   }
 
   private async pollNetworkStats(): Promise<void> {
-    for (const network of this.config.networks) {
-      await this.pollNetworkStatsForNetwork(network)
+    if (this.statsPollInFlight) {
+      return
+    }
+    this.statsPollInFlight = true
+    try {
+      for (const network of this.config.networks) {
+        await this.pollNetworkStatsForNetwork(network)
+      }
+    } finally {
+      this.statsPollInFlight = false
     }
   }
 

@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the answer it already held. It now serves the last cached value once and
   logs a warning; `/api/health` opts out so a dead node is never reported
   healthy on stale numbers.
+- **Live-update storm that looked like a bot.** If the monitor's startup read of
+  the tip failed (node busy), it stayed at height 0 and the next poll announced
+  every block from height 1 as `new-block`; each announcement made every open
+  tab refetch `/api/stats` and `/api/peers`. One visitor became ~60 req/s for
+  hours, saturating the single CPU and starving faircoind. The monitor now adopts
+  an unestablished height as a baseline, announces at most 10 blocks per poll,
+  and never runs overlapping polls; the browser throttles live-event
+  invalidations to one refetch per key per 5s.
 - **A page that fails to load no longer takes down the whole app.** Route chunks
   are loaded with retry (short backoff, then one guarded reload to pick up a new
   deploy), and each content panel has its own error boundary, so a failure shows

@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNetwork } from '@/contexts/network-context'
+import { createThrottledInvalidator, type ThrottledInvalidator } from '@/lib/throttled-invalidator'
 import {
   WebSocketEvent,
   NewBlockEvent,
@@ -20,55 +21,69 @@ import {
  *
  * Live hooks use `useLiveRefetchInterval` so HTTP polling is only a fallback
  * when the socket is down.
+ *
+ * Invalidations are throttled per key (see `createThrottledInvalidator`): a burst
+ * of server events must never become a burst of HTTP requests from every tab.
  */
 export function useRealtimeSync(event: WebSocketEvent | null): void {
   const queryClient = useQueryClient()
   const { currentNetwork } = useNetwork()
+  const invalidatorRef = useRef<ThrottledInvalidator | null>(null)
 
   useEffect(() => {
+    const invalidator = createThrottledInvalidator((queryKey) => {
+      void queryClient.invalidateQueries({ queryKey })
+    })
+    invalidatorRef.current = invalidator
+    return () => {
+      invalidator.dispose()
+      invalidatorRef.current = null
+    }
+  }, [queryClient])
+
+  useEffect(() => {
+    const invalidate = (queryKey: readonly unknown[]) => invalidatorRef.current?.invalidate(queryKey)
     if (!event) return
     if (event.network !== currentNetwork) return
 
     switch (event.type) {
       case 'new-block':
       case 'block-count': {
-        void queryClient.invalidateQueries({ queryKey: ['recent-blocks'] })
-        void queryClient.invalidateQueries({ queryKey: ['recent-transactions'] })
-        void queryClient.invalidateQueries({ queryKey: ['stats'] })
-        void queryClient.invalidateQueries({ queryKey: ['block'] })
-        void queryClient.invalidateQueries({ queryKey: ['transaction'] })
-        void queryClient.invalidateQueries({ queryKey: ['address'] })
-        void queryClient.invalidateQueries({ queryKey: ['address-txs'] })
-        void queryClient.invalidateQueries({ queryKey: ['node-status'] })
-        void queryClient.invalidateQueries({ queryKey: ['masternodes'] })
-        void queryClient.invalidateQueries({ queryKey: ['masternode-list'] })
-        void queryClient.invalidateQueries({ queryKey: ['peers'] })
+        invalidate(['recent-blocks'])
+        invalidate(['recent-transactions'])
+        invalidate(['stats'])
+        invalidate(['block'])
+        invalidate(['transaction'])
+        invalidate(['address'])
+        invalidate(['address-txs'])
+        invalidate(['node-status'])
+        invalidate(['masternodes'])
+        invalidate(['masternode-list'])
+        invalidate(['peers'])
         break
       }
 
       case 'network-stats': {
-        void queryClient.invalidateQueries({ queryKey: ['stats'] })
-        void queryClient.invalidateQueries({ queryKey: ['peers'] })
-        void queryClient.invalidateQueries({ queryKey: ['node-status'] })
+        invalidate(['stats'])
+        invalidate(['peers'])
+        invalidate(['node-status'])
         break
       }
 
       case 'mempool-update': {
-        void queryClient.invalidateQueries({ queryKey: ['mempool'] })
-        void queryClient.invalidateQueries({ queryKey: ['recent-transactions'] })
-        void queryClient.invalidateQueries({ queryKey: ['stats'] })
+        invalidate(['mempool'])
+        invalidate(['recent-transactions'])
+        invalidate(['stats'])
         break
       }
 
       case 'transaction-confirmed': {
         if (!isTransactionConfirmedEvent(event)) break
-        void queryClient.invalidateQueries({
-          queryKey: ['transaction', event.data.txid, currentNetwork],
-        })
-        void queryClient.invalidateQueries({ queryKey: ['address'] })
-        void queryClient.invalidateQueries({ queryKey: ['address-txs'] })
-        void queryClient.invalidateQueries({ queryKey: ['recent-transactions'] })
-        void queryClient.invalidateQueries({ queryKey: ['mempool'] })
+        invalidate(['transaction', event.data.txid, currentNetwork])
+        invalidate(['address'])
+        invalidate(['address-txs'])
+        invalidate(['recent-transactions'])
+        invalidate(['mempool'])
         break
       }
 
