@@ -18,6 +18,12 @@ function assertValidNetwork(network: NetworkType): void {
 interface CacheOptions {
   ttl?: number // Time to live in seconds
   network: NetworkType
+  /**
+   * Serve the last cached answer when the RPC fails (default true). Callers
+   * whose job is to detect node trouble — `/api/health` — must opt out, or a
+   * dead node would look healthy on yesterday's numbers.
+   */
+  staleOnError?: boolean
 }
 
 /** Document stored in the `cache` collection. */
@@ -157,49 +163,77 @@ export class BlockchainCache {
     return `${network}:${method}:${JSON.stringify(params)}`
   }
 
-  protected isExpired(cachedData: CachedData): boolean {
+  /**
+   * @param maxAgeSeconds the reader's own freshness bound. Several call sites
+   *   share one cache key with different TTLs (e.g. `getblockchaininfo` is read
+   *   at 300s by `/api/stats` and at 10s by `/api/health`); the document only
+   *   records the writer's TTL, so a short-TTL reader must not be served a doc
+   *   that a long-TTL writer considers fresh.
+   */
+  protected isExpired(cachedData: CachedData, maxAgeSeconds?: number): boolean {
     const now = Date.now()
-    return now - cachedData.timestamp > cachedData.ttl * 1000
+    const ttl = maxAgeSeconds === undefined ? cachedData.ttl : Math.min(cachedData.ttl, maxAgeSeconds)
+    return now - cachedData.timestamp > ttl * 1000
   }
 
   async get<T>(method: string, params: RpcParam[] = [], options: CacheOptions): Promise<T> {
     assertValidNetwork(options.network)
-    const collection = await this.cacheCollection()
     const cacheKey = this.getCacheKey(method, params, options.network)
     const ttlSeconds = options.ttl ?? 3600
 
+    let collection: Collection<CacheDocument> | null = null
+    let cached: CacheDocument | null = null
     try {
-      const cached = await collection.findOne({ _id: cacheKey })
+      collection = await this.cacheCollection()
+      cached = await collection.findOne({ _id: cacheKey })
+    } catch (error) {
+      // Cache unavailable: go straight to the node.
+      logger.error(`Cache read failed for ${method}:`, error)
+    }
 
-      if (cached && !this.isExpired(cached)) {
+    if (cached && !this.isExpired(cached, ttlSeconds)) {
+      return cached.data as T
+    }
+
+    // Fetch from RPC behind single-flight so concurrent misses share one call.
+    let data: T
+    try {
+      data = await this.fetchSingleFlight<T>(cacheKey, method, params, options.network)
+    } catch (error) {
+      // The node is slow or unreachable. A recently-expired answer beats a page
+      // that spins until the proxy gives up — and retrying the same call here
+      // would only double the wait (each attempt can burn the full RPC timeout).
+      // `/api/health` reports node trouble separately, so serving stale is safe.
+      if (cached && options.staleOnError !== false) {
+        logger.warn(`RPC ${method} failed; serving stale cache (${Math.round((Date.now() - cached.timestamp) / 1000)}s old)`)
         return cached.data as T
       }
+      throw error
+    }
 
-      // Fetch from RPC behind single-flight so concurrent misses share one call.
-      const data = await this.fetchSingleFlight<T>(cacheKey, method, params, options.network)
-
+    if (collection) {
       // Store in cache. `expiresAt` powers the Mongo TTL index.
       // `_id` comes from the filter; do not set it on the replacement body
       // (Mongo's `WithoutId` typing rejects it).
       const now = Date.now()
-      await collection.replaceOne(
-        { _id: cacheKey },
-        {
-          data,
-          timestamp: now,
-          ttl: ttlSeconds,
-          expiresAt: new Date(now + ttlSeconds * 1000),
-          network: options.network,
-        },
-        { upsert: true },
-      )
-
-      return data
-    } catch (error) {
-      logger.error(`Error in cache.get for ${method}:`, error)
-      // Fallback to RPC (still single-flighted) if cache read/write fails.
-      return await this.fetchSingleFlight<T>(cacheKey, method, params, options.network)
+      try {
+        await collection.replaceOne(
+          { _id: cacheKey },
+          {
+            data,
+            timestamp: now,
+            ttl: ttlSeconds,
+            expiresAt: new Date(now + ttlSeconds * 1000),
+            network: options.network,
+          },
+          { upsert: true },
+        )
+      } catch (error) {
+        logger.error(`Cache write failed for ${method}:`, error)
+      }
     }
+
+    return data
   }
 
   /**
