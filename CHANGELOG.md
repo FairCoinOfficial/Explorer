@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the answer it already held. It now serves the last cached value once and
   logs a warning; `/api/health` opts out so a dead node is never reported
   healthy on stale numbers.
+- **A page that fails to load no longer takes down the whole app.** Route chunks
+  are loaded with retry (short backoff, then one guarded reload to pick up a new
+  deploy), and each content panel has its own error boundary, so a failure shows
+  an inline "try again" inside that panel while the header, navigation and the
+  other pane keep working — instead of the full-screen "Something went wrong /
+  Failed to fetch dynamically imported module".
 - **Cache freshness honours the reader's TTL.** Call sites sharing a cache key
   with different TTLs (e.g. `getblockchaininfo` at 300s for stats, 10s for
   health) no longer get served a doc the long-TTL writer considered fresh.
