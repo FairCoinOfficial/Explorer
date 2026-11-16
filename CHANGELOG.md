@@ -5,6 +5,28 @@ All notable changes to the FairCoin Explorer are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **False "node is catching up" banner.** `/api/health` measured lag as the gap to
+  the tallest height any peer *claimed* (`startingheight`). Since 2026-09-24
+  (height 166299) a public peer has been on a separate, lower-difficulty PoS
+  branch that is ~200 blocks *taller* than the heavier chain, so the endpoint
+  reported `lagging` permanently and every visitor saw the banner. Lag is now
+  taken from the node's own most-work header (`getblockchaininfo.headers`) while
+  the tip is fresh; peer claims still count once the tip goes cold, so a truly
+  stuck node is still reported as `stalled`. The tallest claimed height is
+  exposed as `peerReportedHeight` for diagnostics.
+- **Pages spinning for up to a minute when the node is slow.** On an RPC failure
+  `cache.get` retried the same call (doubling the 10s timeout) instead of using
+  the answer it already held. It now serves the last cached value once and
+  logs a warning; `/api/health` opts out so a dead node is never reported
+  healthy on stale numbers.
+- **Cache freshness honours the reader's TTL.** Call sites sharing a cache key
+  with different TTLs (e.g. `getblockchaininfo` at 300s for stats, 10s for
+  health) no longer get served a doc the long-TTL writer considered fresh.
+
 ## [0.3.4] - 2026-06-25
 
 ### Security

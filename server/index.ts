@@ -495,16 +495,22 @@ app.get('/api/health', async (req, res) => {
   try {
     // Short TTLs: a health probe that reads a minute-old cache cannot detect a
     // node that stopped a minute ago.
-    const [nodeHeight, tipHash, peers] = await Promise.all([
-      blockCache.get<number>('getblockcount', [], { network, ttl: 10 }),
-      blockCache.get<string>('getbestblockhash', [], { network, ttl: 10 }),
+    const [nodeHeight, tipHash, chainInfo, peers] = await Promise.all([
+      blockCache.get<number>('getblockcount', [], { network, ttl: 10, staleOnError: false }),
+      blockCache.get<string>('getbestblockhash', [], { network, ttl: 10, staleOnError: false }),
+      // `headers` is the node's most-work validated header — the only lag signal
+      // backed by chain work rather than a peer's word. See node-health.ts.
       blockCache
-        .get<Array<{ synced_headers?: number; startingheight?: number }>>('getpeerinfo', [], { network, ttl: 20 })
+        .get<{ headers?: number }>('getblockchaininfo', [], { network, ttl: 10, staleOnError: false })
+        .catch(() => null),
+      blockCache
+        .get<Array<{ synced_headers?: number; startingheight?: number }>>('getpeerinfo', [], { network, ttl: 20, staleOnError: false })
         .catch(() => []),
     ])
     const tip = await blockCache.getBlock(tipHash, network, true)
     const health = assessNodeHealth({
       nodeHeight,
+      bestHeaderHeight: Number(chainInfo?.headers ?? -1),
       tipTime: Number(tip?.time ?? 0),
       peerHeights: (Array.isArray(peers) ? peers : []).flatMap((peer) => [
         Number(peer?.synced_headers ?? -1),
